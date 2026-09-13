@@ -35,8 +35,10 @@ button, input, select, textarea { font: inherit; }
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: url("../images/general/smoke.svg") center / cover no-repeat;
-  opacity: .24;
+  background:
+    linear-gradient(rgba(0,0,0,.84), rgba(0,0,0,.84)),
+    url("../images/general/smoke.svg") center / cover no-repeat;
+  opacity: 1;
   pointer-events: none;
 }
 .nav-wrap { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; min-height: 118px; gap: 1.5rem; }
