@@ -276,7 +276,7 @@ function hasValidOptions() {
       const selections = getSelectedOptions(item.id);
       if (selections.size === 0) return false;
 
-      if (selections.size > 1) {
+      if (selections.size > 1 && mainQuantity > 1) {
         const splitTotal = Array.from(selections).reduce(
           (sum, label) => sum + (orderState.optionSplits.get(`${item.id}--${label}`) ?? 0),
           0
