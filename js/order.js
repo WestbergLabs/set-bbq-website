@@ -68,6 +68,7 @@ function renderCategorySelection(category, container) {
             <div class="order-item-meta">${item.description} · ${item.unit}</div>
           </div>
           <div class="item-actions">
+            <div class="order-item-price">${formatCurrency(itemPrice)}</div>
             <label class="quantity-control">Qty ${makeQuantityInput(item.id)}</label>
           </div>
         </div>
@@ -116,7 +117,7 @@ function getSelectedOptions(itemId) {
 
 function setOptionSelection(itemId, optionLabel, checked) {
   const selections = new Set(getSelectedOptions(itemId));
-  const maxSelections = getMainQuantity(itemId);
+  const maxSelections = itemId === 'wings' ? 2 : getMainQuantity(itemId);
 
   if (checked) {
     // Each checked option represents at least one unit. Never allow
