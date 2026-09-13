@@ -42,8 +42,8 @@ function renderCategorySelection(category, container) {
         .map((option) => {
           const price = itemPrice + (option.adjustment ?? 0);
           return `<div class="order-option-row" data-option-row="${item.id}" hidden>
-            <span><strong>${option.label}</strong> <span class="option-price">${formatCurrency(price)}</span></span>
-            <label class="quantity-control">Qty ${makeQuantityInput(item.id, option.label)}</label>
+            <span><strong>${option.label}</strong></span>
+            <div class="option-actions"><span class="option-price">${formatCurrency(price)}</span><label class="quantity-control">Qty ${makeQuantityInput(item.id, option.label)}</label></div>
           </div>`;
         }).join('');
 
@@ -51,9 +51,9 @@ function renderCategorySelection(category, container) {
         <div class="order-item-header">
           <div>
             <div class="order-item-name">${item.name}</div>
-            <div class="order-item-meta">${item.description} · ${item.unit} · starting at ${formatCurrency(itemPrice)}</div>
+            <div class="order-item-meta">${item.description} · ${item.unit}</div>
           </div>
-          <label class="quantity-control">Qty ${makeQuantityInput(item.id)}</label>
+          <div class="item-actions"><span class="order-item-price">Starting at ${formatCurrency(itemPrice)}</span><label class="quantity-control">Qty ${makeQuantityInput(item.id)}</label></div>
         </div>
         <div class="order-options" data-options-container="${item.id}" hidden>${optionRows}</div>
         <div class="option-validation" data-option-validation="${item.id}" aria-live="polite"></div>
@@ -66,9 +66,8 @@ function renderCategorySelection(category, container) {
           <div class="order-item-name">${item.name}</div>
           <div class="order-item-meta">${item.description} · ${item.unit}</div>
         </div>
-        <div class="order-item-price">${formatCurrency(itemPrice)}</div>
+        <div class="item-actions"><div class="order-item-price">${formatCurrency(itemPrice)}</div><label class="quantity-control">Qty ${makeQuantityInput(item.id)}</label></div>
       </div>
-      <label class="quantity-control">Qty ${makeQuantityInput(item.id)}</label>
     </div>`;
   }).join('');
 
