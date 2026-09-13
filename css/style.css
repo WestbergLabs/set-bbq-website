@@ -116,7 +116,15 @@ input:focus, select:focus, textarea:focus { outline: 2px solid rgba(182,67,45,.2
   .main-nav { justify-content: center; gap: .1rem; }
   .main-nav a { padding: .45rem .5rem; font-size: .92rem; }
   .order-layout, .layout-two { grid-template-columns: 1fr; }
-  .summary-panel { position: static; }
+  .summary-panel { position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 150; border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0; padding: .65rem 1rem .7rem; box-shadow: 0 -4px 14px rgba(0,0,0,.14); display: grid; grid-template-columns: 1fr auto; align-items: center; gap: .75rem; }
+  .summary-panel .section-head { margin: 0; }
+  .summary-panel .section-head .kicker { display: none; }
+  .summary-panel .section-head h3 { margin: 0; font-size: .95rem; }
+  .summary-list { display: none; }
+  .summary-total { margin: 0; font-size: .9rem; gap: .5rem; }
+  .summary-total:first-of-type { display: none; }
+  .summary-total:last-of-type { font-size: 1.15rem; }
+  body { padding-bottom: 64px; }
   .preview-columns { grid-template-columns: 1fr; }
   .preview-columns > div { border-right: 0; border-bottom: 1px solid var(--line); }
   .preview-columns > div:last-child { border-bottom: 0; }
