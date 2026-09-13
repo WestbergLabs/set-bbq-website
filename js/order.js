@@ -35,11 +35,19 @@ function renderCategorySelection(category, container) {
 
   const list = category.items.map((item) => {
     const itemPrice = getPriceByKey(item.priceKey);
-    const baseLabel = item.pricing && item.pricing.options ? `${formatCurrency(itemPrice)} base` : formatCurrency(itemPrice);
+    const hasPricingOptions = item.pricing && item.pricing.options;
+    const hasOrderOptions = item.orderOptions && item.orderOptions.length;
+    const baseLabel = hasPricingOptions ? `${formatCurrency(itemPrice)} base` : formatCurrency(itemPrice);
 
-    const optionMarkup = item.pricing && item.pricing.options
+    const pricingOptionMarkup = hasPricingOptions
       ? item.pricing.options.map((option) => `
         <option value="${option.label}">${option.label} (+${formatCurrency(option.adjustment)})</option>
+      `).join('')
+      : '';
+
+    const orderOptionMarkup = hasOrderOptions
+      ? item.orderOptions.map((option) => `
+        <option value="${option}">${option}</option>
       `).join('')
       : '';
 
@@ -51,11 +59,19 @@ function renderCategorySelection(category, container) {
         </label>
         <strong>${baseLabel}</strong>
       </div>
-      ${optionMarkup ? `
+      ${pricingOptionMarkup ? `
         <div class="hidden" data-adjustment-wrapper="${item.id}">
           <label for="${item.id}-adjustment">Choose option</label>
           <select data-item-adjustment="${item.id}">
-            ${optionMarkup}
+            ${pricingOptionMarkup}
+          </select>
+        </div>
+      ` : ''}
+      ${orderOptionMarkup ? `
+        <div class="hidden" data-order-option-wrapper="${item.id}">
+          <label for="${item.id}-option">Choose option</label>
+          <select data-item-option="${item.id}">
+            ${orderOptionMarkup}
           </select>
         </div>
       ` : ''}
@@ -85,18 +101,27 @@ function bindSelectionEvents() {
   document.querySelectorAll('[data-item-id]').forEach((checkbox) => {
     checkbox.addEventListener('change', (event) => {
       const itemId = event.target.dataset.itemId;
-      const wrapper = document.querySelector(`[data-adjustment-wrapper="${itemId}"]`);
-      if (wrapper) {
-        wrapper.classList.toggle('hidden', !event.target.checked);
+      const adjustmentWrapper = document.querySelector(`[data-adjustment-wrapper="${itemId}"]`);
+      const orderOptionWrapper = document.querySelector(`[data-order-option-wrapper="${itemId}"]`);
+
+      if (adjustmentWrapper) {
+        adjustmentWrapper.classList.toggle('hidden', !event.target.checked);
+      }
+      if (orderOptionWrapper) {
+        orderOptionWrapper.classList.toggle('hidden', !event.target.checked);
       }
 
       if (event.target.checked) {
         const item = getMenuItemById(itemId);
         const adjustment = document.querySelector(`[data-item-adjustment="${itemId}"]`);
+        const orderOption = document.querySelector(`[data-item-option="${itemId}"]`);
         const selectedAdjustment = adjustment ? adjustment.value : null;
+        const selectedOption = orderOption ? orderOption.value : null;
+
         orderState.selected.set(itemId, {
           item,
           adjustment: selectedAdjustment,
+          option: selectedOption,
           quantity: 1
         });
       } else {
@@ -113,6 +138,17 @@ function bindSelectionEvents() {
       const current = orderState.selected.get(itemId);
       if (current) {
         current.adjustment = event.target.value;
+        updateSummary();
+      }
+    });
+  });
+
+  document.querySelectorAll('[data-item-option]').forEach((select) => {
+    select.addEventListener('change', (event) => {
+      const itemId = event.target.dataset.itemOption;
+      const current = orderState.selected.get(itemId);
+      if (current) {
+        current.option = event.target.value;
         updateSummary();
       }
     });
@@ -145,9 +181,10 @@ function updateSummary() {
     const item = record.item;
     const itemTotal = calculateItemTotal(itemId, record.adjustment);
     subtotal += itemTotal;
+    const optionText = record.option || record.adjustment;
     rows.push(`
       <li>
-        <span>${item.name}${record.adjustment ? ` (${record.adjustment})` : ''}</span>
+        <span>${item.name}${optionText ? ` (${optionText})` : ''}</span>
         <strong>${formatCurrency(itemTotal)}</strong>
       </li>
     `);
@@ -238,7 +275,10 @@ async function initializeOrderPage() {
       if (validateOrderForm()) {
         document.querySelector('[data-order-confirmation]').classList.remove('hidden');
         const summary = document.querySelector('[data-order-summary-text]');
-        const selected = Array.from(orderState.selected.values()).map((entry) => `${entry.item.name}${entry.adjustment ? ` (${entry.adjustment})` : ''}`);
+        const selected = Array.from(orderState.selected.values()).map((entry) => {
+          const optionText = entry.option || entry.adjustment;
+          return `${entry.item.name}${optionText ? ` (${optionText})` : ''}`;
+        });
         summary.textContent = selected.join(', ') || 'No items selected';
       }
     });
