@@ -175,3 +175,15 @@ input:focus, select:focus, textarea:focus { outline: 2px solid rgba(182,67,45,.2
   .contact-cta { flex-direction: column; align-items: flex-start; gap: 1rem; margin-top: 1.5rem; padding-top: 1.25rem; }
   .contact-cta .button { width: 100%; }
 }
+
+
+/* Compact contact card */
+.contact-cards { gap: 1.25rem; }
+.contact-cards .card { padding: 1.1rem 1.25rem; }
+.contact-cards .section-head { margin-bottom: .7rem; }
+.contact-cards .section-head h2 { font-size: clamp(1.55rem, 3vw, 2.15rem); }
+.contact-cards .card p { margin: .55rem 0; }
+.contact-cards .card p:first-of-type { margin-top: 0; }
+.contact-cards .card p:last-of-type { margin-bottom: 0; }
+.contact-cards .card p strong { font-weight: 700; }
+.contact-cards .card .section-head h2 { font-weight: 400; }
