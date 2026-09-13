@@ -31,10 +31,24 @@ button, input, select, textarea { font: inherit; }
   position: sticky;
   top: 0;
   z-index: 200;
-  background: var(--black);
-  border-bottom: 3px solid var(--brand-red);
+  isolation: isolate;
+  overflow: hidden;
+  background: rgba(0,0,0,.92);
+  border-bottom: 5px solid var(--brand-red);
+}
+.site-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: url("https://openclipart.org/image/2000px/330513") center / cover no-repeat;
+  filter: invert(1);
+  opacity: .16;
+  pointer-events: none;
 }
 .nav-wrap {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -84,7 +98,7 @@ button, input, select, textarea { font: inherit; }
 }
 
 .hero {
-  background: var(--black);
+  background: #191919;
   color: var(--white);
   padding: 0 0 clamp(3.5rem, 7vw, 5.5rem);
 }
@@ -95,10 +109,17 @@ button, input, select, textarea { font: inherit; }
   align-items: center;
   text-align: center;
 }
-.hero-visual { order: -1; width: 100%; display: flex; justify-content: center; background: var(--black); }
+.hero-visual {
+  order: -1;
+  width: min(100%, 1080px);
+  display: flex;
+  justify-content: center;
+  background: rgba(0,0,0,.78);
+  padding: .45rem;
+}
 .hero-visual img {
-  width: min(100%, 1180px);
-  height: clamp(220px, 38vw, 460px);
+  width: 100%;
+  height: clamp(200px, 31vw, 380px);
   object-fit: cover;
   object-position: center;
   border-radius: 0;
@@ -213,5 +234,6 @@ input:focus, select:focus, textarea:focus { outline: 2px solid rgba(182,67,45,.2
   .preview-columns > div { border-right: 0; border-bottom: 1px solid var(--line); }
   .preview-columns > div:last-child { border-bottom: 0; }
   .split-head { align-items: start; flex-direction: column; }
-  .hero-visual img { height: 260px; }
+  .hero-visual { width: min(100%, 720px); padding: .3rem; }
+  .hero-visual img { height: 240px; }
 }
