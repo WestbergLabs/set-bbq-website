@@ -64,7 +64,6 @@ function renderCategorySelection(category, container) {
             <div class="order-item-meta">${item.description} · ${item.unit}</div>
           </div>
           <div class="item-actions">
-            <span class="order-item-price">${formatCurrency(itemPrice)}</span>
             <label class="quantity-control">Qty ${makeQuantityInput(item.id)}</label>
           </div>
         </div>
