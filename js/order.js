@@ -2,7 +2,7 @@ const orderState = {
   menu: null,
   prices: null,
   selected: new Map(),
-  optionModes: new Map(),
+  optionSelections: new Map(),
   optionSplits: new Map(),
   deliverySelected: false
 };
@@ -36,8 +36,7 @@ function makeQuantityInput(itemId, optionKey = '') {
 
 function optionPriceText(item, option) {
   const adjustment = option.adjustment ?? 0;
-  const price = getPriceByKey(item.priceKey) + adjustment;
-  return adjustment ? `+${formatCurrency(adjustment)}` : formatCurrency(price);
+  return adjustment ? `+${formatCurrency(adjustment)}` : formatCurrency(getPriceByKey(item.priceKey));
 }
 
 function renderCategorySelection(category, container) {
@@ -49,13 +48,18 @@ function renderCategorySelection(category, container) {
     const options = getOptionDefinitions(item);
 
     if (options.length) {
-      const radioName = `option-${item.id}`;
-      const optionRows = options.map((option, index) => `
+      const optionRows = options.map((option) => `
         <label class="option-choice-row" data-option-row="${item.id}">
-          <input type="radio" name="${radioName}" value="${option.label}" data-option-mode="single" data-option-item="${item.id}" data-option-key="${option.label}" />
+          <input type="checkbox" class="option-checkbox" data-option-item="${item.id}" data-option-key="${option.label}" />
           <span class="option-choice-label">${option.label}</span>
           <span class="option-price">${optionPriceText(item, option)}</span>
         </label>`).join('');
+
+      const splitRows = options.map((option) => `
+        <div class="option-split-row" data-split-row="${item.id}--${option.label}" hidden>
+          <span>${option.label}</span>
+          <label class="quantity-control">Qty ${makeQuantityInput(item.id, option.label)}</label>
+        </div>`).join('');
 
       return `<div class="order-item" data-order-item="${item.id}" data-has-options="true">
         <div class="order-item-header">
@@ -68,22 +72,9 @@ function renderCategorySelection(category, container) {
           </div>
         </div>
         <div class="order-options" data-options-container="${item.id}" hidden>
-          <div class="option-prompt">How would you like them?</div>
-          <div class="option-choice-list">
-            ${optionRows}
-            <label class="option-choice-row mix-choice">
-              <input type="radio" name="${radioName}" value="__mix__" data-option-mode="mix" data-option-item="${item.id}" />
-              <span class="option-choice-label">Mix options</span>
-              <span class="option-price"></span>
-            </label>
-          </div>
-          <div class="option-split-list" data-split-list="${item.id}" hidden>
-            ${options.map((option) => `
-              <div class="option-split-row">
-                <span>${option.label}</span>
-                <label class="quantity-control">Qty ${makeQuantityInput(item.id, option.label)}</label>
-              </div>`).join('')}
-          </div>
+          <div class="option-prompt">Choose one or more:</div>
+          <div class="option-choice-list">${optionRows}</div>
+          <div class="option-split-list" data-split-list="${item.id}" hidden>${splitRows}</div>
           <div class="option-validation" data-option-validation="${item.id}" aria-live="polite"></div>
         </div>
       </div>`;
@@ -119,22 +110,20 @@ function getMainQuantity(itemId) {
   return orderState.selected.get(itemId)?.quantity ?? 0;
 }
 
-function getOptionMode(itemId) {
-  return orderState.optionModes.get(itemId) ?? null;
+function getSelectedOptions(itemId) {
+  return orderState.optionSelections.get(itemId) ?? new Set();
 }
 
-function setOptionMode(itemId, mode) {
-  orderState.optionModes.set(itemId, mode);
-  if (mode?.type !== 'mix') {
-    const item = getMenuItemById(itemId);
-    getOptionDefinitions(item).forEach((option) => {
-      orderState.optionSplits.delete(`${itemId}--${option.label}`);
-    });
-    const splitList = document.querySelector(`[data-split-list="${itemId}"]`);
-    if (splitList) {
-      splitList.querySelectorAll('.item-quantity').forEach((input) => { input.value = ''; });
-    }
+function setOptionSelection(itemId, optionLabel, checked) {
+  const selections = new Set(getSelectedOptions(itemId));
+  if (checked) selections.add(optionLabel);
+  else {
+    selections.delete(optionLabel);
+    orderState.optionSplits.delete(`${itemId}--${optionLabel}`);
   }
+  orderState.optionSelections.set(itemId, selections);
+  updateOptionVisibility(itemId);
+  updateSummary();
 }
 
 function updateMainQuantity(itemId, quantity) {
@@ -143,7 +132,7 @@ function updateMainQuantity(itemId, quantity) {
     orderState.selected.set(itemId, { item, quantity });
   } else {
     orderState.selected.delete(itemId);
-    orderState.optionModes.delete(itemId);
+    orderState.optionSelections.delete(itemId);
     getOptionDefinitions(item).forEach((option) => {
       orderState.optionSplits.delete(`${itemId}--${option.label}`);
     });
@@ -161,32 +150,44 @@ function updateOptionVisibility(itemId) {
   if (!container || !splitList || !validation) return;
 
   container.hidden = mainQuantity <= 0;
+
   if (mainQuantity <= 0) {
     validation.textContent = '';
     splitList.hidden = true;
-    container.querySelectorAll('input[type="radio"]').forEach((input) => { input.checked = false; });
+    container.querySelectorAll('.option-checkbox').forEach((input) => { input.checked = false; });
     container.querySelectorAll('.item-quantity').forEach((input) => { input.value = ''; });
     return;
   }
 
-  const mode = getOptionMode(itemId);
-  const isMix = mode?.type === 'mix';
-  splitList.hidden = !isMix;
+  const selections = getSelectedOptions(itemId);
+  const splitMode = selections.size > 1;
+  splitList.hidden = !splitMode;
 
-  if (!mode) {
-    validation.textContent = 'Choose one option or select Mix options.';
+  // A single selected option applies to the entire item quantity.
+  splitList.querySelectorAll('[data-split-row]').forEach((row) => {
+    const label = row.dataset.splitRow.split('--').slice(1).join('--');
+    row.hidden = !splitMode || !selections.has(label);
+    if (!splitMode) {
+      const input = row.querySelector('.item-quantity');
+      if (input) input.value = '';
+      orderState.optionSplits.delete(`${itemId}--${label}`);
+    }
+  });
+
+  if (selections.size === 0) {
+    validation.textContent = 'Select an option.';
     validation.className = 'option-validation invalid';
     return;
   }
 
-  if (!isMix) {
+  if (!splitMode) {
     validation.textContent = '';
     validation.className = 'option-validation';
     return;
   }
 
-  const splitTotal = getOptionDefinitions(item).reduce(
-    (sum, option) => sum + (orderState.optionSplits.get(`${itemId}--${option.label}`) ?? 0),
+  const splitTotal = Array.from(selections).reduce(
+    (sum, label) => sum + (orderState.optionSplits.get(`${itemId}--${label}`) ?? 0),
     0
   );
 
@@ -195,9 +196,7 @@ function updateOptionVisibility(itemId) {
     validation.className = 'option-validation';
   } else {
     const difference = mainQuantity - splitTotal;
-    validation.textContent = difference > 0
-      ? `Choose ${difference} more`
-      : `Reduce options by ${Math.abs(difference)}`;
+    validation.textContent = difference > 0 ? `Choose ${difference} more` : `Reduce by ${Math.abs(difference)}`;
     validation.className = 'option-validation invalid';
   }
 }
@@ -222,16 +221,13 @@ function bindSelectionEvents() {
     });
   });
 
-  document.querySelectorAll('[data-option-mode]').forEach((input) => {
+  document.querySelectorAll('.option-checkbox').forEach((input) => {
     input.addEventListener('change', (event) => {
-      const itemId = event.target.dataset.optionItem;
-      if (event.target.dataset.optionMode === 'mix') {
-        setOptionMode(itemId, { type: 'mix' });
-      } else {
-        setOptionMode(itemId, { type: 'single', label: event.target.dataset.optionKey });
-      }
-      updateOptionVisibility(itemId);
-      updateSummary();
+      setOptionSelection(
+        event.target.dataset.optionItem,
+        event.target.dataset.optionKey,
+        event.target.checked
+      );
     });
   });
 
@@ -252,12 +248,12 @@ function hasValidOptions() {
       const mainQuantity = getMainQuantity(item.id);
       if (mainQuantity <= 0) continue;
 
-      const mode = getOptionMode(item.id);
-      if (!mode) return false;
+      const selections = getSelectedOptions(item.id);
+      if (selections.size === 0) return false;
 
-      if (mode.type === 'mix') {
-        const splitTotal = options.reduce(
-          (sum, option) => sum + (orderState.optionSplits.get(`${item.id}--${option.label}`) ?? 0),
+      if (selections.size > 1) {
+        const splitTotal = Array.from(selections).reduce(
+          (sum, label) => sum + (orderState.optionSplits.get(`${item.id}--${label}`) ?? 0),
           0
         );
         if (splitTotal !== mainQuantity) return false;
@@ -265,17 +261,6 @@ function hasValidOptions() {
     }
   }
   return true;
-}
-
-function getOptionRecord(item, optionLabel) {
-  const option = getOptionDefinitions(item).find((entry) => entry.label === optionLabel);
-  const adjustment = option?.adjustment ?? 0;
-  const quantity = getMainQuantity(item.id);
-  return {
-    label: optionLabel,
-    quantity,
-    unitPrice: getPriceByKey(item.priceKey) + adjustment
-  };
 }
 
 function updateSummary() {
@@ -297,22 +282,20 @@ function updateSummary() {
       return;
     }
 
-    const mode = getOptionMode(record.item.id);
-    if (!mode) return;
-
-    if (mode.type === 'single') {
-      const line = getOptionRecord(record.item, mode.label);
-      const lineTotal = line.unitPrice * record.quantity;
+    const selections = Array.from(getSelectedOptions(record.item.id));
+    if (selections.length === 1) {
+      const option = options.find((entry) => entry.label === selections[0]);
+      const lineTotal = (getPriceByKey(record.item.priceKey) + (option?.adjustment ?? 0)) * record.quantity;
       subtotal += lineTotal;
-      rows.push(`<li><span>${record.item.name} — ${line.label} × ${record.quantity}</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
-    } else {
-      options.forEach((option) => {
-        const quantity = orderState.optionSplits.get(`${record.item.id}--${option.label}`) ?? 0;
+      rows.push(`<li><span>${record.item.name} — ${selections[0]} × ${record.quantity}</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
+    } else if (selections.length > 1) {
+      selections.forEach((label) => {
+        const option = options.find((entry) => entry.label === label);
+        const quantity = orderState.optionSplits.get(`${record.item.id}--${label}`) ?? 0;
         if (!quantity) return;
-        const unitPrice = getPriceByKey(record.item.priceKey) + (option.adjustment ?? 0);
-        const lineTotal = unitPrice * quantity;
+        const lineTotal = (getPriceByKey(record.item.priceKey) + (option?.adjustment ?? 0)) * quantity;
         subtotal += lineTotal;
-        rows.push(`<li><span>${record.item.name} — ${option.label} × ${quantity}</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
+        rows.push(`<li><span>${record.item.name} — ${label} × ${quantity}</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
       });
     }
   });
@@ -332,9 +315,7 @@ function validateOrderForm() {
     if (!element || !element.value.trim()) {
       valid = false;
       if (element) element.setCustomValidity('Required');
-    } else {
-      element.setCustomValidity('');
-    }
+    } else element.setCustomValidity('');
   });
 
   const email = document.getElementById('email');
@@ -367,9 +348,7 @@ function validateOrderForm() {
   } else if (!hasValidOptions()) {
     valid = false;
     if (message) message.textContent = 'Please finish selecting the options for your items.';
-  } else if (message) {
-    message.textContent = '';
-  }
+  } else if (message) message.textContent = '';
 
   return valid;
 }
@@ -392,20 +371,18 @@ async function initializeOrderPage() {
       if (validateOrderForm()) {
         document.querySelector('[data-order-confirmation]').classList.remove('hidden');
         const summary = document.querySelector('[data-order-summary-text]');
-        summary.textContent = Array.from(orderState.selected.values())
-          .flatMap((entry) => {
-            const options = getOptionDefinitions(entry.item);
-            const mode = getOptionMode(entry.item.id);
-            if (!options.length) return [`${entry.item.name} × ${entry.quantity}`];
-            if (mode?.type === 'single') return [`${entry.item.name} (${mode.label}) × ${entry.quantity}`];
-            return options
-              .map((option) => {
-                const quantity = orderState.optionSplits.get(`${entry.item.id}--${option.label}`) ?? 0;
-                return quantity ? `${entry.item.name} (${option.label}) × ${quantity}` : null;
-              })
-              .filter(Boolean);
-          })
-          .join(', ');
+        summary.textContent = Array.from(orderState.selected.values()).flatMap((entry) => {
+          const options = getOptionDefinitions(entry.item);
+          if (!options.length) return [`${entry.item.name} × ${entry.quantity}`];
+
+          const selections = Array.from(getSelectedOptions(entry.item.id));
+          if (selections.length === 1) return [`${entry.item.name} (${selections[0]}) × ${entry.quantity}`];
+
+          return selections.map((label) => {
+            const quantity = orderState.optionSplits.get(`${entry.item.id}--${label}`) ?? 0;
+            return quantity ? `${entry.item.name} (${label}) × ${quantity}` : null;
+          }).filter(Boolean);
+        }).join(', ');
       }
     });
   }
