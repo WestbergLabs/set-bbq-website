@@ -48,16 +48,37 @@
 <div class="orders-table-wrap"><table class="orders-table"><thead><tr><th>Order</th><th>Event</th><th>Event Date</th><th>Customer</th><th>Guests</th><th>Total</th><th>Status</th></tr></thead><tbody id="ordersBody"></tbody></table><div id="empty" class="admin-empty" hidden>No orders found.</div></div>
 <section id="detail" class="order-detail"></section>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL='https://klgshthkszosfgxhjctv.supabase.co';
 const SUPABASE_ANON_KEY='sb_publishable_BnPEvNiXBsUNpUs-j3eBHQ_gGKsWXNU';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 let orders=[],items=[];
 const money=v=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(v||0));
 const date=v=>v?new Date(v).toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'}):'—';
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 function render(){const q=document.getElementById('search').value.toLowerCase(),st=document.getElementById('status').value;const rows=orders.filter(o=>(!st||o.status===st)&&(!q||[o.order_number,o.event_name,o.contact_name,o.email,o.phone].some(x=>String(x||'').toLowerCase().includes(q))));document.getElementById('ordersBody').innerHTML=rows.map(o=>`<tr onclick="showOrder('${o.id}')"><td class="order-link">#${esc(o.order_number)}</td><td>${esc(o.event_name||'—')}</td><td>${esc(date(o.event_date))}</td><td>${esc(o.contact_name)}</td><td>${esc(o.guest_count||'—')}</td><td><strong>${money(o.total)}</strong></td><td><span class="status-pill">${esc(o.status)}</span></td></tr>`).join('');document.getElementById('empty').hidden=rows.length>0}
 function showOrder(id){const o=orders.find(x=>x.id===id),its=items.filter(x=>x.order_id===id);if(!o)return;const d=document.getElementById('detail');d.className='order-detail open';d.innerHTML=`<div class="detail-grid"><div class="detail-card"><h3>Customer & Event</h3><p><strong>Customer</strong>${esc(o.contact_name)}</p><p><strong>Email</strong>${esc(o.email)}</p><p><strong>Phone</strong>${esc(o.phone||'—')}</p><p><strong>Event</strong>${esc(o.event_name||'—')}</p><p><strong>Date</strong>${esc(date(o.event_date))}</p><p><strong>Guests</strong>${esc(o.guest_count||'—')}</p><p><strong>Address</strong>${esc(o.venue_address||'—')}</p></div><div class="detail-card"><h3>Order</h3><table class="detail-items"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>${its.map(i=>`<tr><td>${esc(i.item_name)}${i.option?' — '+esc(i.option):''}</td><td>${esc(i.quantity)}</td><td>${money(i.unit_price)}</td><td>${money(i.line_total)}</td></tr>`).join('')}</tbody></table><p><strong>Meats</strong>${money(o.subtotal_meats)}</p><p><strong>Sides</strong>${money(o.subtotal_sides)}</p><p><strong>Delivery</strong>${money(o.delivery_fee)}</p><div class="detail-total"><strong>Total: ${money(o.total)}</strong></div></div></div>${o.special_requests?`<div class="detail-card" style="margin-top:1rem"><h3>Special Requests</h3><p>${esc(o.special_requests)}</p></div>`:''}`}
-async function load(){if(!SUPABASE_ANON_KEY){document.getElementById('empty').hidden=false;document.getElementById('empty').textContent='Database connection key needs to be added to this page.';return}const base=SUPABASE_URL+'/rest/v1/';const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+SUPABASE_ANON_KEY};const [a,b]=await Promise.all([fetch(base+'orders?select=*&order=event_date.desc',{headers}),fetch(base+'order_items?select=*&order=created_at.asc',{headers})]);orders=await a.json();items=await b.json();render()}
+async function load(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){
+    document.getElementById('ordersBody').innerHTML='<tr><td colspan="7" style="text-align:center;padding:2rem">Please sign in to view orders.</td></tr>';
+    document.getElementById('detail').innerHTML='<div class="detail-card"><h3>Admin Sign In</h3><form id="loginForm"><p><input id="email" type="email" placeholder="Email" required style="width:100%;padding:.7rem"></p><p><input id="password" type="password" placeholder="Password" required style="width:100%;padding:.7rem"></p><button type="submit">Sign In</button><p id="loginError" style="color:#b43a26"></p></form></div>';
+    document.getElementById('detail').className='order-detail open';
+    document.getElementById('loginForm').onsubmit=async e=>{
+      e.preventDefault();
+      const {error}=await sb.auth.signInWithPassword({email:document.getElementById('email').value,password:document.getElementById('password').value});
+      if(error){document.getElementById('loginError').textContent=error.message;return}
+      location.reload();
+    };
+    return;
+  }
+  const base=SUPABASE_URL+'/rest/v1/';
+  const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+session.access_token};
+  const [a,b]=await Promise.all([fetch(base+'orders?select=*&order=event_date.desc',{headers}),fetch(base+'order_items?select=*&order=created_at.asc',{headers})]);
+  if(!a.ok||!b.ok){document.getElementById('empty').hidden=false;document.getElementById('empty').textContent='You are signed in, but this account is not authorized to view orders.';return}
+  orders=await a.json();items=await b.json();render();
+}
 document.getElementById('search').oninput=render;document.getElementById('status').onchange=render;load();
 </script>
 </body></html>
