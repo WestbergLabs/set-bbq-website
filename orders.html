@@ -10,7 +10,7 @@
 .admin-wrap{max-width:1200px;margin:0 auto;padding:2.5rem 1.25rem 4rem}
 .admin-toolbar{display:flex;align-items:end;justify-content:space-between;gap:1rem;margin-bottom:1.25rem}
 .admin-toolbar h1{margin:.15rem 0 0;font-family:Georgia,"Times New Roman",serif}
-.admin-filters{display:flex;gap:.6rem;align-items:center}
+.admin-actions{display:flex;align-items:center}.admin-actions button{padding:.65rem .9rem;border:1px solid var(--line);background:var(--white);border-radius:4px;cursor:pointer}.admin-toolbar{position:relative}.admin-filters{display:flex;gap:.6rem;align-items:center}
 .admin-filters input,.admin-filters select{padding:.65rem .75rem;border:1px solid var(--line);background:var(--white);border-radius:4px}
 .orders-table-wrap{overflow-x:auto;background:var(--white);border-top:3px solid var(--brand-red);box-shadow:0 4px 18px rgba(0,0,0,.05)}
 .orders-table{width:100%;border-collapse:collapse;min-width:820px}
@@ -43,7 +43,7 @@
 <main class="admin-wrap">
 <div class="admin-toolbar">
 <div><div class="eyebrow">Catering Orders</div><h1>Orders</h1></div>
-<div class="admin-filters"><input id="search" type="search" placeholder="Search orders..."><select id="status"><option value="">All statuses</option><option>new</option><option>contacted</option><option>confirmed</option><option>completed</option><option>cancelled</option></select></div>
+<div class="admin-actions"><button id="logoutBtn" type="button">Log Out</button></div><div class="admin-filters"><input id="search" type="search" placeholder="Search orders..."><select id="status"><option value="">All statuses</option><option>new</option><option>contacted</option><option>confirmed</option><option>completed</option><option>cancelled</option></select></div>
 </div>
 <div class="orders-table-wrap"><table class="orders-table"><thead><tr><th>Order</th><th>Event</th><th>Event Date</th><th>Customer</th><th>Guests</th><th>Total</th><th>Status</th></tr></thead><tbody id="ordersBody"></tbody></table><div id="empty" class="admin-empty" hidden>No orders found.</div></div>
 <section id="detail" class="order-detail"></section>
@@ -59,6 +59,7 @@ const date=v=>v?new Date(v).toLocaleString('en-US',{dateStyle:'medium',timeStyle
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 function render(){const q=document.getElementById('search').value.toLowerCase(),st=document.getElementById('status').value;const rows=orders.filter(o=>(!st||o.status===st)&&(!q||[o.order_number,o.event_name,o.contact_name,o.email,o.phone].some(x=>String(x||'').toLowerCase().includes(q))));document.getElementById('ordersBody').innerHTML=rows.map(o=>`<tr onclick="showOrder('${o.id}')"><td class="order-link">#${esc(o.order_number)}</td><td>${esc(o.event_name||'—')}</td><td>${esc(date(o.event_date))}</td><td>${esc(o.contact_name)}</td><td>${esc(o.guest_count||'—')}</td><td><strong>${money(o.total)}</strong></td><td><span class="status-pill">${esc(o.status)}</span></td></tr>`).join('');document.getElementById('empty').hidden=rows.length>0}
 function showOrder(id){const o=orders.find(x=>x.id===id),its=items.filter(x=>x.order_id===id);if(!o)return;const d=document.getElementById('detail');d.className='order-detail open';d.innerHTML=`<div class="detail-grid"><div class="detail-card"><h3>Customer & Event</h3><p><strong>Customer</strong>${esc(o.contact_name)}</p><p><strong>Email</strong>${esc(o.email)}</p><p><strong>Phone</strong>${esc(o.phone||'—')}</p><p><strong>Event</strong>${esc(o.event_name||'—')}</p><p><strong>Date</strong>${esc(date(o.event_date))}</p><p><strong>Guests</strong>${esc(o.guest_count||'—')}</p><p><strong>Address</strong>${esc(o.venue_address||'—')}</p></div><div class="detail-card"><h3>Order</h3><table class="detail-items"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>${its.map(i=>`<tr><td>${esc(i.item_name)}${i.option?' — '+esc(i.option):''}</td><td>${esc(i.quantity)}</td><td>${money(i.unit_price)}</td><td>${money(i.line_total)}</td></tr>`).join('')}</tbody></table><p><strong>Meats</strong>${money(o.subtotal_meats)}</p><p><strong>Sides</strong>${money(o.subtotal_sides)}</p><p><strong>Delivery</strong>${money(o.delivery_fee)}</p><div class="detail-total"><strong>Total: ${money(o.total)}</strong></div></div></div>${o.special_requests?`<div class="detail-card" style="margin-top:1rem"><h3>Special Requests</h3><p>${esc(o.special_requests)}</p></div>`:''}`}
+async function logout(){await sb.auth.signOut();location.reload()}
 async function load(){
   let {data:{session}}=await sb.auth.getSession();
   if(session){ const refreshed=await sb.auth.refreshSession(); if(refreshed.data.session) session=refreshed.data.session; }
@@ -80,6 +81,6 @@ async function load(){
   if(!a.ok||!b.ok){document.getElementById('empty').hidden=false;document.getElementById('empty').textContent='You are signed in, but this account is not authorized to view orders.';return}
   orders=await a.json();items=await b.json();render();
 }
-document.getElementById('search').oninput=render;document.getElementById('status').onchange=render;load();
+document.getElementById('search').oninput=render;document.getElementById('status').onchange=render;document.getElementById('logoutBtn').onclick=logout;document.getElementById('logoutBtn').style.display='none';sb.auth.onAuthStateChange((_event,session)=>{document.getElementById('logoutBtn').style.display=session?'inline-block':'none'});load();
 </script>
 </body></html>
