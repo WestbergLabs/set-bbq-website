@@ -11,15 +11,14 @@
         {"id":"bbq-chicken-boneless","name":"BBQ Chicken Boneless/Skinless","description":"Boneless smoked chicken prepared for easy serving.","unit":"10 lbs","priceKey":"bbq-chicken-boneless","category":"meats"},
         {"id":"white-chicken","name":"White Chicken","description":"A lighter smoked chicken option.","unit":"Each","priceKey":"white-chicken","category":"meats"},
         {"id":"legs-thighs","name":"Legs/Thighs","description":"Smoked chicken pieces for larger groups.","unit":"10 lbs","priceKey":"legs-thighs","category":"meats"},
-        {"id":"wings","name":"Wings","description":"Smoked and ready for a crowd.","unit":"10 lbs","priceKey":"wings","category":"meats"},
-        {"id":"brisket-10-14","name":"Brisket","description":"Tender smoked brisket for large gatherings.","unit":"10–14 lbs","priceKey":"brisket-10-14","category":"meats"},
-        {"id":"brisket-14-plus","name":"Brisket","description":"Larger brisket cut for bigger events.","unit":"14+ lbs","priceKey":"brisket-14-plus","category":"meats"},
+        {"id":"wings","name":"Wings","description":"Smoked and ready for a crowd.","unit":"10 lbs","priceKey":"wings","category":"meats","orderOptions":["Mild","Spicy"]},
+        {"id":"brisket","name":"Brisket","description":"Tender Black Angus smoked brisket for large gatherings.","unit":"Select size","priceKey":"brisket","category":"meats","pricing":{"type":"adjustment","options":[{"label":"10–14 lbs","adjustment":0},{"label":"14+ lbs","adjustment":30}]}},
         {"id":"pulled-pork","name":"Pulled Pork","description":"Slow-smoked and ready to serve.","unit":"10–12 lbs","priceKey":"pulled-pork","category":"meats"},
         {"id":"baby-back-ribs","name":"Baby Back Ribs","description":"A classic BBQ favorite.","unit":"3 slabs","priceKey":"baby-back-ribs","category":"meats"},
         {"id":"pork-ribs","name":"Pork Ribs","description":"Smoked ribs for gatherings and BBQ buffets.","unit":"2 slabs","priceKey":"pork-ribs","category":"meats"},
         {"id":"sausage-pork","name":"Smoked Sausage - Pork","description":"Pork sausage smoked to perfection.","unit":"20 lbs","priceKey":"sausage-pork","category":"meats"},
         {"id":"sausage-beef","name":"Smoked Sausage - Beef","description":"Beef smoked sausage for a richer flavor profile.","unit":"20 lbs","priceKey":"sausage-beef","category":"meats"},
-        {"id":"pork-belly","name":"Pork Belly","description":"Smoked pork belly with adjustable weight options.","unit":"5 lbs base","priceKey":"pork-belly","category":"meats","pricing":{"type":"adjustment","options":[{"label":"0–5 lbs","adjustment":0},{"label":"6–10 lbs","adjustment":20},{"label":"11–15 lbs","adjustment":40}]}},
+        {"id":"pork-belly","name":"Pork Belly","description":"Smoked pork belly with adjustable weight options.","unit":"Select weight","priceKey":"pork-belly","category":"meats","pricing":{"type":"adjustment","options":[{"label":"0–5 lbs","adjustment":0},{"label":"6–10 lbs","adjustment":20},{"label":"11–15 lbs","adjustment":40}]}},
         {"id":"pulled-chicken","name":"Pulled Chicken","description":"Versatile smoked chicken prepared for sandwiches and platters.","unit":"10–12 lbs","priceKey":"pulled-chicken","category":"meats"}
       ]
     },
