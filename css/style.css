@@ -187,3 +187,23 @@ input:focus, select:focus, textarea:focus { outline: 2px solid rgba(182,67,45,.2
 .contact-cards .card p:last-of-type { margin-bottom: 0; }
 .contact-cards .card p strong { font-weight: 700; }
 .contact-cards .card .section-head h2 { font-weight: 400; }
+
+
+.order-item { padding: .8rem .15rem; border-bottom: 1px solid var(--line); }
+.order-item:last-child { border-bottom: 0; }
+.order-item-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.order-item-name { font-weight: 700; font-size: 1.05rem; line-height: 1.3; }
+.order-item-meta { color: var(--muted); font-size: .88rem; margin-top: .15rem; }
+.order-item-price { color: var(--brand-red); font-weight: 800; white-space: nowrap; }
+.quantity-control { display: flex; align-items: center; justify-content: flex-end; gap: .4rem; margin: .45rem 0 0 auto; font-size: .85rem; font-weight: 700; white-space: nowrap; }
+.item-quantity { width: 64px; padding: .45rem .5rem; text-align: center; }
+.order-options { margin-top: .4rem; border-top: 1px solid rgba(213,213,213,.7); }
+.order-option-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .45rem 0; font-size: .92rem; }
+.option-price { color: var(--brand-red); font-weight: 700; margin-left: .35rem; }
+
+@media (max-width: 780px) {
+  .order-item-header { align-items: flex-start; }
+  .quantity-control { margin-top: .5rem; }
+  .order-option-row { gap: .6rem; }
+  .item-quantity { width: 58px; }
+}
