@@ -247,7 +247,8 @@ input:focus, select:focus, textarea:focus { outline: 2px solid rgba(182,67,45,.2
 }
 
 
-/* Subtle admin access in the footer */
-.admin-footer-link { margin: 1rem 0 0; font-size: .72rem; }
-.admin-footer-link a { color: inherit; opacity: .55; text-decoration: none; }
-.admin-footer-link a:hover { opacity: 1; text-decoration: underline; }
+
+/* Subtle admin link in footer navigation */
+.admin-link { margin-top: .2rem; }
+.admin-link a { font-size: .78rem; color: rgba(255,255,255,.45); }
+.admin-link a:hover { color: rgba(255,255,255,.8); text-decoration: underline; }
