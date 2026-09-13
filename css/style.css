@@ -237,3 +237,11 @@ input:focus, select:focus, textarea:focus { outline: 2px solid rgba(182,67,45,.2
   .option-choice-row { padding: .28rem 0; }
   .option-split-row { padding: .22rem 0; }
 }
+
+
+/* Keep hidden option rows truly hidden until that option is checked. */
+.option-split-row[hidden],
+.option-split-list[hidden],
+.order-options[hidden] {
+  display: none !important;
+}
