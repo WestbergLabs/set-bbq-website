@@ -42,10 +42,7 @@ function renderMenuPage() {
 
     const heading = document.createElement('div');
     heading.className = 'section-head';
-    heading.innerHTML = `
-      <h2>${category.name}</h2>
-      <p>${category.description}</p>
-    `;
+    heading.innerHTML = `<h2>${category.name}</h2><p>${category.description}</p>`;
 
     const itemList = document.createElement('div');
     itemList.className = 'menu-list';
@@ -55,17 +52,23 @@ function renderMenuPage() {
       const itemRow = document.createElement('div');
       itemRow.className = 'menu-item';
 
-      const optionHtml = item.pricing && item.pricing.options
-        ? `<div class="menu-item-meta">${item.pricing.options.map((option) => `${option.label} +${formatCurrency(option.adjustment)}`).join(' • ')}</div>`
-        : `<div class="menu-item-meta">${item.unit}</div>`;
+      let pricingHtml = '';
+      if (item.pricing && item.pricing.options) {
+        const options = item.pricing.options.map((option) => {
+          const optionPrice = itemPrice + Number(option.adjustment || 0);
+          return `<div class="menu-item-option"><span>${option.label}</span><strong>${formatCurrency(optionPrice)}</strong></div>`;
+        }).join('');
+        pricingHtml = `<div class="menu-item-options">${options}</div>`;
+      } else if (item.unit) {
+        pricingHtml = `<div class="menu-item-meta">${item.unit}</div>`;
+      }
 
       itemRow.innerHTML = `
         <div class="menu-item-header">
           <span class="menu-item-name">${item.name}</span>
-          <span class="menu-item-price">${formatCurrency(itemPrice)}</span>
+          ${item.pricing && item.pricing.options ? '' : `<span class="menu-item-price">${formatCurrency(itemPrice)}</span>`}
         </div>
-        <div class="menu-item-description">${item.description}</div>
-        ${optionHtml}
+        ${pricingHtml}
       `;
 
       itemList.appendChild(itemRow);
