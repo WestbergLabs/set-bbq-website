@@ -14,13 +14,6 @@ function getPriceByKey(key) {
   return orderState.prices.items[key]?.basePrice ?? 0;
 }
 
-function getAdjustmentByKey(key, label) {
-  const priceDef = orderState.prices.items[key];
-  if (!priceDef || !priceDef.adjustments) return 0;
-  const match = priceDef.adjustments.find((item) => item.label === label);
-  return match ? match.value : 0;
-}
-
 function getMenuItemById(id) {
   for (const category of orderState.menu.categories) {
     const found = category.items.find((item) => item.id === id);
@@ -31,7 +24,7 @@ function getMenuItemById(id) {
 
 function makeQuantityInput(itemId, optionKey = '') {
   const key = optionKey ? `${itemId}--${optionKey}` : itemId;
-  return `<input class="item-quantity" type="number" min="0" step="1" value="0" inputmode="numeric" aria-label="Quantity" data-quantity-key="${key}" data-item-id="${itemId}" data-option-key="${optionKey}" />`;
+  return `<input class="item-quantity" type="number" min="0" step="1" value="" inputmode="numeric" aria-label="Quantity" data-quantity-key="${key}" data-item-id="${itemId}" data-option-key="${optionKey}" />`;
 }
 
 function renderCategorySelection(category, container) {
@@ -40,36 +33,34 @@ function renderCategorySelection(category, container) {
 
   const list = category.items.map((item) => {
     const itemPrice = getPriceByKey(item.priceKey);
-    const hasPricingOptions = item.pricing?.options?.length;
-    const hasOrderOptions = item.orderOptions?.length;
-    const priceText = hasPricingOptions ? `Starting at ${formatCurrency(itemPrice)}` : formatCurrency(itemPrice);
+    const pricingOptions = item.pricing?.options ?? [];
+    const orderOptions = item.orderOptions ?? [];
+    const hasOptions = pricingOptions.length > 0 || orderOptions.length > 0;
 
-    if (hasPricingOptions || hasOrderOptions) {
-      const options = hasPricingOptions
-        ? item.pricing.options.map((option) => {
-            const price = itemPrice + option.adjustment;
-            return `<div class="order-option-row">
-              <span><strong>${option.label}</strong> <span class="option-price">${formatCurrency(price)}</span></span>
-              <label class="quantity-control">Qty ${makeQuantityInput(item.id, option.label)}</label>
-            </div>`;
-          }).join('')
-        : item.orderOptions.map((option) => `<div class="order-option-row">
-            <span><strong>${option}</strong></span>
-            <label class="quantity-control">Qty ${makeQuantityInput(item.id, option)}</label>
-          </div>`).join('');
+    if (hasOptions) {
+      const optionRows = (pricingOptions.length ? pricingOptions : orderOptions.map((label) => ({ label, adjustment: 0 })))
+        .map((option) => {
+          const price = itemPrice + (option.adjustment ?? 0);
+          return `<div class="order-option-row" data-option-row="${item.id}" hidden>
+            <span><strong>${option.label}</strong> <span class="option-price">${formatCurrency(price)}</span></span>
+            <label class="quantity-control">Qty ${makeQuantityInput(item.id, option.label)}</label>
+          </div>`;
+        }).join('');
 
-      return `<div class="order-item">
+      return `<div class="order-item" data-order-item="${item.id}" data-has-options="true">
         <div class="order-item-header">
           <div>
             <div class="order-item-name">${item.name}</div>
-            <div class="order-item-meta">${item.description} · ${item.unit} · ${priceText}</div>
+            <div class="order-item-meta">${item.description} · ${item.unit} · starting at ${formatCurrency(itemPrice)}</div>
           </div>
+          <label class="quantity-control">Qty ${makeQuantityInput(item.id)}</label>
         </div>
-        <div class="order-options">${options}</div>
+        <div class="order-options" data-options-container="${item.id}" hidden>${optionRows}</div>
+        <div class="option-validation" data-option-validation="${item.id}" aria-live="polite"></div>
       </div>`;
     }
 
-    return `<div class="order-item">
+    return `<div class="order-item" data-order-item="${item.id}">
       <div class="order-item-header">
         <div>
           <div class="order-item-name">${item.name}</div>
@@ -93,16 +84,72 @@ function renderOrderOptions() {
   bindSelectionEvents();
 }
 
+function getOptionDefinitions(item) {
+  if (item.pricing?.options?.length) return item.pricing.options;
+  return (item.orderOptions ?? []).map((label) => ({ label, adjustment: 0 }));
+}
+
+function getOptionQuantity(itemId, optionLabel) {
+  return orderState.selected.get(`${itemId}--${optionLabel}`)?.quantity ?? 0;
+}
+
+function getMainQuantity(itemId) {
+  return orderState.selected.get(itemId)?.quantity ?? 0;
+}
+
 function updateRecord(itemId, optionKey, quantity) {
   const item = getMenuItemById(itemId);
   const key = optionKey ? `${itemId}--${optionKey}` : itemId;
+
   if (quantity > 0) {
     const adjustment = item.pricing?.options?.find((o) => o.label === optionKey)?.adjustment ?? 0;
     orderState.selected.set(key, { item, option: optionKey || null, quantity, adjustment });
   } else {
     orderState.selected.delete(key);
   }
+
+  updateOptionVisibility(itemId);
   updateSummary();
+}
+
+function updateOptionVisibility(itemId) {
+  const item = getMenuItemById(itemId);
+  const mainQuantity = getMainQuantity(itemId);
+  const container = document.querySelector(`[data-options-container="${itemId}"]`);
+  const validation = document.querySelector(`[data-option-validation="${itemId}"]`);
+
+  if (!container || !validation) return;
+
+  const showOptions = mainQuantity > 0;
+  container.hidden = !showOptions;
+  container.querySelectorAll('[data-option-row]').forEach((row) => {
+    row.hidden = !showOptions;
+  });
+
+  if (!showOptions) {
+    validation.textContent = '';
+    container.querySelectorAll('.item-quantity').forEach((input) => {
+      input.value = '';
+      orderState.selected.delete(input.dataset.quantityKey);
+    });
+    return;
+  }
+
+  const optionTotal = getOptionDefinitions(item).reduce(
+    (sum, option) => sum + getOptionQuantity(itemId, option.label),
+    0
+  );
+
+  if (optionTotal === mainQuantity) {
+    validation.textContent = '✓ Options match quantity';
+    validation.className = 'option-validation valid';
+  } else {
+    const difference = mainQuantity - optionTotal;
+    validation.textContent = difference > 0
+      ? `Choose ${difference} more`
+      : `Reduce options by ${Math.abs(difference)}`;
+    validation.className = 'option-validation invalid';
+  }
 }
 
 function bindSelectionEvents() {
@@ -111,9 +158,6 @@ function bindSelectionEvents() {
       event.target.value = event.target.value.replace(/[^0-9]/g, '');
       const quantity = Math.max(0, Number.parseInt(event.target.value || '0', 10));
       updateRecord(event.target.dataset.itemId, event.target.dataset.optionKey, quantity);
-    });
-    input.addEventListener('blur', (event) => {
-      if (event.target.value === '') event.target.value = '0';
     });
   });
 
@@ -126,6 +170,23 @@ function bindSelectionEvents() {
   }
 }
 
+function hasValidOptions() {
+  for (const category of orderState.menu.categories) {
+    for (const item of category.items) {
+      const definitions = getOptionDefinitions(item);
+      if (!definitions.length) continue;
+      const mainQuantity = getMainQuantity(item.id);
+      if (mainQuantity <= 0) continue;
+      const optionTotal = definitions.reduce(
+        (sum, option) => sum + getOptionQuantity(item.id, option.label),
+        0
+      );
+      if (optionTotal !== mainQuantity) return false;
+    }
+  }
+  return true;
+}
+
 function updateSummary() {
   const summaryList = document.querySelector('[data-summary-list]');
   const totalOutput = document.querySelector('[data-order-total]');
@@ -136,6 +197,8 @@ function updateSummary() {
   const rows = [];
 
   orderState.selected.forEach((record) => {
+    if (!record.option && getOptionDefinitions(record.item).length) return;
+
     const unitPrice = getPriceByKey(record.item.priceKey) + record.adjustment;
     const lineTotal = unitPrice * record.quantity;
     subtotal += lineTotal;
@@ -158,14 +221,16 @@ function validateOrderForm() {
     if (!element || !element.value.trim()) {
       valid = false;
       if (element) element.setCustomValidity('Required');
+    } else {
+      element.setCustomValidity('');
     }
   });
 
   const email = document.getElementById('email');
   const confirmEmail = document.getElementById('confirmEmail');
-  if (email && confirmEmail && email.value.trim() !== confirmEmail.value.trim()) {
-    valid = false;
-    confirmEmail.setCustomValidity('Emails must match');
+  if (email && confirmEmail) {
+    confirmEmail.setCustomValidity(email.value.trim() !== confirmEmail.value.trim() ? 'Emails must match' : '');
+    if (confirmEmail.validationMessage) valid = false;
   }
 
   const guestCount = Number(document.getElementById('guestCount')?.value || 0);
@@ -180,16 +245,17 @@ function validateOrderForm() {
     const selectedDate = new Date(eventDate.value + 'T00:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    if (selectedDate < today) {
-      valid = false;
-      eventDate.setCustomValidity('Event date cannot be in the past');
-    }
+    eventDate.setCustomValidity(selectedDate < today ? 'Event date cannot be in the past' : '');
+    if (eventDate.validationMessage) valid = false;
   }
 
   const message = document.querySelector('[data-order-message]');
   if (orderState.selected.size === 0) {
     valid = false;
     if (message) message.textContent = 'Please enter a quantity for at least one menu item.';
+  } else if (!hasValidOptions()) {
+    valid = false;
+    if (message) message.textContent = 'Please make sure each item with options has option quantities matching its total quantity.';
   } else if (message) {
     message.textContent = '';
   }
@@ -216,6 +282,7 @@ async function initializeOrderPage() {
         document.querySelector('[data-order-confirmation]').classList.remove('hidden');
         const summary = document.querySelector('[data-order-summary-text]');
         summary.textContent = Array.from(orderState.selected.values())
+          .filter((entry) => entry.option || !getOptionDefinitions(entry.item).length)
           .map((entry) => `${entry.item.name}${entry.option ? ` (${entry.option})` : ''} × ${entry.quantity}`)
           .join(', ');
       }
