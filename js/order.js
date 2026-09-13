@@ -116,11 +116,24 @@ function getSelectedOptions(itemId) {
 
 function setOptionSelection(itemId, optionLabel, checked) {
   const selections = new Set(getSelectedOptions(itemId));
-  if (checked) selections.add(optionLabel);
-  else {
+  const maxSelections = getMainQuantity(itemId);
+
+  if (checked) {
+    // Each checked option represents at least one unit. Never allow
+    // more checked options than the customer's requested quantity.
+    if (selections.size >= maxSelections) {
+      const checkbox = Array.from(document.querySelectorAll('.option-checkbox')).find((input) =>
+        input.dataset.optionItem === itemId && input.dataset.optionKey === optionLabel
+      );
+      if (checkbox) checkbox.checked = false;
+      return;
+    }
+    selections.add(optionLabel);
+  } else {
     selections.delete(optionLabel);
     orderState.optionSplits.delete(`${itemId}--${optionLabel}`);
   }
+
   orderState.optionSelections.set(itemId, selections);
   updateOptionVisibility(itemId);
   updateSummary();
@@ -130,6 +143,17 @@ function updateMainQuantity(itemId, quantity) {
   const item = getMenuItemById(itemId);
   if (quantity > 0) {
     orderState.selected.set(itemId, { item, quantity });
+
+    // If quantity is reduced, automatically remove excess option choices.
+    const selections = new Set(getSelectedOptions(itemId));
+    if (selections.size > quantity) {
+      const keep = Array.from(selections).slice(0, quantity);
+      const keepSet = new Set(keep);
+      Array.from(selections).slice(quantity).forEach((label) => {
+        orderState.optionSplits.delete(`${itemId}--${label}`);
+      });
+      orderState.optionSelections.set(itemId, keepSet);
+    }
   } else {
     orderState.selected.delete(itemId);
     orderState.optionSelections.delete(itemId);
