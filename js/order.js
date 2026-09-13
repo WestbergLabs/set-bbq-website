@@ -29,188 +29,128 @@ function getMenuItemById(id) {
   return null;
 }
 
+function makeQuantityInput(itemId, optionKey = '') {
+  const key = optionKey ? `${itemId}--${optionKey}` : itemId;
+  return `<input class="item-quantity" type="number" min="0" step="1" value="0" inputmode="numeric" aria-label="Quantity" data-quantity-key="${key}" data-item-id="${itemId}" data-option-key="${optionKey}" />`;
+}
+
 function renderCategorySelection(category, container) {
   const wrapper = document.createElement('div');
   wrapper.className = 'item-selector';
 
   const list = category.items.map((item) => {
     const itemPrice = getPriceByKey(item.priceKey);
-    const hasPricingOptions = item.pricing && item.pricing.options;
-    const hasOrderOptions = item.orderOptions && item.orderOptions.length;
-    const baseLabel = hasPricingOptions ? `${formatCurrency(itemPrice)} base` : formatCurrency(itemPrice);
+    const hasPricingOptions = item.pricing?.options?.length;
+    const hasOrderOptions = item.orderOptions?.length;
+    const priceText = hasPricingOptions ? `Starting at ${formatCurrency(itemPrice)}` : formatCurrency(itemPrice);
 
-    const pricingOptionMarkup = hasPricingOptions
-      ? item.pricing.options.map((option) => `
-        <option value="${option.label}">${option.label} (+${formatCurrency(option.adjustment)})</option>
-      `).join('')
-      : '';
+    if (hasPricingOptions || hasOrderOptions) {
+      const options = hasPricingOptions
+        ? item.pricing.options.map((option) => {
+            const price = itemPrice + option.adjustment;
+            return `<div class="order-option-row">
+              <span><strong>${option.label}</strong> <span class="option-price">${formatCurrency(price)}</span></span>
+              <label class="quantity-control">Qty ${makeQuantityInput(item.id, option.label)}</label>
+            </div>`;
+          }).join('')
+        : item.orderOptions.map((option) => `<div class="order-option-row">
+            <span><strong>${option}</strong></span>
+            <label class="quantity-control">Qty ${makeQuantityInput(item.id, option)}</label>
+          </div>`).join('');
 
-    const orderOptionMarkup = hasOrderOptions
-      ? item.orderOptions.map((option) => `
-        <option value="${option}">${option}</option>
-      `).join('')
-      : '';
+      return `<div class="order-item">
+        <div class="order-item-header">
+          <div>
+            <div class="order-item-name">${item.name}</div>
+            <div class="order-item-meta">${item.description} · ${item.unit} · ${priceText}</div>
+          </div>
+        </div>
+        <div class="order-options">${options}</div>
+      </div>`;
+    }
 
-    return `
-      <div class="checkbox-row">
-        <label>
-          <input type="checkbox" data-item-id="${item.id}" data-category="${category.id}" />
-          ${item.name}
-        </label>
-        <strong>${baseLabel}</strong>
+    return `<div class="order-item">
+      <div class="order-item-header">
+        <div>
+          <div class="order-item-name">${item.name}</div>
+          <div class="order-item-meta">${item.description} · ${item.unit}</div>
+        </div>
+        <div class="order-item-price">${formatCurrency(itemPrice)}</div>
       </div>
-      ${pricingOptionMarkup ? `
-        <div class="hidden" data-adjustment-wrapper="${item.id}">
-          <label for="${item.id}-adjustment">Choose option</label>
-          <select data-item-adjustment="${item.id}">
-            ${pricingOptionMarkup}
-          </select>
-        </div>
-      ` : ''}
-      ${orderOptionMarkup ? `
-        <div class="hidden" data-order-option-wrapper="${item.id}">
-          <label for="${item.id}-option">Choose option</label>
-          <select data-item-option="${item.id}">
-            ${orderOptionMarkup}
-          </select>
-        </div>
-      ` : ''}
-    `;
+      <label class="quantity-control">Qty ${makeQuantityInput(item.id)}</label>
+    </div>`;
   }).join('');
 
-  wrapper.innerHTML = `
-    <h3>${category.name}</h3>
-    ${list}
-  `;
+  wrapper.innerHTML = `<h3>${category.name}</h3>${list}`;
   container.appendChild(wrapper);
 }
 
 function renderOrderOptions() {
   const container = document.querySelector('[data-order-categories]');
   if (!container || !orderState.menu) return;
-
   container.innerHTML = '';
-  orderState.menu.categories.forEach((category) => {
-    renderCategorySelection(category, container);
-  });
-
+  orderState.menu.categories.forEach((category) => renderCategorySelection(category, container));
   bindSelectionEvents();
 }
 
-function bindSelectionEvents() {
-  document.querySelectorAll('[data-item-id]').forEach((checkbox) => {
-    checkbox.addEventListener('change', (event) => {
-      const itemId = event.target.dataset.itemId;
-      const adjustmentWrapper = document.querySelector(`[data-adjustment-wrapper="${itemId}"]`);
-      const orderOptionWrapper = document.querySelector(`[data-order-option-wrapper="${itemId}"]`);
-
-      if (adjustmentWrapper) {
-        adjustmentWrapper.classList.toggle('hidden', !event.target.checked);
-      }
-      if (orderOptionWrapper) {
-        orderOptionWrapper.classList.toggle('hidden', !event.target.checked);
-      }
-
-      if (event.target.checked) {
-        const item = getMenuItemById(itemId);
-        const adjustment = document.querySelector(`[data-item-adjustment="${itemId}"]`);
-        const orderOption = document.querySelector(`[data-item-option="${itemId}"]`);
-        const selectedAdjustment = adjustment ? adjustment.value : null;
-        const selectedOption = orderOption ? orderOption.value : null;
-
-        orderState.selected.set(itemId, {
-          item,
-          adjustment: selectedAdjustment,
-          option: selectedOption,
-          quantity: 1
-        });
-      } else {
-        orderState.selected.delete(itemId);
-      }
-
-      updateSummary();
-    });
-  });
-
-  document.querySelectorAll('[data-item-adjustment]').forEach((select) => {
-    select.addEventListener('change', (event) => {
-      const itemId = event.target.dataset.itemAdjustment;
-      const current = orderState.selected.get(itemId);
-      if (current) {
-        current.adjustment = event.target.value;
-        updateSummary();
-      }
-    });
-  });
-
-  document.querySelectorAll('[data-item-option]').forEach((select) => {
-    select.addEventListener('change', (event) => {
-      const itemId = event.target.dataset.itemOption;
-      const current = orderState.selected.get(itemId);
-      if (current) {
-        current.option = event.target.value;
-        updateSummary();
-      }
-    });
-  });
-
-  document.querySelector('[data-delivery-toggle]').addEventListener('change', (event) => {
-    orderState.deliverySelected = event.target.checked;
-    updateSummary();
-  });
+function updateRecord(itemId, optionKey, quantity) {
+  const item = getMenuItemById(itemId);
+  const key = optionKey ? `${itemId}--${optionKey}` : itemId;
+  if (quantity > 0) {
+    const adjustment = item.pricing?.options?.find((o) => o.label === optionKey)?.adjustment ?? 0;
+    orderState.selected.set(key, { item, option: optionKey || null, quantity, adjustment });
+  } else {
+    orderState.selected.delete(key);
+  }
+  updateSummary();
 }
 
-function calculateItemTotal(itemId, selectedAdjustment) {
-  const item = getMenuItemById(itemId);
-  const basePrice = getPriceByKey(item.priceKey);
-  const adjustmentValue = selectedAdjustment ? getAdjustmentByKey(item.priceKey, selectedAdjustment) : 0;
-  return basePrice + adjustmentValue;
+function bindSelectionEvents() {
+  document.querySelectorAll('[data-quantity-key]').forEach((input) => {
+    input.addEventListener('input', (event) => {
+      event.target.value = event.target.value.replace(/[^0-9]/g, '');
+      const quantity = Math.max(0, Number.parseInt(event.target.value || '0', 10));
+      updateRecord(event.target.dataset.itemId, event.target.dataset.optionKey, quantity);
+    });
+    input.addEventListener('blur', (event) => {
+      if (event.target.value === '') event.target.value = '0';
+    });
+  });
+
+  const deliveryToggle = document.querySelector('[data-delivery-toggle]');
+  if (deliveryToggle) {
+    deliveryToggle.addEventListener('change', (event) => {
+      orderState.deliverySelected = event.target.checked;
+      updateSummary();
+    });
+  }
 }
 
 function updateSummary() {
   const summaryList = document.querySelector('[data-summary-list]');
   const totalOutput = document.querySelector('[data-order-total]');
   const deliveryOutput = document.querySelector('[data-delivery-total]');
-
   if (!summaryList || !totalOutput || !deliveryOutput) return;
 
   let subtotal = 0;
   const rows = [];
 
-  orderState.selected.forEach((record, itemId) => {
-    const item = record.item;
-    const itemTotal = calculateItemTotal(itemId, record.adjustment);
-    subtotal += itemTotal;
-    const optionText = record.option || record.adjustment;
-    rows.push(`
-      <li>
-        <span>${item.name}${optionText ? ` (${optionText})` : ''}</span>
-        <strong>${formatCurrency(itemTotal)}</strong>
-      </li>
-    `);
+  orderState.selected.forEach((record) => {
+    const unitPrice = getPriceByKey(record.item.priceKey) + record.adjustment;
+    const lineTotal = unitPrice * record.quantity;
+    subtotal += lineTotal;
+    const optionText = record.option ? ` — ${record.option}` : '';
+    rows.push(`<li><span>${record.item.name}${optionText} × ${record.quantity}</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
   });
 
   const deliveryFee = orderState.deliverySelected ? orderState.prices.deliveryFee : 0;
-  const grandTotal = subtotal + deliveryFee;
-
   summaryList.innerHTML = rows.length ? rows.join('') : '<li><span>No items selected yet.</span></li>';
   deliveryOutput.textContent = formatCurrency(deliveryFee);
-  totalOutput.textContent = formatCurrency(grandTotal);
+  totalOutput.textContent = formatCurrency(subtotal + deliveryFee);
 }
 
 function validateOrderForm() {
-  const requiredFields = [
-    'eventName',
-    'guestCount',
-    'eventDate',
-    'contactName',
-    'email',
-    'confirmEmail',
-    'phone',
-    'eventAddress',
-    'venueAddress'
-  ];
-
+  const requiredFields = ['eventName', 'guestCount', 'eventDate', 'contactName', 'email', 'confirmEmail', 'phone', 'eventAddress'];
   let valid = true;
 
   requiredFields.forEach((fieldName) => {
@@ -236,7 +176,7 @@ function validateOrderForm() {
   }
 
   const eventDate = document.getElementById('eventDate');
-  if (eventDate && eventDate.value) {
+  if (eventDate?.value) {
     const selectedDate = new Date(eventDate.value + 'T00:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -246,11 +186,12 @@ function validateOrderForm() {
     }
   }
 
+  const message = document.querySelector('[data-order-message]');
   if (orderState.selected.size === 0) {
     valid = false;
-    document.querySelector('[data-order-message]').textContent = 'Please select at least one menu item.';
-  } else {
-    document.querySelector('[data-order-message]').textContent = '';
+    if (message) message.textContent = 'Please enter a quantity for at least one menu item.';
+  } else if (message) {
+    message.textContent = '';
   }
 
   return valid;
@@ -264,7 +205,6 @@ async function initializeOrderPage() {
 
   orderState.menu = await menuResponse.json();
   orderState.prices = await pricesResponse.json();
-
   renderOrderOptions();
   updateSummary();
 
@@ -275,11 +215,9 @@ async function initializeOrderPage() {
       if (validateOrderForm()) {
         document.querySelector('[data-order-confirmation]').classList.remove('hidden');
         const summary = document.querySelector('[data-order-summary-text]');
-        const selected = Array.from(orderState.selected.values()).map((entry) => {
-          const optionText = entry.option || entry.adjustment;
-          return `${entry.item.name}${optionText ? ` (${optionText})` : ''}`;
-        });
-        summary.textContent = selected.join(', ') || 'No items selected';
+        summary.textContent = Array.from(orderState.selected.values())
+          .map((entry) => `${entry.item.name}${entry.option ? ` (${entry.option})` : ''} × ${entry.quantity}`)
+          .join(', ');
       }
     });
   }
