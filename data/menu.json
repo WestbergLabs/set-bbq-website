@@ -1,0 +1,233 @@
+{
+  "categories": [
+    {
+      "id": "meats",
+      "name": "Meats",
+      "description": "Smoked meats and family-style favorites.",
+      "items": [
+        {
+          "id": "whole-turkey",
+          "name": "Whole Turkey",
+          "description": "A classic holiday and event centerpiece.",
+          "unit": "Each",
+          "priceKey": "whole-turkey",
+          "category": "meats"
+        },
+        {
+          "id": "whole-chicken-smoked",
+          "name": "Whole Chicken Smoked (2)",
+          "description": "A crowd-friendly smoked chicken option.",
+          "unit": "Each",
+          "priceKey": "whole-chicken-smoked",
+          "category": "meats"
+        },
+        {
+          "id": "half-chicken-smoked",
+          "name": "1/2 Chicken Smoked (4)",
+          "description": "Smoked halves for smaller gatherings.",
+          "unit": "Each",
+          "priceKey": "half-chicken-smoked",
+          "category": "meats"
+        },
+        {
+          "id": "bbq-chicken-boneless",
+          "name": "BBQ Chicken Boneless/Skinless",
+          "description": "Boneless smoked chicken prepared for easy serving.",
+          "unit": "10 lbs",
+          "priceKey": "bbq-chicken-boneless",
+          "category": "meats"
+        },
+        {
+          "id": "white-chicken",
+          "name": "White Chicken",
+          "description": "A lighter smoked chicken option.",
+          "unit": "Each",
+          "priceKey": "white-chicken",
+          "category": "meats"
+        },
+        {
+          "id": "legs-thighs",
+          "name": "Legs/Thighs",
+          "description": "Smoked chicken pieces for larger groups.",
+          "unit": "10 lbs",
+          "priceKey": "legs-thighs",
+          "category": "meats"
+        },
+        {
+          "id": "wings",
+          "name": "Wings",
+          "description": "Smoked and ready for a crowd.",
+          "unit": "10 lbs",
+          "priceKey": "wings",
+          "category": "meats"
+        },
+        {
+          "id": "brisket-10-14",
+          "name": "Brisket",
+          "description": "Tender smoked brisket for large gatherings.",
+          "unit": "10–14 lbs",
+          "priceKey": "brisket-10-14",
+          "category": "meats"
+        },
+        {
+          "id": "brisket-14-plus",
+          "name": "Brisket",
+          "description": "Larger brisket cut for bigger events.",
+          "unit": "14+ lbs",
+          "priceKey": "brisket-14-plus",
+          "category": "meats"
+        },
+        {
+          "id": "pulled-pork",
+          "name": "Pulled Pork",
+          "description": "Slow-smoked and ready to serve.",
+          "unit": "10–12 lbs",
+          "priceKey": "pulled-pork",
+          "category": "meats"
+        },
+        {
+          "id": "baby-back-ribs",
+          "name": "Baby Back Ribs",
+          "description": "A classic BBQ favorite.",
+          "unit": "3 slabs",
+          "priceKey": "baby-back-ribs",
+          "category": "meats"
+        },
+        {
+          "id": "pork-ribs",
+          "name": "Pork Ribs",
+          "description": "Smoked ribs for gatherings and BBQ buffets.",
+          "unit": "2 slabs",
+          "priceKey": "pork-ribs",
+          "category": "meats"
+        },
+        {
+          "id": "sausage-pork",
+          "name": "Smoked Sausage - Pork",
+          "description": "Pork sausage smoked to perfection.",
+          "unit": "20 lbs",
+          "priceKey": "sausage-pork",
+          "category": "meats"
+        },
+        {
+          "id": "sausage-beef",
+          "name": "Smoked Sausage - Beef",
+          "description": "Beef smoked sausage for a richer flavor profile.",
+          "unit": "20 lbs",
+          "priceKey": "sausage-beef",
+          "category": "meats"
+        },
+        {
+          "id": "pork-belly",
+          "name": "Pork Belly",
+          "description": "Smoked pork belly with adjustable weight options.",
+          "unit": "5 lbs base",
+          "priceKey": "pork-belly",
+          "category": "meats",
+          "pricing": {
+            "type": "adjustment",
+            "options": [
+              { "label": "0–5 lbs", "adjustment": 0 },
+              { "label": "6–10 lbs", "adjustment": 20 },
+              { "label": "11–15 lbs", "adjustment": 40 }
+            ]
+          }
+        },
+        {
+          "id": "pulled-chicken",
+          "name": "Pulled Chicken",
+          "description": "Versatile smoked chicken prepared for sandwiches and platters.",
+          "unit": "10–12 lbs",
+          "priceKey": "pulled-chicken",
+          "category": "meats"
+        }
+      ]
+    },
+    {
+      "id": "sides",
+      "name": "Sides",
+      "description": "Classic BBQ sides built for gatherings.",
+      "items": [
+        {
+          "id": "potato-salad",
+          "name": "Potato Salad (Mustard)",
+          "description": "A classic mustard potato salad.",
+          "unit": "1 pan",
+          "priceKey": "potato-salad",
+          "category": "sides"
+        },
+        {
+          "id": "baked-beans",
+          "name": "Baked Beans",
+          "description": "Slow-cooked and savory.",
+          "unit": "1 pan",
+          "priceKey": "baked-beans",
+          "category": "sides"
+        },
+        {
+          "id": "cole-slaw",
+          "name": "Cole Slaw",
+          "description": "Cool, crisp, and ready for BBQ platters.",
+          "unit": "1 pan",
+          "priceKey": "cole-slaw",
+          "category": "sides"
+        },
+        {
+          "id": "pinto-beans",
+          "name": "DBL Eagle Pinto Beans",
+          "description": "Traditional beans for a BBQ spread.",
+          "unit": "1 pan",
+          "priceKey": "pinto-beans",
+          "category": "sides"
+        }
+      ]
+    },
+    {
+      "id": "desserts",
+      "name": "Desserts by Irene",
+      "description": "Classic sweets to finish the meal.",
+      "items": [
+        {
+          "id": "bread-pudding-pan",
+          "name": "Bread Pudding — Pan",
+          "description": "A full pan of warm bread pudding.",
+          "unit": "Per pan",
+          "priceKey": "bread-pudding-pan",
+          "category": "desserts"
+        },
+        {
+          "id": "banana-pudding-full-pan",
+          "name": "Banana Pudding — Full Pan",
+          "description": "A full pan of banana pudding.",
+          "unit": "Per pan",
+          "priceKey": "banana-pudding-full-pan",
+          "category": "desserts"
+        },
+        {
+          "id": "pudding-small-mason-jar",
+          "name": "Pudding — Small Mason Jar",
+          "description": "Single-serve mason jar pudding.",
+          "unit": "Each",
+          "priceKey": "pudding-small-mason-jar",
+          "category": "desserts"
+        },
+        {
+          "id": "half-half-pan-pudding",
+          "name": "Half & Half Pan Pudding",
+          "description": "A mixed half-and-half pan for sharing.",
+          "unit": "Per pan",
+          "priceKey": "half-half-pan-pudding",
+          "category": "desserts"
+        },
+        {
+          "id": "extra-large-pan",
+          "name": "Extra Large Pan",
+          "description": "An oversized pan option for larger gatherings.",
+          "unit": "Per pan",
+          "priceKey": "extra-large-pan",
+          "category": "desserts"
+        }
+      ]
+    }
+  ]
+}

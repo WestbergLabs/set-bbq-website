@@ -1,0 +1,84 @@
+const menuState = {
+  menu: null,
+  prices: null
+};
+
+async function loadMenuData() {
+  const [menuResponse, priceResponse] = await Promise.all([
+    fetch('data/menu.json'),
+    fetch('data/prices.json')
+  ]);
+
+  const menu = await menuResponse.json();
+  const prices = await priceResponse.json();
+
+  menuState.menu = menu;
+  menuState.prices = prices;
+
+  return { menu, prices };
+}
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(value);
+}
+
+function getItemPrice(itemId) {
+  const itemPrice = menuState.prices.items[itemId];
+  return itemPrice ? itemPrice.basePrice : 0;
+}
+
+function renderMenuPage() {
+  const menuContainer = document.querySelector('[data-menu-container]');
+  if (!menuContainer || !menuState.menu) return;
+
+  menuContainer.innerHTML = '';
+
+  menuState.menu.categories.forEach((category) => {
+    const section = document.createElement('section');
+    section.className = 'menu-section';
+
+    const heading = document.createElement('div');
+    heading.className = 'section-head';
+    heading.innerHTML = `
+      <h2>${category.name}</h2>
+      <p>${category.description}</p>
+    `;
+
+    const itemList = document.createElement('div');
+    itemList.className = 'menu-list';
+
+    category.items.forEach((item) => {
+      const itemPrice = getItemPrice(item.priceKey);
+      const itemRow = document.createElement('div');
+      itemRow.className = 'menu-item';
+
+      const optionHtml = item.pricing && item.pricing.options
+        ? `<div class="menu-item-meta">${item.pricing.options.map((option) => `${option.label} +${formatCurrency(option.adjustment)}`).join(' • ')}</div>`
+        : `<div class="menu-item-meta">${item.unit}</div>`;
+
+      itemRow.innerHTML = `
+        <div class="menu-item-header">
+          <span class="menu-item-name">${item.name}</span>
+          <span class="menu-item-price">${formatCurrency(itemPrice)}</span>
+        </div>
+        <div class="menu-item-description">${item.description}</div>
+        ${optionHtml}
+      `;
+
+      itemList.appendChild(itemRow);
+    });
+
+    section.appendChild(heading);
+    section.appendChild(itemList);
+    menuContainer.appendChild(section);
+  });
+}
+
+function initMenuPage() {
+  loadMenuData().then(() => renderMenuPage());
+}
+
+document.addEventListener('DOMContentLoaded', initMenuPage);

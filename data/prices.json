@@ -1,0 +1,38 @@
+{
+  "currency": "USD",
+  "deliveryFee": 20,
+  "items": {
+    "whole-turkey": { "basePrice": 75 },
+    "whole-chicken-smoked": { "basePrice": 75 },
+    "half-chicken-smoked": { "basePrice": 75 },
+    "bbq-chicken-boneless": { "basePrice": 75 },
+    "white-chicken": { "basePrice": 80 },
+    "legs-thighs": { "basePrice": 75 },
+    "wings": { "basePrice": 75 },
+    "brisket-10-14": { "basePrice": 125 },
+    "brisket-14-plus": { "basePrice": 155 },
+    "pulled-pork": { "basePrice": 75 },
+    "baby-back-ribs": { "basePrice": 90 },
+    "pork-ribs": { "basePrice": 80 },
+    "sausage-pork": { "basePrice": 80 },
+    "sausage-beef": { "basePrice": 85 },
+    "pork-belly": {
+      "basePrice": 75,
+      "adjustments": [
+        { "label": "0–5 lbs", "value": 0 },
+        { "label": "6–10 lbs", "value": 20 },
+        { "label": "11–15 lbs", "value": 40 }
+      ]
+    },
+    "pulled-chicken": { "basePrice": 75 },
+    "potato-salad": { "basePrice": 50 },
+    "baked-beans": { "basePrice": 50 },
+    "cole-slaw": { "basePrice": 50 },
+    "pinto-beans": { "basePrice": 50 },
+    "bread-pudding-pan": { "basePrice": 40 },
+    "banana-pudding-full-pan": { "basePrice": 35 },
+    "pudding-small-mason-jar": { "basePrice": 10 },
+    "half-half-pan-pudding": { "basePrice": 35 },
+    "extra-large-pan": { "basePrice": 50 }
+  }
+}
