@@ -36,7 +36,7 @@ function makeQuantityInput(itemId, optionKey = '') {
 
 function optionPriceText(item, option) {
   const adjustment = option.adjustment ?? 0;
-  return adjustment ? `+${formatCurrency(adjustment)}` : formatCurrency(getPriceByKey(item.priceKey));
+  return formatCurrency(getPriceByKey(item.priceKey) + adjustment);
 }
 
 function renderCategorySelection(category, container) {
