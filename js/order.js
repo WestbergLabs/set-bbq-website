@@ -147,7 +147,7 @@ function updateMainQuantity(itemId, quantity) {
 
     // If quantity is reduced, automatically remove excess option choices.
     const selections = new Set(getSelectedOptions(itemId));
-    if (selections.size > quantity) {
+    if (itemId !== 'wings' && selections.size > quantity) {
       const keep = Array.from(selections).slice(0, quantity);
       const keepSet = new Set(keep);
       Array.from(selections).slice(quantity).forEach((label) => {
