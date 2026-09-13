@@ -185,7 +185,7 @@ function updateOptionVisibility(itemId) {
   }
 
   const selections = getSelectedOptions(itemId);
-  const splitMode = selections.size > 1;
+  const splitMode = selections.size > 1 && mainQuantity > 1;
   splitList.hidden = !splitMode;
 
   // A single selected option applies to the entire item quantity.
@@ -313,6 +313,11 @@ function updateSummary() {
       const lineTotal = (getPriceByKey(record.item.priceKey) + (option?.adjustment ?? 0)) * record.quantity;
       subtotal += lineTotal;
       rows.push(`<li><span>${record.item.name} — ${selections[0]} × ${record.quantity}</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
+    } else if (selections.length > 1 && record.quantity === 1 && record.item.id === 'wings') {
+      // A single wing order can be mixed without asking the customer to split quantities.
+      const lineTotal = getPriceByKey(record.item.priceKey) * record.quantity;
+      subtotal += lineTotal;
+      rows.push(`<li><span>${record.item.name} — Mixed (${selections.join(' + ')}) × 1</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
     } else if (selections.length > 1) {
       selections.forEach((label) => {
         const option = options.find((entry) => entry.label === label);
