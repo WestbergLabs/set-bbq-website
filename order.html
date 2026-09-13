@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Order | South East Texas BBQ</title>
-    <meta name="description" content="Create a custom BBQ order for South East Texas BBQ & Catering." />
+    <title>Request Catering | South East Texas BBQ</title>
+    <meta name="description" content="Create a custom BBQ catering request for South East Texas BBQ & Catering." />
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
@@ -14,11 +14,10 @@
           <img src="images/logo/SET_Logo.png" alt="South East Texas BBQ & Catering logo" class="brand-logo" />
         </a>
         <nav class="main-nav" aria-label="Main navigation">
-          <a href="index.html" data-page="index.html">Home</a>
-          <a href="menu.html" data-page="menu.html">Menu</a>
-          <a href="order.html" data-page="order.html">Request Catering</a>
-          <a href="contact.html" data-page="contact.html">Contact</a>
+          <a href="index.html">Home</a>
+          <a href="menu.html">Menu</a>
           <a href="order.html" class="cta-link">Request Catering</a>
+          <a href="contact.html">Contact</a>
         </nav>
       </div>
     </header>
@@ -26,9 +25,9 @@
     <main>
       <section class="masthead">
         <div class="container">
-          <div class="eyebrow">Order</div>
-          <h1>Request your BBQ order.</h1>
-          <p class="page-intro">Build a catering request for your event, add the details, and review your totals before submitting the request.</p>
+          <div class="eyebrow">Request Catering</div>
+          <h1>Tell us about your event.</h1>
+          <p class="page-intro">Build your catering request, choose your BBQ, and review the estimated total before sending the request.</p>
         </div>
       </section>
 
@@ -39,7 +38,7 @@
               <div class="card">
                 <div class="section-head">
                   <div class="kicker">Event info</div>
-                  <h2>Tell us about the event</h2>
+                  <h2>Event details</h2>
                 </div>
 
                 <div class="field-row">
@@ -67,22 +66,16 @@
                   </div>
                 </div>
 
-                <div class="field-row">
-                  <div>
-                    <label for="eventAddress">Event Address</label>
-                    <input id="eventAddress" name="eventAddress" type="text" required />
-                  </div>
-                  <div>
-                    <label for="venueAddress">Venue Address</label>
-                    <input id="venueAddress" name="venueAddress" type="text" required />
-                  </div>
+                <div>
+                  <label for="eventAddress">Event Address</label>
+                  <input id="eventAddress" name="eventAddress" type="text" required />
                 </div>
 
                 <div class="field-row">
-                  <div>
-                    <label for="deliveryToggle">Delivery</label>
-                    <label>
-                      <input id="deliveryToggle" data-delivery-toggle type="checkbox" /> Add delivery (+$20)
+                  <div class="delivery-field">
+                    <label for="deliveryToggle">
+                      <input id="deliveryToggle" data-delivery-toggle type="checkbox" />
+                      <span>Deliver + $20</span>
                     </label>
                   </div>
                 </div>
@@ -171,8 +164,8 @@
     <footer class="site-footer">
       <div class="container footer-grid">
         <div>
-          <span class="footer-title">SET BBQ</span>
-          <p>South East Texas BBQ & Catering</p>
+          <span class="footer-title">South East Texas BBQ & Catering</span>
+          <p>Catering and delivery for events, parties, and gatherings.</p>
         </div>
         <div>
           <span class="footer-title">Quick links</span>
