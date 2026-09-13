@@ -2,6 +2,8 @@ const orderState = {
   menu: null,
   prices: null,
   selected: new Map(),
+  optionSelections: new Map(),
+  optionSplits: new Map(),
   deliverySelected: false
 };
 
@@ -22,6 +24,11 @@ function getMenuItemById(id) {
   return null;
 }
 
+function getOptionDefinitions(item) {
+  if (item.pricing?.options?.length) return item.pricing.options;
+  return (item.orderOptions ?? []).map((label) => ({ label, adjustment: 0 }));
+}
+
 function makeQuantityInput(itemId, optionKey = '') {
   const key = optionKey ? `${itemId}--${optionKey}` : itemId;
   return `<input class="item-quantity" type="number" min="0" step="1" value="" inputmode="numeric" aria-label="Quantity" data-quantity-key="${key}" data-item-id="${itemId}" data-option-key="${optionKey}" />`;
@@ -33,19 +40,28 @@ function renderCategorySelection(category, container) {
 
   const list = category.items.map((item) => {
     const itemPrice = getPriceByKey(item.priceKey);
-    const pricingOptions = item.pricing?.options ?? [];
-    const orderOptions = item.orderOptions ?? [];
-    const hasOptions = pricingOptions.length > 0 || orderOptions.length > 0;
+    const options = getOptionDefinitions(item);
 
-    if (hasOptions) {
-      const optionRows = (pricingOptions.length ? pricingOptions : orderOptions.map((label) => ({ label, adjustment: 0 })))
-        .map((option) => {
-          const price = itemPrice + (option.adjustment ?? 0);
-          return `<div class="order-option-row" data-option-row="${item.id}" hidden>
+    if (options.length) {
+      const optionRows = options.map((option) => {
+        const adjustment = option.adjustment ?? 0;
+        const priceText = adjustment === 0
+          ? formatCurrency(itemPrice)
+          : `+${formatCurrency(adjustment)}`;
+
+        return `<div class="order-option-row" data-option-row="${item.id}" data-option-label="${option.label}" hidden>
+          <label class="option-choice">
+            <input type="checkbox" class="option-checkbox" data-option-item="${item.id}" data-option-key="${option.label}" />
             <span><strong>${option.label}</strong></span>
-            <div class="option-actions"><span class="option-price">${formatCurrency(price)}</span><label class="quantity-control">Qty ${makeQuantityInput(item.id, option.label)}</label></div>
-          </div>`;
-        }).join('');
+          </label>
+          <div class="option-actions">
+            <span class="option-price">${priceText}</span>
+            <label class="option-split-control" data-split-control="${item.id}--${option.label}" hidden>
+              Qty ${makeQuantityInput(item.id, option.label)}
+            </label>
+          </div>
+        </div>`;
+      }).join('');
 
       return `<div class="order-item" data-order-item="${item.id}" data-has-options="true">
         <div class="order-item-header">
@@ -53,9 +69,14 @@ function renderCategorySelection(category, container) {
             <div class="order-item-name">${item.name}</div>
             <div class="order-item-meta">${item.description} · ${item.unit}</div>
           </div>
-          <div class="item-actions"><span class="order-item-price"> ${formatCurrency(itemPrice)}</span><label class="quantity-control">Qty ${makeQuantityInput(item.id)}</label></div>
+          <div class="item-actions">
+            <span class="order-item-price">Starting at ${formatCurrency(itemPrice)}</span>
+            <label class="quantity-control">Qty ${makeQuantityInput(item.id)}</label>
+          </div>
         </div>
-        <div class="order-options" data-options-container="${item.id}" hidden>${optionRows}</div>
+        <div class="order-options" data-options-container="${item.id}" hidden>
+          ${optionRows}
+        </div>
         <div class="option-validation" data-option-validation="${item.id}" aria-live="polite"></div>
       </div>`;
     }
@@ -66,7 +87,10 @@ function renderCategorySelection(category, container) {
           <div class="order-item-name">${item.name}</div>
           <div class="order-item-meta">${item.description} · ${item.unit}</div>
         </div>
-        <div class="item-actions"><div class="order-item-price">${formatCurrency(itemPrice)}</div><label class="quantity-control">Qty ${makeQuantityInput(item.id)}</label></div>
+        <div class="item-actions">
+          <div class="order-item-price">${formatCurrency(itemPrice)}</div>
+          <label class="quantity-control">Qty ${makeQuantityInput(item.id)}</label>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -83,30 +107,53 @@ function renderOrderOptions() {
   bindSelectionEvents();
 }
 
-function getOptionDefinitions(item) {
-  if (item.pricing?.options?.length) return item.pricing.options;
-  return (item.orderOptions ?? []).map((label) => ({ label, adjustment: 0 }));
-}
-
-function getOptionQuantity(itemId, optionLabel) {
-  return orderState.selected.get(`${itemId}--${optionLabel}`)?.quantity ?? 0;
-}
-
 function getMainQuantity(itemId) {
   return orderState.selected.get(itemId)?.quantity ?? 0;
 }
 
-function updateRecord(itemId, optionKey, quantity) {
-  const item = getMenuItemById(itemId);
-  const key = optionKey ? `${itemId}--${optionKey}` : itemId;
+function getSelectedOptions(itemId) {
+  return orderState.optionSelections.get(itemId) ?? new Set();
+}
 
+function getOptionSplit(itemId, optionLabel) {
+  return orderState.optionSplits.get(`${itemId}--${optionLabel}`) ?? 0;
+}
+
+function setOptionSplit(itemId, optionLabel, quantity) {
+  const key = `${itemId}--${optionLabel}`;
   if (quantity > 0) {
-    const adjustment = item.pricing?.options?.find((o) => o.label === optionKey)?.adjustment ?? 0;
-    orderState.selected.set(key, { item, option: optionKey || null, quantity, adjustment });
+    orderState.optionSplits.set(key, quantity);
   } else {
-    orderState.selected.delete(key);
+    orderState.optionSplits.delete(key);
+  }
+}
+
+function updateMainQuantity(itemId, quantity) {
+  const item = getMenuItemById(itemId);
+  if (quantity > 0) {
+    orderState.selected.set(itemId, { item, option: null, quantity, adjustment: 0 });
+  } else {
+    orderState.selected.delete(itemId);
+    orderState.optionSelections.delete(itemId);
+    getOptionDefinitions(item).forEach((option) => {
+      orderState.optionSplits.delete(`${itemId}--${option.label}`);
+    });
   }
 
+  updateOptionVisibility(itemId);
+  updateSummary();
+}
+
+function updateOptionSelection(itemId, optionLabel, checked) {
+  const selections = new Set(getSelectedOptions(itemId));
+  if (checked) {
+    selections.add(optionLabel);
+  } else {
+    selections.delete(optionLabel);
+    orderState.optionSplits.delete(`${itemId}--${optionLabel}`);
+  }
+
+  orderState.optionSelections.set(itemId, selections);
   updateOptionVisibility(itemId);
   updateSummary();
 }
@@ -116,34 +163,57 @@ function updateOptionVisibility(itemId) {
   const mainQuantity = getMainQuantity(itemId);
   const container = document.querySelector(`[data-options-container="${itemId}"]`);
   const validation = document.querySelector(`[data-option-validation="${itemId}"]`);
-
   if (!container || !validation) return;
 
   const showOptions = mainQuantity > 0;
   container.hidden = !showOptions;
-  container.querySelectorAll('[data-option-row]').forEach((row) => {
-    row.hidden = !showOptions;
-  });
 
   if (!showOptions) {
     validation.textContent = '';
-    container.querySelectorAll('.item-quantity').forEach((input) => {
-      input.value = '';
-      orderState.selected.delete(input.dataset.quantityKey);
-    });
+    container.querySelectorAll('.option-checkbox').forEach((input) => { input.checked = false; });
+    container.querySelectorAll('.option-split-control').forEach((control) => { control.hidden = true; });
     return;
   }
 
-  const optionTotal = getOptionDefinitions(item).reduce(
-    (sum, option) => sum + getOptionQuantity(itemId, option.label),
+  const selections = getSelectedOptions(itemId);
+  const selectedCount = selections.size;
+
+  container.querySelectorAll('[data-option-row]').forEach((row) => { row.hidden = false; });
+
+  // One selected option automatically receives the full quantity.
+  // Split quantity fields only appear when the customer chooses multiple options.
+  container.querySelectorAll('.option-split-control').forEach((control) => {
+    const optionLabel = control.dataset.splitControl.split('--').slice(1).join('--');
+    control.hidden = selectedCount < 2 || !selections.has(optionLabel);
+    if (selectedCount < 2) {
+      const input = control.querySelector('.item-quantity');
+      if (input) input.value = '';
+      orderState.optionSplits.delete(`${itemId}--${optionLabel}`);
+    }
+  });
+
+  if (selectedCount === 0) {
+    validation.textContent = 'Select an option';
+    validation.className = 'option-validation invalid';
+    return;
+  }
+
+  if (selectedCount === 1) {
+    validation.textContent = '';
+    validation.className = 'option-validation';
+    return;
+  }
+
+  const splitTotal = Array.from(selections).reduce(
+    (sum, label) => sum + getOptionSplit(itemId, label),
     0
   );
 
-  if (optionTotal === mainQuantity) {
-    validation.textContent = '✓ Options match quantity';
-    validation.className = 'option-validation valid';
+  if (splitTotal === mainQuantity) {
+    validation.textContent = '';
+    validation.className = 'option-validation';
   } else {
-    const difference = mainQuantity - optionTotal;
+    const difference = mainQuantity - splitTotal;
     validation.textContent = difference > 0
       ? `Choose ${difference} more`
       : `Reduce options by ${Math.abs(difference)}`;
@@ -156,7 +226,26 @@ function bindSelectionEvents() {
     input.addEventListener('input', (event) => {
       event.target.value = event.target.value.replace(/[^0-9]/g, '');
       const quantity = Math.max(0, Number.parseInt(event.target.value || '0', 10));
-      updateRecord(event.target.dataset.itemId, event.target.dataset.optionKey, quantity);
+      const itemId = event.target.dataset.itemId;
+      const optionKey = event.target.dataset.optionKey;
+
+      if (optionKey) {
+        setOptionSplit(itemId, optionKey, quantity);
+        updateOptionVisibility(itemId);
+        updateSummary();
+      } else {
+        updateMainQuantity(itemId, quantity);
+      }
+    });
+  });
+
+  document.querySelectorAll('.option-checkbox').forEach((input) => {
+    input.addEventListener('change', (event) => {
+      updateOptionSelection(
+        event.target.dataset.optionItem,
+        event.target.dataset.optionKey,
+        event.target.checked
+      );
     });
   });
 
@@ -172,15 +261,22 @@ function bindSelectionEvents() {
 function hasValidOptions() {
   for (const category of orderState.menu.categories) {
     for (const item of category.items) {
-      const definitions = getOptionDefinitions(item);
-      if (!definitions.length) continue;
+      const options = getOptionDefinitions(item);
+      if (!options.length) continue;
+
       const mainQuantity = getMainQuantity(item.id);
       if (mainQuantity <= 0) continue;
-      const optionTotal = definitions.reduce(
-        (sum, option) => sum + getOptionQuantity(item.id, option.label),
-        0
-      );
-      if (optionTotal !== mainQuantity) return false;
+
+      const selections = getSelectedOptions(item.id);
+      if (selections.size === 0) return false;
+
+      if (selections.size > 1) {
+        const splitTotal = Array.from(selections).reduce(
+          (sum, label) => sum + getOptionSplit(item.id, label),
+          0
+        );
+        if (splitTotal !== mainQuantity) return false;
+      }
     }
   }
   return true;
@@ -196,13 +292,33 @@ function updateSummary() {
   const rows = [];
 
   orderState.selected.forEach((record) => {
-    if (!record.option && getOptionDefinitions(record.item).length) return;
+    const options = getOptionDefinitions(record.item);
 
-    const unitPrice = getPriceByKey(record.item.priceKey) + record.adjustment;
-    const lineTotal = unitPrice * record.quantity;
-    subtotal += lineTotal;
-    const optionText = record.option ? ` — ${record.option}` : '';
-    rows.push(`<li><span>${record.item.name}${optionText} × ${record.quantity}</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
+    if (!options.length) {
+      const lineTotal = getPriceByKey(record.item.priceKey) * record.quantity;
+      subtotal += lineTotal;
+      rows.push(`<li><span>${record.item.name} × ${record.quantity}</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
+      return;
+    }
+
+    const selections = Array.from(getSelectedOptions(record.item.id));
+    if (selections.length === 1) {
+      const option = options.find((entry) => entry.label === selections[0]);
+      const unitPrice = getPriceByKey(record.item.priceKey) + (option?.adjustment ?? 0);
+      const lineTotal = unitPrice * record.quantity;
+      subtotal += lineTotal;
+      rows.push(`<li><span>${record.item.name} — ${selections[0]} × ${record.quantity}</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
+    } else if (selections.length > 1) {
+      selections.forEach((label) => {
+        const option = options.find((entry) => entry.label === label);
+        const quantity = getOptionSplit(record.item.id, label);
+        if (!quantity) return;
+        const unitPrice = getPriceByKey(record.item.priceKey) + (option?.adjustment ?? 0);
+        const lineTotal = unitPrice * quantity;
+        subtotal += lineTotal;
+        rows.push(`<li><span>${record.item.name} — ${label} × ${quantity}</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
+      });
+    }
   });
 
   const deliveryFee = orderState.deliverySelected ? orderState.prices.deliveryFee : 0;
@@ -254,7 +370,7 @@ function validateOrderForm() {
     if (message) message.textContent = 'Please enter a quantity for at least one menu item.';
   } else if (!hasValidOptions()) {
     valid = false;
-    if (message) message.textContent = 'Please make sure each item with options has option quantities matching its total quantity.';
+    if (message) message.textContent = 'Please finish selecting the options for your items.';
   } else if (message) {
     message.textContent = '';
   }
@@ -281,8 +397,13 @@ async function initializeOrderPage() {
         document.querySelector('[data-order-confirmation]').classList.remove('hidden');
         const summary = document.querySelector('[data-order-summary-text]');
         summary.textContent = Array.from(orderState.selected.values())
-          .filter((entry) => entry.option || !getOptionDefinitions(entry.item).length)
-          .map((entry) => `${entry.item.name}${entry.option ? ` (${entry.option})` : ''} × ${entry.quantity}`)
+          .flatMap((entry) => {
+            const options = getOptionDefinitions(entry.item);
+            if (!options.length) return [`${entry.item.name} × ${entry.quantity}`];
+            const selections = Array.from(getSelectedOptions(entry.item.id));
+            if (selections.length === 1) return [`${entry.item.name} (${selections[0]}) × ${entry.quantity}`];
+            return selections.map((label) => `${entry.item.name} (${label}) × ${getOptionSplit(entry.item.id, label)}`);
+          })
           .join(', ');
       }
     });
