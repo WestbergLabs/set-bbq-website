@@ -63,7 +63,7 @@ button, input, select, textarea { font: inherit; }
 }
 .hero-inner { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 2.25rem; align-items: center; text-align: center; }
 .hero-visual { order: -1; width: min(100%, 1080px); display: flex; justify-content: center; background: #000; padding: .45rem; }
-.hero-visual img { width: 100%; height: clamp(200px, 31vw, 380px); object-fit: cover; object-position: center; border-radius: 0; -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%); mask-composite: intersect; }
+.hero-visual img { width: 100%; height: clamp(200px, 31vw, 380px); object-fit: cover; object-position: center; border-radius: 0; -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%); mask-composite: intersect; }
 .hero-copy { max-width: 760px; }
 .eyebrow { font-size: .78rem; letter-spacing: .13em; text-transform: uppercase; font-weight: 700; color: var(--brand-cream); margin-bottom: .7rem; }
 .hero h1, .masthead h1, .section-head h2 { font-family: Georgia, "Times New Roman", serif; }
