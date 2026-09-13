@@ -29,7 +29,7 @@
       "description": "Classic BBQ sides built for gatherings.",
       "items": [
         {"id":"potato-salad","name":"Potato Salad (Mustard)","description":"A classic mustard potato salad.","unit":"1 pan","priceKey":"potato-salad","category":"sides"},
-        {"id":"baked-beans","name":"Baked Beans","description":"Slow-cooked and savory.","unit":"1 pan","priceKey":"baked-beans","category":"sides"},
+        {"id":"baked-beans","name":"Baked Beans","description":"Slow-cooked and savory.","unit":"1 pan","priceKey":"baked-beans","category":"sides","orderOptions":["Bacon","No Bacon"]},
         {"id":"cole-slaw","name":"Cole Slaw","description":"Cool, crisp, and ready for BBQ platters.","unit":"1 pan","priceKey":"cole-slaw","category":"sides"},
         {"id":"pinto-beans","name":"DBL Eagle Pinto Beans","description":"Traditional beans for a BBQ spread.","unit":"1 pan","priceKey":"pinto-beans","category":"sides"}
       ]
