@@ -53,7 +53,7 @@ function renderCategorySelection(category, container) {
             <div class="order-item-name">${item.name}</div>
             <div class="order-item-meta">${item.description} · ${item.unit}</div>
           </div>
-          <div class="item-actions"><span class="order-item-price">Starting at ${formatCurrency(itemPrice)}</span><label class="quantity-control">Qty ${makeQuantityInput(item.id)}</label></div>
+          <div class="item-actions"><span class="order-item-price"> ${formatCurrency(itemPrice)}</span><label class="quantity-control">Qty ${makeQuantityInput(item.id)}</label></div>
         </div>
         <div class="order-options" data-options-container="${item.id}" hidden>${optionRows}</div>
         <div class="option-validation" data-option-validation="${item.id}" aria-live="polite"></div>
