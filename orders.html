@@ -77,7 +77,7 @@ async function load(){
   }
   const base=SUPABASE_URL+'/rest/v1/';
   const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+session.access_token};
-  const [a,b]=await Promise.all([sb.from('orders').select('*').order('event_date',{ascending:false}),sb.from('order_items').select('*').order('created_at',{ascending:true})]);
+  const [a,b]=await Promise.all([sb.from('orders').select('*').order('event_date',{ascending:false}),sb.from('order_items').select('*').order('id',{ascending:true})]);
   if(a.error||b.error){document.getElementById('empty').hidden=false;document.getElementById('empty').textContent=`You are signed in, but orders could not be loaded: ${(a.error||b.error).message}`;return}
   orders=a.data||[];items=b.data||[];render();
 }
