@@ -1,1 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 500" preserveAspectRatio="xMidYMid slice"><defs><filter id="blur" x="-20%" y="-30%" width="140%" height="160%"><feGaussianBlur stdDeviation="22"/></filter><radialGradient id="smoke" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff" stop-opacity=".62"/><stop offset=".55" stop-color="#ddd" stop-opacity=".28"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><g filter="url(#blur)" fill="url(#smoke)"><ellipse cx="180" cy="390" rx="260" ry="105"/><ellipse cx="430" cy="270" rx="310" ry="125"/><ellipse cx="720" cy="365" rx="360" ry="145"/><ellipse cx="1040" cy="250" rx="300" ry="120"/><ellipse cx="1320" cy="360" rx="350" ry="130"/><ellipse cx="1510" cy="180" rx="240" ry="105"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 500" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <filter id="smokeA" x="-25%" y="-25%" width="150%" height="150%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012 0.035" numOctaves="4" seed="7" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="55" xChannelSelector="R" yChannelSelector="G" result="distorted"/>
+      <feGaussianBlur in="distorted" stdDeviation="10"/>
+    </filter>
+    <filter id="smokeB" x="-25%" y="-25%" width="150%" height="150%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.018 0.05" numOctaves="3" seed="19" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="38" xChannelSelector="R" yChannelSelector="G" result="distorted"/>
+      <feGaussianBlur in="distorted" stdDeviation="5"/>
+    </filter>
+    <linearGradient id="fade" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.72"/>
+      <stop offset="0.42" stop-color="#fff" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="cloud" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.34"/>
+      <stop offset="0.55" stop-color="#fff" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <g fill="none" stroke="url(#fade)" stroke-linecap="round" filter="url(#smokeA)">
+    <path d="M110 500 C70 430 210 400 145 345 C75 285 220 265 170 210 C120 155 255 120 215 35" stroke-width="105" opacity="0.34"/>
+    <path d="M400 500 C345 425 495 390 425 325 C350 255 525 235 460 175 C405 125 535 90 500 10" stroke-width="125" opacity="0.28"/>
+    <path d="M760 500 C700 430 850 390 785 320 C715 245 890 220 820 155 C770 105 900 65 870 0" stroke-width="145" opacity="0.31"/>
+    <path d="M1110 500 C1050 420 1200 390 1135 325 C1070 260 1230 225 1170 165 C1115 110 1250 65 1210 5" stroke-width="130" opacity="0.28"/>
+    <path d="M1435 500 C1380 430 1515 390 1455 325 C1395 260 1535 230 1480 170 C1430 115 1560 65 1530 0" stroke-width="110" opacity="0.30"/>
+  </g>
+
+  <g fill="url(#cloud)" filter="url(#smokeB)">
+    <ellipse cx="170" cy="330" rx="210" ry="105"/>
+    <ellipse cx="455" cy="255" rx="235" ry="125"/>
+    <ellipse cx="820" cy="300" rx="270" ry="135"/>
+    <ellipse cx="1160" cy="245" rx="245" ry="120"/>
+    <ellipse cx="1480" cy="320" rx="220" ry="110"/>
+  </g>
+</svg>
