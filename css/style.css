@@ -36,7 +36,7 @@ button, input, select, textarea { font: inherit; }
   inset: 0;
   z-index: 0;
   background:
-    linear-gradient(rgba(0,0,0,.84), rgba(0,0,0,.84)),
+    linear-gradient(rgba(0,0,0,.68), rgba(0,0,0,.68)),
     url("../images/general/smoke.svg") center / cover no-repeat;
   opacity: 1;
   pointer-events: none;
