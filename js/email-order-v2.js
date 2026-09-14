@@ -15,9 +15,9 @@
   function orderNumber() {
     const now = new Date();
     const p = (v) => String(v).padStart(2, '0');
-    const stamp = `${String(now.getFullYear()).slice(-2)}${p(now.getMonth() + 1)}${p(now.getDate())}-${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`;
-    const suffix = Math.random().toString(36).slice(2, 4).toUpperCase();
-    return `SET-${stamp}-${suffix}`;
+    const date = `${String(now.getFullYear()).slice(-2)}${p(now.getMonth() + 1)}${p(now.getDate())}`;
+    const suffix = Math.random().toString(36).slice(2, 6).toUpperCase();
+    return `SET-${date}-${suffix}`;
   }
 
   function dateTime(dateValue, timeValue) {
