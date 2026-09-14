@@ -43,7 +43,7 @@ In the template Attachments tab, add a **Variable Attachment**:
 
 Recommended settings:
 
-**Template ID:** `set_bbq_customer_order`
+**Template ID:** `set_bbq_customer_confirm`
 
 **To Email:** `{{customer_email}}`
 
