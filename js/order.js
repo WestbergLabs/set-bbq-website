@@ -502,24 +502,39 @@ function showThankYouPage(pdfBlob) {
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-async function initializeOrderPage() {
-  const [menuResponse, pricesResponse] = await Promise.all([
-    fetch('data/menu.json'),
-    fetch('data/prices.json')
-  ]);
-
-  orderState.menu = await menuResponse.json();
-  orderState.prices = await pricesResponse.json();
-  renderOrderOptions();
-  updateSummary();
-
+function attachOrderHandler() {
   const form = document.getElementById('order-form');
-  if (form) {
-    form.addEventListener('submit', (event) => {
-      event.preventDefault();
-      submitOrder();
-    });
+  if (!form || form.dataset.handlerAttached) return;
+  form.dataset.handlerAttached = 'true';
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    submitOrder();
+  });
+}
+
+async function initializeOrderPage() {
+  attachOrderHandler();
+  try {
+    const [menuResponse, pricesResponse] = await Promise.all([
+      fetch('data/menu.json'),
+      fetch('data/prices.json')
+    ]);
+    if (!menuResponse.ok || !pricesResponse.ok) throw new Error('Unable to load menu information.');
+    orderState.menu = await menuResponse.json();
+    orderState.prices = await pricesResponse.json();
+    renderOrderOptions();
+    updateSummary();
+  } catch (error) {
+    const message = document.querySelector('[data-order-message]');
+    if (message) {
+      message.textContent = error.message || 'Unable to load the order form.';
+      message.classList.add('form-error');
+    }
   }
 }
 
-document.addEventListener('DOMContentLoaded', initializeOrderPage);
+document.addEventListener('DOMContentLoaded', () => {
+  attachOrderHandler();
+  initializeOrderPage();
+});
