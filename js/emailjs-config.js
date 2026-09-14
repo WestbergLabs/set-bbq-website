@@ -4,6 +4,6 @@ window.SET_EMAIL_CONFIG = {
   publicKey: 'CpbCBxjBvlriVqVVD',
   serviceId: 'service_6lrifbo',
   businessTemplateId: 'set_bbq_business_order',
-  customerTemplateId: 'set_bbq_customer_confirmation',
+  customerTemplateId: 'set_bbq_customer_confirm',
   businessEmail: '4thehalibit@gmail.com'
 };
