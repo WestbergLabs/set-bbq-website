@@ -40,7 +40,8 @@
       "items": [
         {"id":"bread-pudding-pan","name":"Rum Bread Pudding — Pan","description":"A full pan of warm rum bread pudding.","unit":"Per pan","priceKey":"bread-pudding-pan","category":"desserts"},
         {"id":"banana-pudding-full-pan","name":"Banana Pudding — Full Pan","description":"A full pan of banana pudding topped with biscotti cookies. Choose Half & Half for half biscotti and half without.","unit":"Per pan","priceKey":"banana-pudding-full-pan","category":"desserts","orderOptions":["All Biscotti","Half & Half"]},
-        {"id":"pudding-small-mason-jar","name":"Pudding — Small Mason Jar","description":"Single-serve mason jar pudding.","unit":"Each","priceKey":"pudding-small-mason-jar","category":"desserts"}
+        {"id":"pudding-small-mason-jar","name":"Pudding — Small Mason Jar","description":"Single-serve mason jar pudding.","unit":"Each","priceKey":"pudding-small-mason-jar","category":"desserts"},
+        {"id":"custom-dessert","name":"Custom Dessert","description":"Custom dessert request starting at $40. A SET BBQ team member will contact you to discuss options and final pricing.","unit":"Starting at $40","priceKey":"custom-dessert","category":"desserts"}
       ]
     }
   ]
