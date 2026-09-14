@@ -1,125 +1,104 @@
 # South East Texas BBQ & Catering
 
-Mobile-first catering website for **South East Texas BBQ & Catering**.
+![South East Texas BBQ & Catering](images/hero/grill.jpg)
 
-The site is a static HTML/CSS/JavaScript project hosted with GitHub Pages. Customer catering requests are sent directly through EmailJS.
+A mobile-first catering website for **South East Texas BBQ & Catering**.
+
+**Live website:** https://westberglabs.github.io/set-bbq-website/
 
 ---
 
-## Current status
+## What this project does
 
-The production site currently supports:
+Customers can:
 
-- Home, Menu, Catering, and Contact pages
-- Mobile-first catering order form
-- Centralized menu and pricing data
-- Item quantities and menu-specific options
-- Brisket, pork belly, wings, baked-beans, and dessert option handling
-- Custom Dessert requests starting at $40
-- Browser-generated PDF invoices
-- Customer confirmation email
-- Business order email
-- Customer-controlled Reply-To for business email replies
-- Site version information
+- Browse the menu and pricing
+- Build a catering request
+- Choose quantities and menu options
+- Request delivery
+- Add special requests
+- Request a custom dessert starting at $40
+- Submit an order
+- Receive a confirmation email
+- Receive a PDF copy of the order
 
-The public site is static. There is no server running on GitHub Pages.
+When an order is submitted:
+
+1. The business receives the full order by email.
+2. The customer receives a confirmation email.
+3. The PDF invoice is generated in the browser.
+4. The business email's **Reply-To** is set to the customer.
+5. The business email also provides the current SMS notification workflow through Verizon email-to-text.
+
+The website itself is **static**. There is currently no database or server-side application.
 
 ---
 
 ## Repository
 
-Repository: `WestbergLabs/set-bbq-website`
+**GitHub:** https://github.com/WestbergLabs/set-bbq-website
 
 ### Branches
 
-- **`main`** — production branch / GitHub Pages source
-- **`emailjs-rebuild`** — retained test/development branch for safely testing future changes before production
+| Branch | Purpose |
+|---|---|
+| `main` | Production / GitHub Pages |
+| `emailjs-rebuild` | Development and testing |
 
-Recommended workflow:
-
-1. Start future changes on `emailjs-rebuild`.
-2. Test the complete site there.
-3. When everything is approved, fast-forward `main` to the tested commit.
-4. Leave `emailjs-rebuild` in place as the development branch.
-
-Do not delete the test branch. It is intentionally kept as a safe place to work.
+Keep `emailjs-rebuild`. Use it for future changes, test thoroughly, then move approved changes to `main`.
 
 ---
 
-## File structure
+## Project structure
 
 ```text
 /
-├── index.html                 # Home
-├── menu.html                  # Public menu
-├── catering.html              # Catering information
-├── order.html                 # Customer order form
-├── contact.html               # Contact information
-├── orders.html                # Protected admin Orders page
-│
-├── css/
-│   └── style.css              # Shared site styling
+├── index.html              # Home
+├── menu.html               # Menu
+├── catering.html           # Catering information
+├── order.html              # Customer order form
+├── contact.html            # Contact information
 │
 ├── data/
-│   ├── menu.json              # Menu names, descriptions, units, options
-│   └── prices.json            # Prices and delivery fee
+│   ├── menu.json           # Menu names, descriptions, options
+│   └── prices.json         # Prices and delivery fee
+│
+├── css/
+│   └── style.css           # Shared site styling
 │
 ├── js/
-│   ├── app.js                 # Shared site behavior
-│   ├── order.js               # Order form, quantities, options, totals
-│   ├── custom-dessert.js      # Custom Dessert UI and request handling
-│   ├── emailjs-config.js      # EmailJS public configuration and routing
-│   ├── email-order-v2.js      # Email creation, PDF generation, submission
-│   ├── pdf-layout-fix.js      # PDF layout adjustments
-│   ├── order-submit-fix.js    # Order submission/validation fixes
-│   ├── order-bridge.js        # Order-form integration helper
-│   ├── thank-you-message.js   # Post-submit confirmation UI
-│   ├── site-version.js         # Visible site/build version
-│   └── test-form-fill.js      # Local/test form helper
+│   ├── order.js            # Order form, options, totals
+│   ├── custom-dessert.js   # Custom dessert handling
+│   ├── email-order-v2.js   # Email/PDF/order submission
+│   ├── emailjs-config.js   # EmailJS configuration
+│   ├── site-version.js     # Visible build version
+│   └── ...                 # Supporting order/PDF scripts
 │
 ├── images/
-│   ├── logo/
-│   └── hero/
+│   ├── logo/               # Site logos
+│   └── hero/               # Hero imagery
 │
 └── docs/
-    └── EMAILJS_SETUP.md       # EmailJS setup/reference
+    └── EMAILJS_SETUP.md    # EmailJS setup reference
 ```
 
-There are currently several small order-related JavaScript files because the order system was rebuilt incrementally. **Do not combine or rename them casually.** Update script references in `order.html` if files are renamed or moved.
+There are several small order-related JavaScript files because the order system was built incrementally. **Do not combine, rename, or remove them casually.** Check `order.html` before changing script names or load order.
 
 ---
 
-# Menu and pricing
+# Changing menu items and prices
 
-Menu content is intentionally separated from the application code.
+Menu content and pricing are intentionally separated from the main application.
 
-### `data/menu.json`
+### Change a price
 
-Controls customer-facing menu information such as:
+Open:
 
-- Item name
-- Description
-- Unit/size wording
-- Category
-- Available options
-- Price key
+```text
+data/prices.json
+```
 
-### `data/prices.json`
-
-Controls:
-
-- Base item prices
-- Option price adjustments
-- Delivery fee
-
-## Quick price change
-
-For a normal item:
-
-1. Open `data/prices.json`.
-2. Find the item's price key.
-3. Change `basePrice`.
-4. Save and test the order form.
+Find the item's price key and change its `basePrice`.
 
 Example:
 
@@ -133,217 +112,170 @@ Change only the number:
 "brisket": { "basePrice": 165 }
 ```
 
-## Quick menu-item change
+### Change a menu item
 
-Open `data/menu.json` and edit the item's:
-
-- `name`
-- `description`
-- `unit`
-- `orderOptions`
-- `pricing`
-
-Keep the item's `priceKey` matched to `data/prices.json`.
-
-**Important:** If an item is removed or renamed, check every reference to its ID/price key in JavaScript before deleting it.
-
-### Current dessert terminology
-
-Customer-facing dessert wording intentionally avoids unexplained "pan" terminology.
-
-Current dessert choices include:
-
-- Rum Bread Pudding — Full Size
-- Banana Pudding — Full Size
-- Banana Pudding options: All Biscotti / Half & Half
-- Pudding — Small Mason Jar
-- Custom Dessert — Starting at $40
-
-Do not reintroduce "pan" into customer-facing dessert names unless the business decides to define that term for customers.
-
----
-
-# Custom Dessert
-
-Custom Dessert is a special order item rather than a fixed-price product.
-
-Current behavior:
-
-- Starting price: **$40**
-- Customer can enter a detailed request.
-- The order clearly identifies it as a custom dessert.
-- The request appears in the business email.
-- The request appears in the customer confirmation.
-- The request appears in the PDF invoice.
-- Final pricing is to be confirmed after SET BBQ & Catering contacts the customer.
-
-Do not treat the $40 starting price as a guaranteed final price.
-
----
-
-# EmailJS
-
-EmailJS handles both outgoing order emails directly from the browser.
-
-The order submission sends:
-
-1. **Business order email**
-2. **Customer confirmation email**
-
-The website also generates the PDF invoice in the browser and attaches it to the emails.
-
-## Current routing
-
-The site intentionally uses two EmailJS services:
-
-- Customer confirmations use the configured Yahoo service.
-- Business orders are routed through the Gmail-connected service.
-
-The business email uses the customer's email as **Reply-To**, so replying to a new order should send the reply to the customer rather than back to the sending Gmail account.
-
-EmailJS configuration lives in:
-
-`js/emailjs-config.js`
-
-Do not move EmailJS IDs into HTML or duplicate them throughout the project.
-
-## Email templates
-
-Current template IDs:
-
-- Business order: `set_bbq_business_order`
-- Customer confirmation: `set_bbq_customer_confirm`
-
-The business template should use:
-
-- To: `{{business_email}}`
-- Reply-To: `{{reply_to}}`
-- Subject containing the order number/customer name
-- Invoice HTML: `{{{invoice_html}}}`
-- Variable PDF attachment: `{{invoice_attachment}}`
-
-The customer template should use:
-
-- To: `{{customer_email}}`
-- Reply-To: the SET BBQ business address
-- Invoice HTML: `{{{invoice_html}}}`
-- Variable PDF attachment: `{{invoice_attachment}}`
-
-See `docs/EMAILJS_SETUP.md` for the EmailJS setup reference.
-
-### Important EmailJS rule
-
-If email behavior needs to change, check **both**:
-
-- `js/emailjs-config.js`
-- `js/email-order-v2.js`
-
-Also check the EmailJS dashboard templates before changing working website code.
-
-### Spam/deliverability
-
-Yahoo may classify legitimate business-order messages as Spam. That is a mailbox/deliverability issue, not an order-form routing failure.
-
-The current website has been tested successfully for:
+Open:
 
 ```text
-Customer order
-    ↓
-Business Yahoo mailbox
-    ↓
-Business replies to customer
-    ↓
-Customer receives reply
+data/menu.json
 ```
 
-Do not redesign the EmailJS routing solely because Yahoo occasionally puts a legitimate message in Spam.
+You can change:
+
+- Name
+- Description
+- Unit/size wording
+- Options
+- Pricing reference
+
+**Important:** Keep the item's `priceKey` matched to `data/prices.json`.
+
+If an item is renamed or removed, search the JavaScript files for its ID before deleting anything.
+
+### Desserts
+
+Customer-facing dessert names intentionally do **not** use unexplained "pan" terminology.
+
+Current special dessert behavior includes:
+
+- Banana Pudding — Full Size
+- Banana Pudding — All Biscotti
+- Banana Pudding — Half & Half
+- Small Mason Jar pudding
+- Custom Dessert — Starting at $40
+
+Custom desserts are **starting-price requests**, not guaranteed final prices. Someone will contact the customer to discuss the request and final pricing.
 
 ---
 
-# Order form architecture
+# Email system
 
-The order form is rendered dynamically from `data/menu.json`.
+Email is handled by **EmailJS**. Supabase or another database is **not** involved in sending email.
 
-Main responsibilities:
+The site sends:
+
+- **Business order email**
+- **Customer confirmation email**
+
+The business order uses the customer's email as **Reply-To**.
+
+The PDF invoice is generated in the browser with PDF-Lib and attached to the emails.
+
+### EmailJS configuration
+
+Website configuration:
+
+```text
+js/emailjs-config.js
+```
+
+EmailJS templates currently used:
+
+- `set_bbq_business_order`
+- `set_bbq_customer_confirm`
+
+The business and customer sends intentionally use their configured services. Do not change the working routing without testing both emails.
+
+See:
+
+```text
+docs/EMAILJS_SETUP.md
+```
+
+for the setup reference.
+
+### SMS notification
+
+The current order alert uses the existing **business email → Verizon email-to-text** workflow.
+
+It is intentionally just an alert to check the business email rather than a second copy of the complete order.
+
+If this changes later, document the new workflow here before changing production code.
+
+---
+
+# External services and websites
+
+| Service | Purpose | Website |
+|---|---|---|
+| **GitHub** | Source code and version control | https://github.com/ |
+| **GitHub Pages** | Hosts the production website | https://pages.github.com/ |
+| **EmailJS** | Sends business and customer emails | https://www.emailjs.com/ |
+| **Verizon** | Current SMS/email-to-text notification path | https://www.verizon.com/ |
+| **jsDelivr** | Loads browser libraries | https://www.jsdelivr.com/ |
+| **PDF-Lib** | Generates PDF invoices in the browser | https://pdf-lib.js.org/ |
+
+### Email accounts used by the workflow
+
+- **Yahoo** — business/customer email mailbox
+- **Gmail** — current sending service used for business-order email routing
+- **Verizon** — SMS notification delivery
+
+These are part of the operational workflow; they are not application databases.
+
+---
+
+# Order form
+
+The order form is primarily handled by:
 
 ### `js/order.js`
 
-Handles:
+Responsible for:
 
 - Loading menu/pricing data
-- Rendering categories/items
+- Rendering menu categories
 - Quantities
 - Options
-- Option splits
-- Wings special handling
+- Split options
 - Validation
-- Summary
+- Order summary
 - Totals
 
 ### `js/custom-dessert.js`
 
-Handles the custom dessert request UI and makes sure the customer's custom description is included with the order.
+Responsible for:
+
+- Custom Dessert UI
+- Customer's custom description
+- Including the custom request with the order
 
 ### `js/email-order-v2.js`
 
-Handles:
+Responsible for:
 
-- Building the submitted order object
-- Order number generation
-- Email HTML
-- PDF generation
-- EmailJS submission
-- Customer confirmation screen
+- Building the order
+- Generating the order number
+- Building email HTML
+- Generating the PDF
+- Sending the emails
+- Customer confirmation
 
 ### PDF
 
-The PDF is generated in the browser with PDF-Lib.
+The invoice is generated in the browser using PDF-Lib.
 
-The invoice and email are intentionally based on the same order data so item names, quantities, options, and totals stay synchronized.
-
----
-
-# GitHub Pages
-
-The production site is designed for GitHub Pages.
-
-Use relative paths for local assets and pages.
-
-The public site does not require a server-side runtime.
-
-External services/libraries currently used by the site include:
-
-- EmailJS — outgoing customer/business email
-- jsDelivr — browser libraries loaded by the order page
-- PDF-Lib — browser PDF generation
-
-If the GitHub Pages source branch changes, verify that it is still pointing at **`main`** for production.
+The email and PDF are built from the same order data so quantities, options, item names, and totals stay synchronized.
 
 ---
 
-# Local testing
+# Testing
 
-From the repository root:
+For local testing:
 
 ```bash
 python -m http.server 8000
 ```
 
-Open:
+Then open:
 
 ```text
 http://localhost:8000
 ```
 
-Testing through a local HTTP server is preferable to opening HTML files directly.
+### Basic production test
 
----
-
-# Production test checklist
-
-Before pushing a significant order-form change to `main`, test:
-
-### Website
+Before moving a significant order-form change to `main`, verify:
 
 - Home page
 - Menu page
@@ -351,161 +283,87 @@ Before pushing a significant order-form change to `main`, test:
 - Contact page
 - Order page on desktop
 - Order page on mobile
-
-### Order form
-
-- Empty order validation
-- Quantity of 1
-- Multiple quantities
-- Items without options
-- Items with options
-- Brisket size options
-- Pork belly weight options
-- Wings mixed options
+- Empty-order validation
+- Quantities
+- Menu options
+- Brisket options
+- Pork belly options
+- Wings options
 - Baked Beans options
 - Banana Pudding All Biscotti
 - Banana Pudding Half & Half
 - Small Mason Jar
 - Custom Dessert
-- Custom Dessert description
 - Delivery fee
 - Special requests
 - Correct total
+- Business email
+- Customer confirmation
+- PDF invoice
+- Business email Reply-To → customer
 
-### Submission
+For a Custom Dessert order, confirm the request appears in the:
 
-Confirm all three:
-
-1. Business email arrives.
-2. Customer confirmation arrives.
-3. PDF invoice is generated correctly.
-
-For the business email, also test:
-
-**Reply → customer's email**
-
-### Custom dessert
-
-Confirm that the PDF, business email, and customer email all clearly identify:
-
-**CUSTOM DESSERT — STARTING AT $40**
-
-and include the customer's request.
+- Business email
+- Customer email
+- PDF
 
 ---
 
-# Version information
+# Versioning
 
-The site intentionally displays version information because it has been useful during testing and troubleshooting.
+The site displays its current build version in the footer.
 
-Version-related code is in:
-
-`js/site-version.js`
-
-When making a meaningful production change, update the version there and keep the cache-busting query strings in `order.html` consistent with the changed scripts.
-
-Do not remove version information from production pages.
-
----
-
-# Making future changes
-
-For a normal website change:
-
-1. Switch to `emailjs-rebuild`.
-2. Make the smallest necessary change.
-3. Test locally.
-4. Test the GitHub Pages test branch if needed.
-5. Check desktop and mobile.
-6. For order changes, run a complete order submission.
-7. Verify email and PDF output.
-8. Update the site version.
-9. When approved, move the tested commit to `main`.
-
-Avoid large unrelated rewrites while fixing a single issue.
-
----
-
-# Troubleshooting quick reference
-
-### Prices are wrong
-
-Check:
-
-```text
-data/prices.json
-```
-
-### Item name/description/options are wrong
-
-Check:
-
-```text
-data/menu.json
-```
-
-### Order totals/options behave incorrectly
-
-Check:
-
-```text
-js/order.js
-```
-
-### Custom Dessert behaves incorrectly
-
-Check:
-
-```text
-js/custom-dessert.js
-js/email-order-v2.js
-```
-
-### Email is not sent
-
-Check:
-
-```text
-js/emailjs-config.js
-js/email-order-v2.js
-EmailJS dashboard templates/services
-```
-
-### PDF layout is wrong
-
-Check:
-
-```text
-js/email-order-v2.js
-js/pdf-layout-fix.js
-```
-
-### Version does not change
-
-Check:
+Version file:
 
 ```text
 js/site-version.js
-order.html
 ```
+
+For meaningful production changes:
+
+1. Update the site version.
+2. Check any changed script cache-busting query strings in `order.html`.
+3. Test the affected workflow.
+
+The current production version is **v0.1.16**.
 
 ---
 
-# Current architecture at a glance
+# Future database
+
+A database is **not currently part of production**.
+
+If a database is added later, it should be treated as a **data layer only**:
 
 ```text
-GitHub Pages
-    │
-    ├── Static HTML/CSS/JS
-    ├── data/menu.json
-    ├── data/prices.json
-    │
-    └── Customer Order Form
-            │
-            ├── Browser PDF
-            └── EmailJS
-                   ├── Business Order Email
-                   └── Customer Confirmation
+Customer
+   ↓
+Website
+   ├── Database → order records
+   └── EmailJS → email notifications
+                    ↓
+                 Verizon
+                    ↓
+                 SMS alert
 ```
 
-The project should remain **simple, static, and maintainable**. Add infrastructure or features only when the business actually needs it.
+Do not reintroduce database/email responsibilities into the website unless there is a specific reason to do so.
+
+---
+
+# Future changes
+
+Recommended workflow:
+
+1. Start on `emailjs-rebuild`.
+2. Make the smallest necessary change.
+3. Test locally.
+4. Test the affected page on mobile and desktop.
+5. For order changes, submit a complete test order.
+6. Verify business email, customer email, PDF, and SMS alert when applicable.
+7. Update the version.
+8. Move the approved change to `main`.
+9. Leave `emailjs-rebuild` available for the next change.
+
+**Keep the site simple.** Avoid adding infrastructure unless the business actually needs it.
