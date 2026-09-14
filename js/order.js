@@ -466,7 +466,7 @@ async function submitOrder() {
     showThankYouPage(pdfBlob);
   } catch(error) {
     const message=document.querySelector('[data-order-message]');
-    if(message) { message.textContent=error.message || 'We could not submit your order. Please try again.'; message.classList.add('form-error'); }
+    if(message) { message.textContent=error.message || 'We could not submit your order. Please try again.'; message.classList.add('form-error'); message.scrollIntoView({ block: 'center' }); }
     button.disabled=false;
     button.textContent='Place Order';
   }
