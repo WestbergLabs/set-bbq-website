@@ -1,9 +1,9 @@
 // EmailJS configuration for the static GitHub Pages order form.
-// Replace the YOUR_* values after creating the EmailJS service and templates.
+// Test configuration: Gmail recipient for business-order testing.
 window.SET_EMAIL_CONFIG = {
-  publicKey: 'YOUR_EMAILJS_PUBLIC_KEY',
-  serviceId: 'YOUR_EMAILJS_SERVICE_ID',
-  businessTemplateId: 'YOUR_EMAILJS_BUSINESS_TEMPLATE_ID',
-  customerTemplateId: 'YOUR_EMAILJS_CUSTOMER_TEMPLATE_ID',
-  businessEmail: 'northquarterscook@yahoo.com'
+  publicKey: 'CpbCBxjBvlriVqVVD',
+  serviceId: 'service_6lrifbo',
+  businessTemplateId: 'template_p0yb60l',
+  customerTemplateId: 'template_1kfq6dk',
+  businessEmail: '4thehalibit@gmail.com'
 };
