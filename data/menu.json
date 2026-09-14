@@ -39,10 +39,8 @@
       "description": "Classic sweets to finish the meal.",
       "items": [
         {"id":"bread-pudding-pan","name":"Rum Bread Pudding — Pan","description":"A full pan of warm rum bread pudding.","unit":"Per pan","priceKey":"bread-pudding-pan","category":"desserts"},
-        {"id":"banana-pudding-full-pan","name":"Banana Pudding — Full Pan","description":"A full pan of banana pudding.","unit":"Per pan","priceKey":"banana-pudding-full-pan","category":"desserts"},
-        {"id":"pudding-small-mason-jar","name":"Pudding — Small Mason Jar","description":"Single-serve mason jar pudding.","unit":"Each","priceKey":"pudding-small-mason-jar","category":"desserts"},
-        {"id":"half-half-pan-pudding","name":"Half & Half Pan Pudding","description":"A mixed half-and-half pan for sharing.","unit":"Per pan","priceKey":"half-half-pan-pudding","category":"desserts"},
-        {"id":"extra-large-pan","name":"Extra Large Pan","description":"An oversized pan option for larger gatherings.","unit":"Per pan","priceKey":"extra-large-pan","category":"desserts"}
+        {"id":"banana-pudding-full-pan","name":"Banana Pudding — Full Pan","description":"A full pan of banana pudding topped with biscotti cookies. Choose Half & Half for half biscotti and half without.","unit":"Per pan","priceKey":"banana-pudding-full-pan","category":"desserts","orderOptions":["All Biscotti","Half & Half"]},
+        {"id":"pudding-small-mason-jar","name":"Pudding — Small Mason Jar","description":"Single-serve mason jar pudding.","unit":"Each","priceKey":"pudding-small-mason-jar","category":"desserts"}
       ]
     }
   ]
