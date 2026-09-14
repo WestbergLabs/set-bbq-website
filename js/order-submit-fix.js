@@ -45,6 +45,22 @@
     }
   };
 
+  // Make EmailJS failures visible instead of falling back to a generic message.
+  if (window.emailjs && typeof window.emailjs.send === 'function') {
+    const originalSend = window.emailjs.send.bind(window.emailjs);
+    window.emailjs.send = async function (serviceId, templateId, params) {
+      try {
+        return await originalSend(serviceId, templateId, params);
+      } catch (error) {
+        const stage = templateId === window.SET_EMAIL_CONFIG?.customerTemplateId
+          ? 'Customer email'
+          : 'Business email';
+        const detail = error?.text || error?.message || (typeof error === 'string' ? error : JSON.stringify(error));
+        throw new Error(`${stage} failed: ${detail}`);
+      }
+    };
+  }
+
   // Correct the legacy success sentence once the thank-you markup is inserted.
   const fixSuccessText = () => {
     const intro = document.querySelector('.masthead .page-intro');
