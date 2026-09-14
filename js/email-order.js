@@ -186,12 +186,6 @@
     return pdf.save();
   }
 
-  function base64(bytes) {
-    let binary = '';
-    for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-    return btoa(binary);
-  }
-
   async function submitOrder() {
     const message = document.querySelector('[data-order-message]');
     const form = document.getElementById('order-form');
@@ -222,7 +216,6 @@
         customer_name: order.contactName,
         reply_to: order.email,
         invoice_html: invoiceHtml(order),
-        invoice_attachment: base64(pdfBytes),
         event_name: order.eventName,
         event_date: dateTime(order.eventDate, order.eventTime),
         total: money(order.total)
