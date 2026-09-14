@@ -16,8 +16,8 @@
     const now = new Date();
     const p = (v) => String(v).padStart(2, '0');
     const date = `${String(now.getFullYear()).slice(-2)}${p(now.getMonth() + 1)}${p(now.getDate())}`;
-    const suffix = Math.random().toString(36).slice(2, 6).toUpperCase();
-    return `SET-${date}-${suffix}`;
+    const suffix = Math.random().toString(36).slice(2, 7).toUpperCase();
+    return `${date}-${suffix}`;
   }
 
   function dateTime(dateValue, timeValue) {
