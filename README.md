@@ -190,33 +190,6 @@ The order submission sends:
 1. **Business order email**
 2. **Customer confirmation email**
 
-The business order email also uses a **BCC notification through text.email**. The BCC is sent to the configured SET BBQ notification address, which converts the email into an SMS alert. The SMS is intentionally only a quick **new order / check email** notification rather than a second copy of the full order.
-
-### text.email notification
-
-Current notification flow:
-
-```text
-New order
-    ↓
-EmailJS business order
-    ├── Business email → full order/invoice
-    └── BCC → text.email → SMS notification
-```
-
-The text.email notification is intentionally kept simple and does not replace the business email.
-
-Important notes:
-
-- text.email converts the existing business email into an SMS-friendly message.
-- The SMS may be truncated because it is based on the full business email.
-- Sender phone numbers may vary because text.email can use different sending numbers.
-- Do not rely on saving a single sender number as a contact.
-- The text.email destination is configured in the EmailJS dashboard rather than committed to the public repository.
-- If the notification is removed or changed, check the **Business Order** EmailJS template first.
-
-
-
 The website also generates the PDF invoice in the browser and attaches it to the emails.
 
 ## Current routing
