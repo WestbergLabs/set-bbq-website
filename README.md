@@ -2,7 +2,7 @@
 
 Mobile-first catering website for **South East Texas BBQ & Catering**.
 
-The site is a static HTML/CSS/JavaScript project hosted with GitHub Pages. Customer catering requests are sent through EmailJS, while Supabase provides the order database and protected admin access.
+The site is a static HTML/CSS/JavaScript project hosted with GitHub Pages. Customer catering requests are sent directly through EmailJS.
 
 ---
 
@@ -20,12 +20,6 @@ The production site currently supports:
 - Customer confirmation email
 - Business order email
 - Customer-controlled Reply-To for business email replies
-- Supabase order storage
-- Supabase Auth for the protected Orders page
-- Role-based admin authorization
-- Row Level Security (RLS)
-- Order search and status filtering
-- Order detail view and logout
 - Site version information
 
 The public site is static. There is no server running on GitHub Pages.
@@ -309,101 +303,6 @@ The invoice and email are intentionally based on the same order data so item nam
 
 ---
 
-# Supabase
-
-Supabase provides the backend for order storage and admin authentication.
-
-Primary order tables:
-
-### `orders`
-
-Stores the overall catering order, customer/event information, totals, status, and related information.
-
-### `order_items`
-
-Stores the individual order-item snapshot, including:
-
-- Item name
-- Quantity
-- Option
-- Unit price
-- Line total
-- Category
-
-**Important:** `order_items` does not currently use a `created_at` column. Do not add queries that sort/filter this table by `created_at` unless that column is intentionally added.
-
-## Order status
-
-Common statuses:
-
-- `new`
-- `contacted`
-- `confirmed`
-- `completed`
-- `cancelled`
-
-New orders should start as `new`.
-
-Historical orders whose event date has passed may be marked `completed`.
-
----
-
-# Admin access
-
-The Orders page is protected by Supabase Auth and database RLS.
-
-An administrator needs:
-
-1. A Supabase Auth account.
-2. The `admin` role in Supabase `app_metadata`.
-3. Access through the Orders page.
-
-Admin authorization is role-based and should **not** be hardcoded to a particular email address or user ID.
-
-Adding another administrator should not require changing the website code or RLS policy.
-
-Current admin features:
-
-- Sign in
-- Search
-- Status filtering
-- Order details
-- Customer/event information
-- Item and pricing details
-- Special requests
-- Logout
-
-There is intentionally no full dashboard, customer-management system, calendar, or menu-management interface yet.
-
----
-
-# Security
-
-This repository is public.
-
-**Never commit:**
-
-- Supabase service-role keys
-- Passwords
-- Authentication tokens
-- Private API keys
-- Customer personal information
-- Admin credentials
-- Other private secrets
-
-The Supabase browser/publishable key may be visible in a static frontend as intended by Supabase. It is **not** a replacement for RLS.
-
-Security must come from:
-
-- Supabase Auth
-- Database permissions
-- RLS
-- Database-side authorization checks
-
-Never replace RLS with a client-side check such as a hardcoded administrator email.
-
----
-
 # GitHub Pages
 
 The production site is designed for GitHub Pages.
@@ -412,10 +311,9 @@ Use relative paths for local assets and pages.
 
 The public site does not require a server-side runtime.
 
-External services currently used by the site include:
+External services/libraries currently used by the site include:
 
 - EmailJS — outgoing customer/business email
-- Supabase — order storage and admin authentication
 - jsDelivr — browser libraries loaded by the order page
 - PDF-Lib — browser PDF generation
 
@@ -591,16 +489,6 @@ js/site-version.js
 order.html
 ```
 
-### Admin Orders page does not work
-
-Check:
-
-- Supabase Auth
-- Admin `app_metadata` role
-- RLS policies
-- Existing table/column names
-- Browser console errors
-
 ---
 
 # Current architecture at a glance
@@ -609,22 +497,15 @@ Check:
 GitHub Pages
     │
     ├── Static HTML/CSS/JS
-    │
     ├── data/menu.json
     ├── data/prices.json
     │
-    ├── Customer Order Form
-    │       │
-    │       ├── Browser PDF
-    │       └── EmailJS
-    │              ├── Business Order Email
-    │              └── Customer Confirmation
-    │
-    └── Supabase
-            ├── Orders
-            ├── Order Items
-            ├── Authentication
-            └── RLS-protected Admin Access
+    └── Customer Order Form
+            │
+            ├── Browser PDF
+            └── EmailJS
+                   ├── Business Order Email
+                   └── Customer Confirmation
 ```
 
-The project should remain **simple, static, and maintainable**. Add infrastructure or features only when the business actually needs them.
+The project should remain **simple, static, and maintainable**. Add infrastructure or features only when the business actually needs it.
