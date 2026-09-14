@@ -287,7 +287,7 @@
   async function submitOrder() {
     const message = document.querySelector('[data-order-message]');
     const form = document.getElementById('order-form');
-    const button = form?.querySelector('button[type="submit"]');
+    const button = form?.querySelector('button[type=\"submit\"]');
     if (!form || !button || window.orderState.submitting) return;
     window.orderState.submitting = true;
 
@@ -312,7 +312,7 @@
         business_email: config.businessEmail,
         customer_email: order.email,
         customer_name: order.contactName,
-        reply_to: order.email,
+        reply_to: config.businessEmail,
         invoice_html: invoiceHtml(order),
         event_name: order.eventName,
         event_date: dateTime(order.eventDate, order.eventTime),
@@ -326,7 +326,7 @@
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
 
-      document.querySelector('main').innerHTML = `<section class="masthead"><div class="container"><div class="eyebrow">Order Received</div><h1>Thank you for your order!</h1><p class="page-intro">Your invoice <strong>${esc(order.orderNumber)}</strong> is ready below. A copy of your order has also been emailed to you.</p><div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.25rem"><a href="${url}" download="${esc(order.orderNumber)}.pdf" style="display:inline-block;padding:.75rem 1.15rem;background:#7a1f1f;color:#fff;text-decoration:none;border-radius:4px;font-weight:700">Download Invoice</a><a href="${url}" target="_blank" rel="noopener" style="display:inline-block;padding:.75rem 1.15rem;border:1px solid #7a1f1f;color:#7a1f1f;text-decoration:none;border-radius:4px;font-weight:700">Open Invoice in New Tab</a></div><p class="page-intro" style="margin-top:1rem"><strong>Need to make a change?</strong> Please call or email <a href="mailto:${esc(config.businessEmail)}">${esc(config.businessEmail)}</a>.</p></div></section><section class="section"><div class="container"><div class="card"><div class="section-head"><div class="kicker">Invoice</div><h2>Your Invoice</h2></div><div style="height:88vh;min-height:720px;max-height:1100px"><iframe src="${url}" title="Your catering invoice" style="width:100%;height:100%;border:1px solid #ddd;border-radius:4px"></iframe></div><p style="margin-top:1rem"><a href="${url}" download="${esc(order.orderNumber)}.pdf">Download Invoice</a></p></div></div></section>`;
+      document.querySelector('main').innerHTML = `<section class=\"masthead\"><div class=\"container\"><div class=\"eyebrow\">Order Received</div><h1>Thank you for your order!</h1><p class=\"page-intro\">Your invoice <strong>${esc(order.orderNumber)}</strong> is ready below. A copy of your order has also been emailed to you.</p><div style=\"display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.25rem\"><a href=\"${url}\" download=\"${esc(order.orderNumber)}.pdf\" style=\"display:inline-block;padding:.75rem 1.15rem;background:#7a1f1f;color:#fff;text-decoration:none;border-radius:4px;font-weight:700\">Download Invoice</a><a href=\"${url}\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-block;padding:.75rem 1.15rem;border:1px solid #7a1f1f;color:#7a1f1f;text-decoration:none;border-radius:4px;font-weight:700\">Open Invoice in New Tab</a></div><p class=\"page-intro\" style=\"margin-top:1rem\"><strong>Need to make a change?</strong> Please call or email <a href=\"mailto:${esc(config.businessEmail)}\">${esc(config.businessEmail)}</a>.</p></div></section><section class=\"section\"><div class=\"container\"><div class=\"card\"><div class=\"section-head\"><div class=\"kicker\">Invoice</div><h2>Your Invoice</h2></div><div style=\"height:88vh;min-height:720px;max-height:1100px\"><iframe src=\"${url}\" title=\"Your catering invoice\" style=\"width:100%;height:100%;border:1px solid #ddd;border-radius:4px\"></iframe></div><p style=\"margin-top:1rem\"><a href=\"${url}\" download=\"${esc(order.orderNumber)}.pdf\">Download Invoice</a></p></div></div></section>`;
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
       if (message) {
