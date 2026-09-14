@@ -509,6 +509,14 @@ function attachOrderHandler() {
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     event.stopPropagation();
+    form.classList.add('validated');
+    if (!validateOrderForm()) {
+      // The Place Order button sits in the totals panel, far from the
+      // message element, so bring the problem into view.
+      document.querySelector('[data-order-message]')?.scrollIntoView({ block: 'center' });
+      form.reportValidity();
+      return;
+    }
     submitOrder();
   });
 }

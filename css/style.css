@@ -252,3 +252,8 @@ input:focus, select:focus, textarea:focus { outline: 2px solid rgba(182,67,45,.2
 .admin-link { margin-top: .2rem; }
 .admin-link a { font-size: .78rem; color: rgba(255,255,255,.45); }
 .admin-link a:hover { color: rgba(255,255,255,.8); text-decoration: underline; }
+
+#order-form.validated :invalid {
+  border-color: var(--danger, #c0392b);
+  background: #fff6f5;
+}
