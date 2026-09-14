@@ -383,6 +383,122 @@ function validateOrderForm() {
   return valid;
 }
 
+
+const SUPABASE_URL = 'https://klgshthkszosfgxhjctv.supabase.co';
+const SUBMIT_ORDER_URL = `${SUPABASE_URL}/functions/v1/submit-order`;
+
+function buildOrderItems() {
+  const items = [];
+  orderState.selected.forEach((record) => {
+    const options = getOptionDefinitions(record.item);
+    const selections = Array.from(getSelectedOptions(record.item.id));
+    if (!options.length || selections.length === 0) {
+      const unitPrice = getPriceByKey(record.item.priceKey);
+      items.push({menu_item_id:record.item.id,item_name:record.item.name,category:record.item.category,quantity:record.quantity,unit:record.item.unit,unit_price:unitPrice,line_total:unitPrice*record.quantity,option:null});
+      return;
+    }
+    if (selections.length === 1) {
+      const option = options.find((entry) => entry.label === selections[0]);
+      const unitPrice = getPriceByKey(record.item.priceKey) + (option?.adjustment ?? 0);
+      items.push({menu_item_id:record.item.id,item_name:record.item.name,category:record.item.category,quantity:record.quantity,unit:record.item.unit,unit_price:unitPrice,line_total:unitPrice*record.quantity,option:selections[0]});
+      return;
+    }
+    if (record.item.id === 'wings' && record.quantity === 1) {
+      const unitPrice = getPriceByKey(record.item.priceKey);
+      items.push({menu_item_id:record.item.id,item_name:record.item.name,category:record.item.category,quantity:1,unit:record.item.unit,unit_price:unitPrice,line_total:unitPrice,option:`Mixed: ${selections.join(' + ')}`});
+      return;
+    }
+    selections.forEach((label) => {
+      const option = options.find((entry) => entry.label === label);
+      const quantity = orderState.optionSplits.get(`${record.item.id}--${label}`) ?? 0;
+      if (!quantity) return;
+      const unitPrice = getPriceByKey(record.item.priceKey) + (option?.adjustment ?? 0);
+      items.push({menu_item_id:record.item.id,item_name:record.item.name,category:record.item.category,quantity,unit:record.item.unit,unit_price:unitPrice,line_total:unitPrice*quantity,option:label});
+    });
+  });
+  return items;
+}
+
+function calculateSubtotals(items) {
+  return items.reduce((t,item) => {
+    if (item.category === 'meats') t.meats += item.line_total;
+    else if (item.category === 'sides') t.sides += item.line_total;
+    else if (item.category === 'desserts') t.desserts += item.line_total;
+    return t;
+  },{meats:0,sides:0,desserts:0});
+}
+
+async function submitOrder() {
+  const items = buildOrderItems();
+  const totals = calculateSubtotals(items);
+  const form = document.getElementById('order-form');
+  const button = form.querySelector('button[type="submit"]');
+  const payload = {
+    eventName:document.getElementById('eventName').value.trim(),
+    guestCount:Number(document.getElementById('guestCount').value),
+    eventDate:document.getElementById('eventDate').value,
+    eventTime:document.getElementById('eventTime').value,
+    eventAddress:document.getElementById('eventAddress').value.trim(),
+    contactName:document.getElementById('contactName').value.trim(),
+    phone:document.getElementById('phone').value.trim(),
+    email:document.getElementById('email').value.trim(),
+    deliveryRequired:orderState.deliverySelected,
+    deliveryFee:orderState.deliverySelected ? orderState.prices.deliveryFee : 0,
+    specialRequests:document.getElementById('specialRequests').value.trim(),
+    items,
+    subtotalMeats:totals.meats,
+    subtotalSides:totals.sides,
+    subtotalDesserts:totals.desserts,
+    total:totals.meats+totals.sides+totals.desserts+(orderState.deliverySelected ? orderState.prices.deliveryFee : 0)
+  };
+  button.disabled=true;
+  button.textContent='Submitting...';
+  try {
+    const response=await fetch(SUBMIT_ORDER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!response.ok){
+      const error=await response.json().catch(()=>({}));
+      throw new Error(error.error || 'We could not submit your order. Please try again.');
+    }
+    const pdfBlob=await response.blob();
+    showThankYouPage(pdfBlob);
+  } catch(error) {
+    const message=document.querySelector('[data-order-message]');
+    if(message) message.textContent=error.message || 'We could not submit your order. Please try again.';
+    button.disabled=false;
+    button.textContent='Place Order';
+  }
+}
+
+function showThankYouPage(pdfBlob) {
+  const pdfUrl=URL.createObjectURL(pdfBlob);
+  const link=document.createElement('a');
+  link.href=pdfUrl;
+  link.download='north-quarters-invoice.pdf';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  document.querySelector('main').innerHTML=`
+    <section class="masthead">
+      <div class="container">
+        <div class="eyebrow">Order Received</div>
+        <h1>Thank you for your order!</h1>
+        <p class="page-intro">Your invoice has been downloaded automatically. A copy is also shown below for your records.</p>
+        <p class="page-intro"><strong>Need to make a change?</strong> Please call or email <a href="mailto:northquarterscook@yahoo.com">northquarterscook@yahoo.com</a>.</p>
+      </div>
+    </section>
+    <section class="section">
+      <div class="container">
+        <div class="card">
+          <div class="section-head"><div class="kicker">Invoice</div><h2>Your Invoice</h2></div>
+          <div style="height:75vh;min-height:600px"><iframe src="${pdfUrl}" title="Your catering invoice" style="width:100%;height:100%;border:1px solid #ddd;border-radius:4px"></iframe></div>
+          <p style="margin-top:1rem"><a href="${pdfUrl}" download="north-quarters-invoice.pdf">Download Invoice Again</a></p>
+        </div>
+      </div>
+    </section>`;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
 async function initializeOrderPage() {
   const [menuResponse, pricesResponse] = await Promise.all([
     fetch('data/menu.json'),
@@ -398,24 +514,8 @@ async function initializeOrderPage() {
   if (form) {
     form.addEventListener('submit', (event) => {
       event.preventDefault();
-      if (validateOrderForm()) {
-        document.querySelector('[data-order-confirmation]').classList.remove('hidden');
-        const summary = document.querySelector('[data-order-summary-text]');
-        summary.textContent = Array.from(orderState.selected.values()).flatMap((entry) => {
-          const options = getOptionDefinitions(entry.item);
-          if (!options.length) return [`${entry.item.name} × ${entry.quantity}`];
-
-          const selections = Array.from(getSelectedOptions(entry.item.id));
-          if (selections.length === 1) return [`${entry.item.name} (${selections[0]}) × ${entry.quantity}`];
-
-          return selections.map((label) => {
-            const quantity = orderState.optionSplits.get(`${entry.item.id}--${label}`) ?? 0;
-            return quantity ? `${entry.item.name} (${label}) × ${quantity}` : null;
-          }).filter(Boolean);
-        }).join(', ');
-      }
+      if (validateOrderForm()) submitOrder();
     });
   }
-}
 
 document.addEventListener('DOMContentLoaded', initializeOrderPage);
