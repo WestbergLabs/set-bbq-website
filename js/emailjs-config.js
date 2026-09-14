@@ -1,9 +1,9 @@
 // EmailJS configuration for the static GitHub Pages order form.
-// Test configuration: Gmail recipient for business-order testing.
+// Production configuration: Yahoo recipient for SET BBQ business orders.
 window.SET_EMAIL_CONFIG = {
   publicKey: 'CpbCBxjBvlriVqVVD',
-  serviceId: 'service_6lrifbo',
+  serviceId: 'set_bbq_yahoo',
   businessTemplateId: 'set_bbq_business_order',
   customerTemplateId: 'set_bbq_customer_confirm',
-  businessEmail: '4thehalibit@gmail.com'
+  businessEmail: 'northquarterscook@yahoo.com'
 };
