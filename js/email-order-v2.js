@@ -53,15 +53,38 @@
     };
   }
 
+  function customDessertDetails(order) {
+    return order.items
+      .filter((item) => item.menu_item_id === 'custom-dessert')
+      .map((item) => String(item.option || '').replace(/^CUSTOM REQUEST:\s*/i, '').trim())
+      .filter(Boolean);
+  }
+
   function invoiceHtml(order) {
-    const rows = order.items.map((item) => `
+    const rows = order.items.map((item) => {
+      const isCustom = item.menu_item_id === 'custom-dessert';
+      const itemName = isCustom ? 'CUSTOM DESSERT — STARTING AT $40' : item.item_name;
+      const optionText = isCustom ? 'Final pricing to be confirmed after discussion' : item.option;
+      const unitText = isCustom ? 'Starting at $40' : (item.unit || '—');
+      const unitPrice = isCustom ? 40 : item.unit_price;
+      const lineTotal = isCustom ? item.line_total : item.line_total;
+      return `
       <tr>
-        <td style="padding:9px 8px;border-bottom:1px solid #ddd">${esc(item.item_name)}${item.option ? `<div style="font-size:12px;color:#666;margin-top:3px">${esc(item.option)}</div>` : ''}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid #ddd;${isCustom ? 'font-weight:700' : ''}">${esc(itemName)}${optionText ? `<div style="font-size:12px;color:#666;margin-top:3px;font-weight:400">${esc(optionText)}</div>` : ''}</td>
         <td align="center" style="padding:9px 8px;border-bottom:1px solid #ddd">${esc(item.quantity)}</td>
-        <td style="padding:9px 8px;border-bottom:1px solid #ddd">${esc(item.unit || '—')}</td>
-        <td align="right" style="padding:9px 8px;border-bottom:1px solid #ddd">${money(item.unit_price)}</td>
-        <td align="right" style="padding:9px 8px;border-bottom:1px solid #ddd">${money(item.line_total)}</td>
-      </tr>`).join('');
+        <td style="padding:9px 8px;border-bottom:1px solid #ddd">${esc(unitText)}</td>
+        <td align="right" style="padding:9px 8px;border-bottom:1px solid #ddd">${money(unitPrice)}</td>
+        <td align="right" style="padding:9px 8px;border-bottom:1px solid #ddd">${money(lineTotal)}</td>
+      </tr>`;
+    }).join('');
+
+    const customDetails = customDessertDetails(order);
+    const customBlock = customDetails.length ? `
+      <div style="margin-top:16px;padding:13px 14px;border:1px solid #c98b36;border-radius:6px;background:#fff8eb">
+        <div style="font-size:11px;font-weight:800;letter-spacing:.08em;color:#8a621f">CUSTOM DESSERT REQUEST</div>
+        <div style="margin-top:7px;font-weight:700">Final pricing will be confirmed after SET BBQ &amp; Catering discusses the request with the customer.</div>
+        <div style="margin-top:8px;white-space:pre-wrap">${esc(customDetails.join('\n\n'))}</div>
+      </div>` : '';
 
     return `<div style="font-family:Arial,Helvetica,sans-serif;background:#f5f2ee;padding:24px;color:#202020">
       <div style="max-width:760px;margin:0 auto;background:#fff;border:1px solid #d8d8d8">
@@ -84,6 +107,7 @@
             <thead><tr style="background:#7a1f1f;color:#fff"><th align="left" style="padding:9px 8px">ITEM</th><th align="center" style="padding:9px 8px">QTY</th><th align="left" style="padding:9px 8px">SIZE / UNIT</th><th align="right" style="padding:9px 8px">UNIT</th><th align="right" style="padding:9px 8px">TOTAL</th></tr></thead>
             <tbody>${rows}</tbody>
           </table>
+          ${customBlock}
           ${order.specialRequests ? `<div style="margin-top:18px;padding-top:13px;border-top:1px solid #ddd"><div style="font-size:10px;font-weight:800;color:#777;letter-spacing:.08em">SPECIAL REQUESTS</div><div style="margin-top:7px;white-space:pre-wrap">${esc(order.specialRequests)}</div></div>` : ''}
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;font-size:13px">
             <tr><td align="right">BBQ Catering Subtotal</td><td align="right" width="120">${money(order.subtotalMeats + order.subtotalSides)}</td></tr>
@@ -122,6 +146,8 @@
     const light = rgb(.95, .95, .95);
     const white = rgb(1, 1, 1);
     const line = rgb(.84, .84, .84);
+    const accent = rgb(.79, .55, .21);
+    const paleAccent = rgb(1, .97, .92);
     const text = (page, value, x, y, size = 9, font = regular, color = black) => page.drawText(String(value ?? ''), { x, y, size, font, color });
     const moneyPdf = (value) => `$${Number(value || 0).toFixed(2)}`;
     const fitText = (value, font, size, maxWidth) => {
@@ -130,9 +156,26 @@
       while (output.length > 3 && font.widthOfTextAtSize(`${output.slice(0, -3)}...`, size) > maxWidth) output = output.slice(0, -1);
       return `${output.slice(0, -3)}...`;
     };
+    const wrapText = (value, font, size, maxWidth) => {
+      const words = String(value ?? '').split(/\s+/).filter(Boolean);
+      const lines = [];
+      let lineValue = '';
+      words.forEach((word) => {
+        const next = lineValue ? `${lineValue} ${word}` : word;
+        if (font.widthOfTextAtSize(next, size) <= maxWidth) {
+          lineValue = next;
+          return;
+        }
+        if (lineValue) lines.push(lineValue);
+        lineValue = word;
+      });
+      if (lineValue) lines.push(lineValue);
+      return lines;
+    };
 
     const bbqItems = order.items.filter((item) => item.category !== 'desserts');
     const dessertItems = order.items.filter((item) => item.category === 'desserts');
+    const customItems = order.items.filter((item) => item.menu_item_id === 'custom-dessert');
     let page;
     let y;
 
@@ -230,12 +273,17 @@
           cols.forEach((col) => text(page, col.label, col.x, y - 14, 6.7, bold, white));
           y -= headerH;
         }
-        page.drawRectangle({ x: margin, y: y - rowH + 2, width: contentW, height: rowH, borderColor: line, borderWidth: .35 });
-        text(page, fitText(item.item_name, regular, 7.4, 160), cols[0].x, y - 12, 7.4, regular);
+        const isCustom = item.menu_item_id === 'custom-dessert';
+        const itemName = isCustom ? 'CUSTOM DESSERT — STARTING AT $40' : item.item_name;
+        const option = isCustom ? 'See custom request below' : (item.option || '');
+        const unit = isCustom ? 'Starting at $40' : (item.unit || '');
+        const unitPrice = isCustom ? 40 : item.unit_price;
+        page.drawRectangle({ x: margin, y: y - rowH + 2, width: contentW, height: rowH, borderColor: line, borderWidth: .35, color: isCustom ? paleAccent : undefined });
+        text(page, fitText(itemName, regular, 7.4, 160), cols[0].x, y - 12, 7.4, isCustom ? bold : regular, isCustom ? red : black);
         text(page, String(item.quantity).replace(/\.00$/, ''), cols[1].x + 10, y - 12, 7.4, regular);
-        text(page, fitText(item.unit || '', regular, 7.2, 78), cols[2].x, y - 12, 7.2, regular);
-        text(page, fitText(item.option || '', regular, 7.2, 112), cols[3].x, y - 12, 7.2, regular);
-        text(page, moneyPdf(item.unit_price), cols[4].x, y - 12, 7.1, regular);
+        text(page, fitText(unit, regular, 7.2, 78), cols[2].x, y - 12, 7.2, regular);
+        text(page, fitText(option, regular, 7.2, 112), cols[3].x, y - 12, 7.2, regular);
+        text(page, moneyPdf(unitPrice), cols[4].x, y - 12, 7.1, regular);
         text(page, moneyPdf(item.line_total), cols[5].x, y - 12, 7.1, regular);
         y -= rowH;
       });
@@ -244,6 +292,23 @@
 
     if (bbqItems.length) drawSectionTable(bbqItems, 'ORDER ITEMS — BBQ CATERING');
     if (dessertItems.length) drawSectionTable(dessertItems, 'DESSERTS BY IRENE');
+
+    if (customItems.length) {
+      if (y < 160) addPage(true);
+      const details = customItems.map((item) => String(item.option || '').replace(/^CUSTOM REQUEST:\s*/i, '').trim()).filter(Boolean).join('\n\n');
+      const lines = wrapText(details, regular, 7.8, contentW - 20);
+      const lineH = 11;
+      const boxH = Math.max(66, 50 + (lines.length * lineH));
+      page.drawRectangle({ x: margin, y: y - boxH, width: contentW, height: boxH, color: paleAccent, borderColor: accent, borderWidth: .8 });
+      text(page, 'CUSTOM DESSERT REQUEST', margin + 10, y - 16, 8.5, bold, accent);
+      text(page, 'Starting at $40 • Final pricing will be confirmed after SET BBQ & Catering contacts the customer.', margin + 10, y - 31, 7.4, bold, red);
+      let textY = y - 47;
+      lines.forEach((lineValue) => {
+        text(page, lineValue, margin + 10, textY, 7.8, regular, black);
+        textY -= lineH;
+      });
+      y -= boxH + 14;
+    }
 
     if (order.specialRequests) {
       if (y < 118) addPage(true);
