@@ -4,7 +4,8 @@ const orderState = {
   selected: new Map(),
   optionSelections: new Map(),
   optionSplits: new Map(),
-  deliverySelected: false
+  deliverySelected: false,
+  submitting: false
 };
 
 const formatCurrency = (value) => new Intl.NumberFormat('en-US', {
@@ -13,11 +14,11 @@ const formatCurrency = (value) => new Intl.NumberFormat('en-US', {
 }).format(value);
 
 function getPriceByKey(key) {
-  return orderState.prices.items[key]?.basePrice ?? 0;
+  return orderState.prices?.items?.[key]?.basePrice ?? 0;
 }
 
 function getMenuItemById(id) {
-  for (const category of orderState.menu.categories) {
+  for (const category of orderState.menu?.categories || []) {
     const found = category.items.find((item) => item.id === id);
     if (found) return found;
   }
@@ -120,8 +121,6 @@ function setOptionSelection(itemId, optionLabel, checked) {
   const maxSelections = itemId === 'wings' ? 2 : getMainQuantity(itemId);
 
   if (checked) {
-    // Each checked option represents at least one unit. Never allow
-    // more checked options than the customer's requested quantity.
     if (selections.size >= maxSelections) {
       const checkbox = Array.from(document.querySelectorAll('.option-checkbox')).find((input) =>
         input.dataset.optionItem === itemId && input.dataset.optionKey === optionLabel
@@ -142,10 +141,10 @@ function setOptionSelection(itemId, optionLabel, checked) {
 
 function updateMainQuantity(itemId, quantity) {
   const item = getMenuItemById(itemId);
+  if (!item) return;
+
   if (quantity > 0) {
     orderState.selected.set(itemId, { item, quantity });
-
-    // If quantity is reduced, automatically remove excess option choices.
     const selections = new Set(getSelectedOptions(itemId));
     if (itemId !== 'wings' && selections.size > quantity) {
       const keep = Array.from(selections).slice(0, quantity);
@@ -162,12 +161,12 @@ function updateMainQuantity(itemId, quantity) {
       orderState.optionSplits.delete(`${itemId}--${option.label}`);
     });
   }
+
   updateOptionVisibility(itemId);
   updateSummary();
 }
 
 function updateOptionVisibility(itemId) {
-  const item = getMenuItemById(itemId);
   const mainQuantity = getMainQuantity(itemId);
   const container = document.querySelector(`[data-options-container="${itemId}"]`);
   const splitList = document.querySelector(`[data-split-list="${itemId}"]`);
@@ -188,7 +187,6 @@ function updateOptionVisibility(itemId) {
   const splitMode = selections.size > 1 && mainQuantity > 1;
   splitList.hidden = !splitMode;
 
-  // A single selected option applies to the entire item quantity.
   splitList.querySelectorAll('[data-split-row]').forEach((row) => {
     const label = row.dataset.splitRow.split('--').slice(1).join('--');
     row.hidden = !splitMode || !selections.has(label);
@@ -292,7 +290,7 @@ function updateSummary() {
   const summaryList = document.querySelector('[data-summary-list]');
   const totalOutput = document.querySelector('[data-order-total]');
   const deliveryOutput = document.querySelector('[data-delivery-total]');
-  if (!summaryList || !totalOutput || !deliveryOutput) return;
+  if (!summaryList || !totalOutput || !deliveryOutput || !orderState.prices) return;
 
   let subtotal = 0;
   const rows = [];
@@ -314,7 +312,6 @@ function updateSummary() {
       subtotal += lineTotal;
       rows.push(`<li><span>${record.item.name} — ${selections[0]} × ${record.quantity}</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
     } else if (selections.length > 1 && record.quantity === 1 && record.item.id === 'wings') {
-      // A single wing order can be mixed without asking the customer to split quantities.
       const lineTotal = getPriceByKey(record.item.priceKey) * record.quantity;
       subtotal += lineTotal;
       rows.push(`<li><span>${record.item.name} — Mixed (${selections.join(' + ')}) × 1</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
@@ -345,7 +342,9 @@ function validateOrderForm() {
     if (!element || !element.value.trim()) {
       valid = false;
       if (element) element.setCustomValidity('Required');
-    } else element.setCustomValidity('');
+    } else {
+      element.setCustomValidity('');
+    }
   });
 
   const email = document.getElementById('email');
@@ -378,157 +377,132 @@ function validateOrderForm() {
   } else if (!hasValidOptions()) {
     valid = false;
     if (message) message.textContent = 'Please finish selecting the options for your items.';
-  } else if (message) message.textContent = '';
+  } else if (message) {
+    message.textContent = '';
+  }
 
   return valid;
 }
-
-
-const SUPABASE_URL = 'https://klgshthkszosfgxhjctv.supabase.co';
-const SUBMIT_ORDER_URL = `${SUPABASE_URL}/functions/v1/submit-order`;
 
 function buildOrderItems() {
   const items = [];
   orderState.selected.forEach((record) => {
     const options = getOptionDefinitions(record.item);
     const selections = Array.from(getSelectedOptions(record.item.id));
+
     if (!options.length || selections.length === 0) {
       const unitPrice = getPriceByKey(record.item.priceKey);
-      items.push({menu_item_id:record.item.id,item_name:record.item.name,category:record.item.category,quantity:record.quantity,unit:record.item.unit,unit_price:unitPrice,line_total:unitPrice*record.quantity,option:null});
+      items.push({
+        menu_item_id: record.item.id,
+        item_name: record.item.name,
+        category: record.item.category,
+        quantity: record.quantity,
+        unit: record.item.unit,
+        unit_price: unitPrice,
+        line_total: unitPrice * record.quantity,
+        option: null
+      });
       return;
     }
+
     if (selections.length === 1) {
       const option = options.find((entry) => entry.label === selections[0]);
       const unitPrice = getPriceByKey(record.item.priceKey) + (option?.adjustment ?? 0);
-      items.push({menu_item_id:record.item.id,item_name:record.item.name,category:record.item.category,quantity:record.quantity,unit:record.item.unit,unit_price:unitPrice,line_total:unitPrice*record.quantity,option:selections[0]});
+      items.push({
+        menu_item_id: record.item.id,
+        item_name: record.item.name,
+        category: record.item.category,
+        quantity: record.quantity,
+        unit: record.item.unit,
+        unit_price: unitPrice,
+        line_total: unitPrice * record.quantity,
+        option: selections[0]
+      });
       return;
     }
+
     if (record.item.id === 'wings' && record.quantity === 1) {
       const unitPrice = getPriceByKey(record.item.priceKey);
-      items.push({menu_item_id:record.item.id,item_name:record.item.name,category:record.item.category,quantity:1,unit:record.item.unit,unit_price:unitPrice,line_total:unitPrice,option:`Mixed: ${selections.join(' + ')}`});
+      items.push({
+        menu_item_id: record.item.id,
+        item_name: record.item.name,
+        category: record.item.category,
+        quantity: 1,
+        unit: record.item.unit,
+        unit_price: unitPrice,
+        line_total: unitPrice,
+        option: `Mixed: ${selections.join(' + ')}`
+      });
       return;
     }
+
     selections.forEach((label) => {
       const option = options.find((entry) => entry.label === label);
       const quantity = orderState.optionSplits.get(`${record.item.id}--${label}`) ?? 0;
       if (!quantity) return;
       const unitPrice = getPriceByKey(record.item.priceKey) + (option?.adjustment ?? 0);
-      items.push({menu_item_id:record.item.id,item_name:record.item.name,category:record.item.category,quantity,unit:record.item.unit,unit_price:unitPrice,line_total:unitPrice*quantity,option:label});
+      items.push({
+        menu_item_id: record.item.id,
+        item_name: record.item.name,
+        category: record.item.category,
+        quantity,
+        unit: record.item.unit,
+        unit_price: unitPrice,
+        line_total: unitPrice * quantity,
+        option: label
+      });
     });
   });
   return items;
 }
 
 function calculateSubtotals(items) {
-  return items.reduce((t,item) => {
-    if (item.category === 'meats') t.meats += item.line_total;
-    else if (item.category === 'sides') t.sides += item.line_total;
-    else if (item.category === 'desserts') t.desserts += item.line_total;
-    return t;
-  },{meats:0,sides:0,desserts:0});
-}
-
-async function submitOrder() {
-  const items = buildOrderItems();
-  const message = document.querySelector('[data-order-message]');
-  const totals = calculateSubtotals(items);
-  const form = document.getElementById('order-form');
-  const button = form.querySelector('button[type="submit"]');
-  const payload = {
-    eventName:document.getElementById('eventName').value.trim(),
-    guestCount:Number(document.getElementById('guestCount').value),
-    eventDate:document.getElementById('eventDate').value,
-    eventTime:document.getElementById('eventTime').value,
-    eventAddress:document.getElementById('eventAddress').value.trim(),
-    contactName:document.getElementById('contactName').value.trim(),
-    phone:document.getElementById('phone').value.trim(),
-    email:document.getElementById('email').value.trim(),
-    deliveryRequired:orderState.deliverySelected,
-    deliveryFee:orderState.deliverySelected ? orderState.prices.deliveryFee : 0,
-    specialRequests:document.getElementById('specialRequests').value.trim(),
-    items,
-    subtotalMeats:totals.meats,
-    subtotalSides:totals.sides,
-    subtotalDesserts:totals.desserts,
-    total:totals.meats+totals.sides+totals.desserts+(orderState.deliverySelected ? orderState.prices.deliveryFee : 0)
-  };
-  if (message) message.textContent = 'Submitting your order…';
-  button.disabled=true;
-  button.textContent='Submitting...';
-  try {
-    const response=await fetch(SUBMIT_ORDER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    if(!response.ok){
-      const error=await response.json().catch(()=>({}));
-      throw new Error(error.error || 'We could not submit your order. Please try again.');
-    }
-    const pdfBlob=await response.blob();
-    if (!pdfBlob.size) throw new Error('The invoice was empty. Please try again.');
-    showThankYouPage(pdfBlob);
-  } catch(error) {
-    const message=document.querySelector('[data-order-message]');
-    if(message) { message.textContent=error.message || 'We could not submit your order. Please try again.'; message.classList.add('form-error'); message.scrollIntoView({ block: 'center' }); }
-    button.disabled=false;
-    button.textContent='Place Order';
-  }
-}
-
-function showThankYouPage(pdfBlob) {
-  const pdfUrl=URL.createObjectURL(pdfBlob);
-  const link=document.createElement('a');
-  link.href=pdfUrl;
-  link.download='north-quarters-invoice.pdf';
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-
-  document.querySelector('main').innerHTML=`
-    <section class="masthead">
-      <div class="container">
-        <div class="eyebrow">Order Received</div>
-        <h1>Thank you for your order!</h1>
-        <p class="page-intro">Your invoice has been downloaded automatically. A copy is also shown below for your records.</p>
-        <p class="page-intro"><strong>Need to make a change?</strong> Please call or email <a href="mailto:northquarterscook@yahoo.com">northquarterscook@yahoo.com</a>.</p>
-      </div>
-    </section>
-    <section class="section">
-      <div class="container">
-        <div class="card">
-          <div class="section-head"><div class="kicker">Invoice</div><h2>Your Invoice</h2></div>
-          <div style="height:75vh;min-height:600px"><iframe src="${pdfUrl}" title="Your catering invoice" style="width:100%;height:100%;border:1px solid #ddd;border-radius:4px"></iframe></div>
-          <p style="margin-top:1rem"><a href="${pdfUrl}" download="north-quarters-invoice.pdf">Download Invoice Again</a></p>
-        </div>
-      </div>
-    </section>`;
-  window.scrollTo({top:0,behavior:'smooth'});
+  return items.reduce((totals, item) => {
+    if (item.category === 'meats') totals.meats += item.line_total;
+    else if (item.category === 'sides') totals.sides += item.line_total;
+    else if (item.category === 'desserts') totals.desserts += item.line_total;
+    return totals;
+  }, { meats: 0, sides: 0, desserts: 0 });
 }
 
 function attachOrderHandler() {
   const form = document.getElementById('order-form');
   if (!form || form.dataset.handlerAttached) return;
   form.dataset.handlerAttached = 'true';
+
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     event.stopPropagation();
     form.classList.add('validated');
+
     if (!validateOrderForm()) {
-      // The Place Order button sits in the totals panel, far from the
-      // message element, so bring the problem into view.
       document.querySelector('[data-order-message]')?.scrollIntoView({ block: 'center' });
       form.reportValidity();
       return;
     }
-    submitOrder();
+
+    if (typeof window.submitOrder === 'function') {
+      window.submitOrder();
+    } else {
+      const message = document.querySelector('[data-order-message]');
+      if (message) message.textContent = 'The order submission system is still loading. Please refresh and try again.';
+    }
   });
 }
 
 async function initializeOrderPage() {
   attachOrderHandler();
+
   try {
     const [menuResponse, pricesResponse] = await Promise.all([
       fetch('data/menu.json'),
       fetch('data/prices.json')
     ]);
-    if (!menuResponse.ok || !pricesResponse.ok) throw new Error('Unable to load menu information.');
+
+    if (!menuResponse.ok || !pricesResponse.ok) {
+      throw new Error('Unable to load menu information.');
+    }
+
     orderState.menu = await menuResponse.json();
     orderState.prices = await pricesResponse.json();
     renderOrderOptions();
@@ -542,7 +516,9 @@ async function initializeOrderPage() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  attachOrderHandler();
-  initializeOrderPage();
-});
+window.orderState = orderState;
+window.buildOrderItems = buildOrderItems;
+window.calculateSubtotals = calculateSubtotals;
+window.validateOrderForm = validateOrderForm;
+
+document.addEventListener('DOMContentLoaded', initializeOrderPage);
