@@ -517,5 +517,6 @@ async function initializeOrderPage() {
       if (validateOrderForm()) submitOrder();
     });
   }
+}
 
 document.addEventListener('DOMContentLoaded', initializeOrderPage);
