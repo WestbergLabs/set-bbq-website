@@ -430,6 +430,7 @@ function calculateSubtotals(items) {
 
 async function submitOrder() {
   const items = buildOrderItems();
+  const message = document.querySelector('[data-order-message]');
   const totals = calculateSubtotals(items);
   const form = document.getElementById('order-form');
   const button = form.querySelector('button[type="submit"]');
@@ -451,6 +452,7 @@ async function submitOrder() {
     subtotalDesserts:totals.desserts,
     total:totals.meats+totals.sides+totals.desserts+(orderState.deliverySelected ? orderState.prices.deliveryFee : 0)
   };
+  if (message) message.textContent = 'Submitting your order…';
   button.disabled=true;
   button.textContent='Submitting...';
   try {
@@ -460,10 +462,11 @@ async function submitOrder() {
       throw new Error(error.error || 'We could not submit your order. Please try again.');
     }
     const pdfBlob=await response.blob();
+    if (!pdfBlob.size) throw new Error('The invoice was empty. Please try again.');
     showThankYouPage(pdfBlob);
   } catch(error) {
     const message=document.querySelector('[data-order-message]');
-    if(message) message.textContent=error.message || 'We could not submit your order. Please try again.';
+    if(message) { message.textContent=error.message || 'We could not submit your order. Please try again.'; message.classList.add('form-error'); }
     button.disabled=false;
     button.textContent='Place Order';
   }
@@ -514,7 +517,7 @@ async function initializeOrderPage() {
   if (form) {
     form.addEventListener('submit', (event) => {
       event.preventDefault();
-      if (validateOrderForm()) submitOrder();
+      submitOrder();
     });
   }
 }
