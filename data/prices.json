@@ -30,8 +30,6 @@
     "pinto-beans": { "basePrice": 50 },
     "bread-pudding-pan": { "basePrice": 40 },
     "banana-pudding-full-pan": { "basePrice": 35 },
-    "pudding-small-mason-jar": { "basePrice": 10 },
-    "half-half-pan-pudding": { "basePrice": 35 },
-    "extra-large-pan": { "basePrice": 50 }
+    "pudding-small-mason-jar": { "basePrice": 10 }
   }
 }
