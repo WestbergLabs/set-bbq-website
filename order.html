@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Request Catering | South East Texas BBQ</title>
-    <meta name="description" content="Request catering from South East Texas BBQ & Catering." />
+    <meta name="description" content="Create a custom BBQ catering request for South East Texas BBQ & Catering." />
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
@@ -25,57 +25,98 @@
     <main>
       <section class="masthead">
         <div class="container">
-          <div class="eyebrow">Catering Request</div>
-          <h1>Build Your Catering Order</h1>
-          <p class="page-intro">Choose your menu items, event details, and delivery preference. This is a request for review, not an immediate confirmation.</p>
+          <div class="eyebrow">Request Catering</div>
+          <h1>Tell us about your event.</h1>
+          <p class="page-intro">Build your catering request, choose your BBQ, and review the estimated total before sending the request.</p>
         </div>
       </section>
 
       <section class="section">
         <div class="container order-layout">
           <form id="order-form" novalidate>
-            <div class="form-section">
-              <div class="section-head">
-                <div class="kicker">Event</div>
-                <h2>Event details</h2>
+            <div class="form-grid">
+              <div class="card">
+                <div class="section-head">
+                  <div class="kicker">Event info</div>
+                  <h2>Event details</h2>
+                </div>
+                <div class="field-row">
+                  <div>
+                    <label for="eventName">Event Name</label>
+                    <input id="eventName" name="eventName" type="text" required />
+                  </div>
+                  <div>
+                    <label for="guestCount">Number of Guests</label>
+                    <input id="guestCount" name="guestCount" type="number" min="1" required />
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div>
+                    <label for="eventDate">Event Date</label>
+                    <input id="eventDate" name="eventDate" type="date" required />
+                  </div>
+                  <div>
+                    <label for="eventTime">Event Time</label>
+                    <input id="eventTime" name="eventTime" type="time" />
+                  </div>
+                </div>
+                <div>
+                  <label for="eventAddress">Event Address</label>
+                  <input id="eventAddress" name="eventAddress" type="text" required />
+                </div>
+                <div class="field-row">
+                  <div class="delivery-field">
+                    <label for="deliveryToggle">
+                      <input id="deliveryToggle" data-delivery-toggle type="checkbox" />
+                      <span>Deliver + $20</span>
+                    </label>
+                  </div>
+                </div>
               </div>
-              <div class="form-grid">
-                <label>Event Name<input id="eventName" name="eventName" type="text" required /></label>
-                <label>Guest Count<input id="guestCount" name="guestCount" type="number" min="1" required /></label>
-                <label>Event Date<input id="eventDate" name="eventDate" type="date" required /></label>
-                <label>Event Time<input id="eventTime" name="eventTime" type="time" /></label>
-                <label>Contact Name<input id="contactName" name="contactName" type="text" required /></label>
-                <label>Phone<input id="phone" name="phone" type="tel" required /></label>
-                <label>Email<input id="email" name="email" type="email" required /></label>
-                <label>Confirm Email<input id="confirmEmail" name="confirmEmail" type="email" required /></label>
-                <label class="full-width">Venue / Event Address<input id="eventAddress" name="eventAddress" type="text" required /></label>
-              </div>
-            </div>
 
-            <div class="form-section">
-              <div class="section-head">
-                <div class="kicker">Menu</div>
-                <h2>Choose your items</h2>
-                <p>Select quantities below. Items with options will show additional choices when needed.</p>
+              <div class="card">
+                <div class="section-head">
+                  <div class="kicker">Contact</div>
+                  <h2>Contact details</h2>
+                </div>
+                <div class="field-row">
+                  <div>
+                    <label for="contactName">Contact Person</label>
+                    <input id="contactName" name="contactName" type="text" required />
+                  </div>
+                  <div>
+                    <label for="phone">Phone</label>
+                    <input id="phone" name="phone" type="tel" required />
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div>
+                    <label for="email">Email</label>
+                    <input id="email" name="email" type="email" required />
+                  </div>
+                  <div>
+                    <label for="confirmEmail">Confirm Email</label>
+                    <input id="confirmEmail" name="confirmEmail" type="email" required />
+                  </div>
+                </div>
               </div>
-              <div data-order-categories></div>
-            </div>
 
-            <div class="form-section">
-              <div class="section-head">
-                <div class="kicker">Delivery</div>
-                <h2>Pickup or delivery</h2>
+              <div class="card">
+                <div class="section-head">
+                  <div class="kicker">Menu</div>
+                  <h2>Select your items</h2>
+                </div>
+                <div data-order-categories></div>
               </div>
-              <label class="toggle-row"><input type="checkbox" data-delivery-toggle /> <span>Request delivery</span></label>
-            </div>
 
-            <div class="form-section">
-              <div class="section-head">
-                <div class="kicker">Special notes</div>
-                <h2>Special notes</h2>
+              <div class="card">
+                <div class="section-head">
+                  <div class="kicker">Requests</div>
+                  <h2>Special notes</h2>
+                </div>
+                <label for="specialRequests">Special Requests</label>
+                <textarea id="specialRequests" name="specialRequests"></textarea>
               </div>
-              <label for="specialRequests">Special Requests</label>
-              <textarea id="specialRequests" name="specialRequests"></textarea>
             </div>
           </form>
 
