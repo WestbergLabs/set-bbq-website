@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex,nofollow">
   <title>SET BBQ — Admin</title>
-  <link rel="stylesheet" href="css/admin.css?v=23">
+  <link rel="stylesheet" href="css/admin.css?v=29">
 </head>
 <body>
   <main class="admin-shell">
@@ -25,35 +25,225 @@
     </section>
 
     <section class="admin-card admin-dashboard" id="admin-dashboard" hidden>
-      <div class="brand">SET BBQ</div>
-      <h1>Admin</h1>
-      <p>Business tools and site management.</p>
-
-      <div class="tool-grid">
-        <a class="tool-card" href="menu-editor.html">
-          <span class="tool-kicker">Menu & Prices</span>
-          <strong>Menu Editor</strong>
-          <span>Edit item names, descriptions, units, prices, options, and delivery fee.</span>
-        </a>
+      <div class="admin-page-head">
+        <div>
+          <div class="brand">SET BBQ · Administration</div>
+          <h1>Dashboard</h1>
+          <p>Website tools and day-to-day management.</p>
+        </div>
+        <div class="admin-user">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="admin-user-email">Signed in</span>
+        </div>
       </div>
 
-      <div class="admin-dashboard-actions">
-        <button id="admin-logout" class="secondary" type="button">Sign Out</button>
+      <nav class="admin-nav" aria-label="Admin sections">
+        <a href="#menu">Menu</a>
+        <a href="#website">Website</a>
+        <a href="#system">System</a>
+        <a href="#account">Account</a>
+      </nav>
+
+      <section class="admin-section" id="menu">
+        <div class="admin-section-heading">
+          <div>
+            <span class="section-kicker">Menu</span>
+            <h2>Menu &amp; Pricing</h2>
+          </div>
+          <span class="section-note">Database-backed</span>
+        </div>
+        <div class="admin-tool-list">
+          <a class="admin-tool" href="menu-editor.html">
+            <span class="tool-icon" aria-hidden="true">≡</span>
+            <span class="tool-copy">
+              <strong>Menu Editor</strong>
+              <span>Update items, descriptions, prices, options, delivery fee, and item order.</span>
+            </span>
+            <span class="tool-arrow" aria-hidden="true">→</span>
+          </a>
+          <a class="admin-tool" href="menu.html" target="_blank" rel="noopener">
+            <span class="tool-icon" aria-hidden="true">↗</span>
+            <span class="tool-copy">
+              <strong>View Menu</strong>
+              <span>Open the customer-facing menu to confirm what visitors see.</span>
+            </span>
+            <span class="tool-arrow" aria-hidden="true">→</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="admin-section" id="website">
+        <div class="admin-section-heading">
+          <div>
+            <span class="section-kicker">Website</span>
+            <h2>Customer Pages</h2>
+          </div>
+          <span class="section-note">Quick access</span>
+        </div>
+        <div class="admin-tool-list">
+          <a class="admin-tool" href="index.html" target="_blank" rel="noopener">
+            <span class="tool-icon" aria-hidden="true">⌂</span>
+            <span class="tool-copy">
+              <strong>View Website</strong>
+              <span>Open the public SET BBQ homepage.</span>
+            </span>
+            <span class="tool-arrow" aria-hidden="true">→</span>
+          </a>
+          <a class="admin-tool" href="contact.html" target="_blank" rel="noopener">
+            <span class="tool-icon" aria-hidden="true">✉</span>
+            <span class="tool-copy">
+              <strong>Contact Page</strong>
+              <span>Review the customer-facing contact information.</span>
+            </span>
+            <span class="tool-arrow" aria-hidden="true">→</span>
+          </a>
+          <a class="admin-tool" href="order.html" target="_blank" rel="noopener">
+            <span class="tool-icon" aria-hidden="true">▤</span>
+            <span class="tool-copy">
+              <strong>Order Page</strong>
+              <span>Open the catering request form for review or testing.</span>
+            </span>
+            <span class="tool-arrow" aria-hidden="true">→</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="admin-section" id="system">
+        <div class="admin-section-heading">
+          <div>
+            <span class="section-kicker">System</span>
+            <h2>System Status</h2>
+          </div>
+          <button id="run-status-check" class="text-button" type="button">Run checks</button>
+        </div>
+
+        <div class="status-summary" id="status-summary">
+          <span class="status-summary-dot" aria-hidden="true"></span>
+          <div>
+            <strong id="status-summary-title">Checking system…</strong>
+            <span id="status-summary-time">Please wait</span>
+          </div>
+        </div>
+
+        <div class="status-list" aria-live="polite">
+          <div class="status-row" data-check="website">
+            <div><strong>Website</strong><span>Public site is reachable.</span></div>
+            <span class="check-result pending">Checking…</span>
+          </div>
+          <div class="status-row" data-check="menu">
+            <div><strong>Menu Database</strong><span>Current menu can be loaded.</span></div>
+            <span class="check-result pending">Checking…</span>
+          </div>
+          <div class="status-row" data-check="auth">
+            <div><strong>Admin Authentication</strong><span>Current admin session is valid.</span></div>
+            <span class="check-result pending">Checking…</span>
+          </div>
+          <div class="status-row" data-check="order">
+            <div><strong>Order Page</strong><span>Customer order form is reachable.</span></div>
+            <span class="check-result pending">Checking…</span>
+          </div>
+        </div>
+
+        <div class="system-note">
+          <strong>Need to test an actual order?</strong>
+          <span>Use the Order Page above. This check does not submit an order or send an email.</span>
+        </div>
+      </section>
+
+      <section class="admin-section" id="account">
+        <div class="admin-section-heading">
+          <div>
+            <span class="section-kicker">Account</span>
+            <h2>Admin Account</h2>
+          </div>
+        </div>
+        <div class="account-panel">
+          <div>
+            <span class="account-label">Signed in as</span>
+            <strong id="account-email">—</strong>
+          </div>
+          <div>
+            <span class="account-label">Environment</span>
+            <strong>Production</strong>
+          </div>
+          <button id="admin-logout" class="secondary" type="button">Sign Out</button>
+        </div>
+      </section>
+
+      <footer class="dashboard-footer">
         <a href="index.html">← Back to website</a>
-      </div>
+        <span>Build <span data-site-version>v0.1.29</span></span>
+      </footer>
     </section>
   </main>
 
-  <footer class="admin-footer">Build <span data-site-version>v0.1.22</span></footer>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabase-config.js?v=1"></script>
+  <script src="js/supabase-config.js?v=2"></script>
   <script src="js/admin-auth.js?v=1"></script>
-  <script src="js/site-version.js?v=22"></script>
+  <script src="js/menu-store.js?v=2"></script>
+  <script src="js/site-version.js?v=29"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const form = document.getElementById('admin-login-form');
       const message = document.getElementById('admin-message');
+      const loginCard = document.getElementById('login-card');
+      const dashboard = document.getElementById('admin-dashboard');
+      let currentUser = null;
+
+      const setCheck = (name, state, label) => {
+        const row = document.querySelector('[data-check="' + name + '"]');
+        if (!row) return;
+        const result = row.querySelector('.check-result');
+        result.className = 'check-result ' + state;
+        result.textContent = label;
+      };
+
+      const runStatusChecks = async () => {
+        document.getElementById('status-summary-title').textContent = 'Checking system…';
+        document.getElementById('status-summary-time').textContent = 'Running live checks';
+        ['website', 'menu', 'auth', 'order'].forEach((name) => setCheck(name, 'pending', 'Checking…'));
+
+        const checks = await Promise.allSettled([
+          fetch('index.html', { cache: 'no-store' }).then((response) => {
+            if (!response.ok) throw new Error('Website unavailable');
+          }),
+          window.SET_MENU_API.load().then((result) => {
+            if (!result?.menu || !result?.prices) throw new Error('Menu data incomplete');
+          }),
+          window.SET_ADMIN_AUTH_API.checkSession().then((user) => {
+            if (!user) throw new Error('Session expired');
+            currentUser = user;
+            return user;
+          }),
+          fetch('order.html', { cache: 'no-store' }).then((response) => {
+            if (!response.ok) throw new Error('Order page unavailable');
+          })
+        ]);
+
+        const names = ['website', 'menu', 'auth', 'order'];
+        checks.forEach((result, index) => {
+          setCheck(names[index], result.status === 'fulfilled' ? 'ok' : 'error', result.status === 'fulfilled' ? 'Operational' : 'Unavailable');
+        });
+
+        const failed = checks.filter((result) => result.status === 'rejected').length;
+        const title = document.getElementById('status-summary-title');
+        const dot = document.querySelector('.status-summary-dot');
+        if (failed === 0) {
+          title.textContent = 'All checked systems operational';
+          dot.className = 'status-summary-dot ok';
+        } else {
+          title.textContent = failed + ' system check' + (failed === 1 ? '' : 's') + ' need attention';
+          dot.className = 'status-summary-dot error';
+        }
+        document.getElementById('status-summary-time').textContent =
+          'Last checked ' + new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(new Date());
+
+        if (currentUser?.email) {
+          document.getElementById('admin-user-email').textContent = currentUser.email;
+          document.getElementById('account-email').textContent = currentUser.email;
+        }
+      };
+
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
         message.textContent = 'Signing in…';
@@ -69,14 +259,19 @@
       });
 
       try {
-        const user = await window.SET_ADMIN_AUTH_API.checkSession();
-        if (user) {
-          document.getElementById('login-card').hidden = true;
-          document.getElementById('admin-dashboard').hidden = false;
+        currentUser = await window.SET_ADMIN_AUTH_API.checkSession();
+        if (currentUser) {
+          loginCard.hidden = true;
+          dashboard.hidden = false;
+          document.getElementById('admin-user-email').textContent = currentUser.email || 'Signed in';
+          document.getElementById('account-email').textContent = currentUser.email || '—';
+          runStatusChecks();
         }
       } catch (error) {
         message.textContent = error?.message || 'Unable to verify admin access.';
       }
+
+      document.getElementById('run-status-check').addEventListener('click', runStatusChecks);
 
       document.getElementById('admin-logout').addEventListener('click', async () => {
         await window.SET_ADMIN_AUTH_API.signOut();
