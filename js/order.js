@@ -25,9 +25,16 @@ function getMenuItemById(id) {
   return null;
 }
 
+function getOptionGroups(item) {
+  if (item.pricing?.groups?.length) return item.pricing.groups;
+  const options = item.pricing?.options?.length
+    ? item.pricing.options
+    : (item.orderOptions ?? []).map((label) => ({ label, adjustment: 0 }));
+  return options.length ? [{ label: 'Options', options }] : [];
+}
+
 function getOptionDefinitions(item) {
-  if (item.pricing?.options?.length) return item.pricing.options;
-  return (item.orderOptions ?? []).map((label) => ({ label, adjustment: 0 }));
+  return getOptionGroups(item).flatMap((group) => group.options || []);
 }
 
 function makeQuantityInput(itemId, optionKey = '') {
@@ -46,21 +53,24 @@ function renderCategorySelection(category, container) {
 
   const list = category.items.map((item) => {
     const itemPrice = getPriceByKey(item.priceKey);
-    const options = getOptionDefinitions(item);
+    const groups = getOptionGroups(item);
 
-    if (options.length) {
-      const optionRows = options.map((option) => `
-        <label class="option-choice-row" data-option-row="${item.id}">
-          <input type="checkbox" class="option-checkbox" data-option-item="${item.id}" data-option-key="${option.label}" />
-          <span class="option-choice-label">${option.label}</span>
-          <span class="option-price">${optionPriceText(item, option)}</span>
-        </label>`).join('');
+    if (groups.length) {
+      const groupHtml = groups.map((group, groupIndex) => {
+        const options = group.options || [];
+        const optionRows = options.map((option) => `
+          <label class="option-choice-row" data-option-row="${item.id}">
+            <input type="radio" class="option-radio" name="option-${item.id}-${groupIndex}" data-option-item="${item.id}" data-option-group="${groupIndex}" data-option-key="${option.label}" />
+            <span class="option-choice-label">${option.label}</span>
+            <span class="option-price">${Number(option.adjustment || 0) ? '+' + formatCurrency(option.adjustment) : ''}</span>
+          </label>`).join('');
 
-      const splitRows = options.map((option) => `
-        <div class="option-split-row" data-split-row="${item.id}--${option.label}" hidden>
-          <span>${option.label}</span>
-          <label class="quantity-control">Qty ${makeQuantityInput(item.id, option.label)}</label>
-        </div>`).join('');
+        return `
+          <div class="option-group" data-option-group-container="${item.id}--${groupIndex}">
+            <div class="option-group-label">${group.label || 'Options'}</div>
+            <div class="option-choice-list">${optionRows}</div>
+          </div>`;
+      }).join('');
 
       return `<div class="order-item" data-order-item="${item.id}" data-has-options="true">
         <div class="order-item-header">
@@ -74,9 +84,8 @@ function renderCategorySelection(category, container) {
           </div>
         </div>
         <div class="order-options" data-options-container="${item.id}" hidden>
-          <div class="option-prompt">Choose one or more:</div>
-          <div class="option-choice-list">${optionRows}</div>
-          <div class="option-split-list" data-split-list="${item.id}" hidden>${splitRows}</div>
+          <div class="option-prompt">Choose your selections:</div>
+          ${groupHtml}
           <div class="option-validation" data-option-validation="${item.id}" aria-live="polite"></div>
         </div>
       </div>`;
@@ -98,195 +107,59 @@ function renderCategorySelection(category, container) {
 
   wrapper.innerHTML = `<h3>${category.name}</h3>${list}`;
   container.appendChild(wrapper);
-}
-
-function renderOrderOptions() {
-  const container = document.querySelector('[data-order-categories]');
-  if (!container || !orderState.menu) return;
-  container.innerHTML = '';
-  orderState.menu.categories.forEach((category) => renderCategorySelection(category, container));
-  bindSelectionEvents();
-}
-
-function getMainQuantity(itemId) {
-  return orderState.selected.get(itemId)?.quantity ?? 0;
-}
-
-function getSelectedOptions(itemId) {
-  return orderState.optionSelections.get(itemId) ?? new Set();
-}
-
-function setOptionSelection(itemId, optionLabel, checked) {
-  const selections = new Set(getSelectedOptions(itemId));
-  const maxSelections = itemId === 'wings' ? 2 : getMainQuantity(itemId);
-
-  if (checked) {
-    if (selections.size >= maxSelections) {
-      const checkbox = Array.from(document.querySelectorAll('.option-checkbox')).find((input) =>
-        input.dataset.optionItem === itemId && input.dataset.optionKey === optionLabel
-      );
-      if (checkbox) checkbox.checked = false;
-      return;
-    }
-    selections.add(optionLabel);
-  } else {
-    selections.delete(optionLabel);
-    orderState.optionSplits.delete(`${itemId}--${optionLabel}`);
-  }
-
+}function setOptionSelection(itemId, groupIndex, optionLabel) {
+  const key = `${itemId}--${groupIndex}`;
+  const selections = new Map(orderState.optionSelections.get(itemId) || []);
+  selections.set(groupIndex, optionLabel);
   orderState.optionSelections.set(itemId, selections);
   updateOptionVisibility(itemId);
   updateSummary();
-}
-
-function updateMainQuantity(itemId, quantity) {
+}function updateMainQuantity(itemId, quantity) {
   const item = getMenuItemById(itemId);
   if (!item) return;
 
   if (quantity > 0) {
     orderState.selected.set(itemId, { item, quantity });
-    const selections = new Set(getSelectedOptions(itemId));
-    if (itemId !== 'wings' && selections.size > quantity) {
-      const keep = Array.from(selections).slice(0, quantity);
-      const keepSet = new Set(keep);
-      Array.from(selections).slice(quantity).forEach((label) => {
-        orderState.optionSplits.delete(`${itemId}--${label}`);
-      });
-      orderState.optionSelections.set(itemId, keepSet);
-    }
   } else {
     orderState.selected.delete(itemId);
     orderState.optionSelections.delete(itemId);
-    getOptionDefinitions(item).forEach((option) => {
-      orderState.optionSplits.delete(`${itemId}--${option.label}`);
-    });
   }
 
   updateOptionVisibility(itemId);
   updateSummary();
-}
-
-function updateOptionVisibility(itemId) {
+}function updateOptionVisibility(itemId) {
   const mainQuantity = getMainQuantity(itemId);
   const container = document.querySelector(`[data-options-container="${itemId}"]`);
-  const splitList = document.querySelector(`[data-split-list="${itemId}"]`);
   const validation = document.querySelector(`[data-option-validation="${itemId}"]`);
-  if (!container || !splitList || !validation) return;
+  if (!container || !validation) return;
 
   container.hidden = mainQuantity <= 0;
-
   if (mainQuantity <= 0) {
     validation.textContent = '';
-    splitList.hidden = true;
-    container.querySelectorAll('.option-checkbox').forEach((input) => { input.checked = false; });
-    container.querySelectorAll('.item-quantity').forEach((input) => { input.value = ''; });
+    container.querySelectorAll('.option-radio').forEach((input) => { input.checked = false; });
     return;
   }
 
+  const groups = getOptionGroups(getMenuItemById(itemId));
   const selections = getSelectedOptions(itemId);
-  const splitMode = selections.size > 1 && mainQuantity > 1;
-  splitList.hidden = !splitMode;
+  const complete = groups.every((_, index) => selections.has(index));
 
-  splitList.querySelectorAll('[data-split-row]').forEach((row) => {
-    const label = row.dataset.splitRow.split('--').slice(1).join('--');
-    row.hidden = !splitMode || !selections.has(label);
-    if (!splitMode) {
-      const input = row.querySelector('.item-quantity');
-      if (input) input.value = '';
-      orderState.optionSplits.delete(`${itemId}--${label}`);
-    }
-  });
-
-  if (selections.size === 0) {
-    validation.textContent = 'Select an option.';
-    validation.className = 'option-validation invalid';
-    return;
-  }
-
-  if (!splitMode) {
-    validation.textContent = '';
-    validation.className = 'option-validation';
-    return;
-  }
-
-  const splitTotal = Array.from(selections).reduce(
-    (sum, label) => sum + (orderState.optionSplits.get(`${itemId}--${label}`) ?? 0),
-    0
-  );
-
-  if (splitTotal === mainQuantity) {
-    validation.textContent = '';
-    validation.className = 'option-validation';
-  } else {
-    const difference = mainQuantity - splitTotal;
-    validation.textContent = difference > 0 ? `Choose ${difference} more` : `Reduce by ${Math.abs(difference)}`;
-    validation.className = 'option-validation invalid';
-  }
-}
-
-function bindSelectionEvents() {
-  document.querySelectorAll('[data-quantity-key]').forEach((input) => {
-    input.addEventListener('input', (event) => {
-      event.target.value = event.target.value.replace(/[^0-9]/g, '');
-      const quantity = Math.max(0, Number.parseInt(event.target.value || '0', 10));
-      const itemId = event.target.dataset.itemId;
-      const optionKey = event.target.dataset.optionKey;
-
-      if (optionKey) {
-        const key = `${itemId}--${optionKey}`;
-        if (quantity > 0) orderState.optionSplits.set(key, quantity);
-        else orderState.optionSplits.delete(key);
-        updateOptionVisibility(itemId);
-        updateSummary();
-      } else {
-        updateMainQuantity(itemId, quantity);
-      }
-    });
-  });
-
-  document.querySelectorAll('.option-checkbox').forEach((input) => {
-    input.addEventListener('change', (event) => {
-      setOptionSelection(
-        event.target.dataset.optionItem,
-        event.target.dataset.optionKey,
-        event.target.checked
-      );
-    });
-  });
-
-  const deliveryToggle = document.querySelector('[data-delivery-toggle]');
-  if (deliveryToggle) {
-    deliveryToggle.addEventListener('change', (event) => {
-      orderState.deliverySelected = event.target.checked;
-      updateSummary();
-    });
-  }
-}
-
-function hasValidOptions() {
+  validation.textContent = complete ? '' : 'Please select an option from each group.';
+  validation.className = complete ? 'option-validation' : 'option-validation invalid';
+}function hasValidOptions() {
   for (const category of orderState.menu.categories) {
     for (const item of category.items) {
-      const options = getOptionDefinitions(item);
-      if (!options.length) continue;
+      const groups = getOptionGroups(item);
+      if (!groups.length) continue;
       const mainQuantity = getMainQuantity(item.id);
       if (mainQuantity <= 0) continue;
 
       const selections = getSelectedOptions(item.id);
-      if (selections.size === 0) return false;
-
-      if (selections.size > 1 && mainQuantity > 1) {
-        const splitTotal = Array.from(selections).reduce(
-          (sum, label) => sum + (orderState.optionSplits.get(`${item.id}--${label}`) ?? 0),
-          0
-        );
-        if (splitTotal !== mainQuantity) return false;
-      }
+      if (!groups.every((_, index) => selections.has(index))) return false;
     }
   }
   return true;
-}
-
-function updateSummary() {
+}function updateSummary() {
   const summaryList = document.querySelector('[data-summary-list]');
   const totalOutput = document.querySelector('[data-order-total]');
   const deliveryOutput = document.querySelector('[data-delivery-total]');
@@ -296,34 +169,29 @@ function updateSummary() {
   const rows = [];
 
   orderState.selected.forEach((record) => {
-    const options = getOptionDefinitions(record.item);
+    const groups = getOptionGroups(record.item);
+    const basePrice = getPriceByKey(record.item.priceKey);
 
-    if (!options.length) {
-      const lineTotal = getPriceByKey(record.item.priceKey) * record.quantity;
+    if (!groups.length) {
+      const lineTotal = basePrice * record.quantity;
       subtotal += lineTotal;
       rows.push(`<li><span>${record.item.name} × ${record.quantity}</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
       return;
     }
 
-    const selections = Array.from(getSelectedOptions(record.item.id));
-    if (selections.length === 1) {
-      const option = options.find((entry) => entry.label === selections[0]);
-      const lineTotal = (getPriceByKey(record.item.priceKey) + (option?.adjustment ?? 0)) * record.quantity;
-      subtotal += lineTotal;
-      rows.push(`<li><span>${record.item.name} — ${selections[0]} × ${record.quantity}</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
-    } else if (selections.length > 1 && record.quantity === 1 && record.item.id === 'wings') {
-      const lineTotal = getPriceByKey(record.item.priceKey) * record.quantity;
-      subtotal += lineTotal;
-      rows.push(`<li><span>${record.item.name} — Mixed (${selections.join(' + ')}) × 1</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
-    } else if (selections.length > 1) {
-      selections.forEach((label) => {
-        const option = options.find((entry) => entry.label === label);
-        const quantity = orderState.optionSplits.get(`${record.item.id}--${label}`) ?? 0;
-        if (!quantity) return;
-        const lineTotal = (getPriceByKey(record.item.priceKey) + (option?.adjustment ?? 0)) * quantity;
-        subtotal += lineTotal;
-        rows.push(`<li><span>${record.item.name} — ${label} × ${quantity}</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
+    const selections = getSelectedOptions(record.item.id);
+    if (groups.every((_, index) => selections.has(index))) {
+      let unitPrice = basePrice;
+      const labels = [];
+      groups.forEach((group, index) => {
+        const label = selections.get(index);
+        const option = group.options.find((entry) => entry.label === label);
+        unitPrice += Number(option?.adjustment || 0);
+        labels.push(`${group.label}: ${label}`);
       });
+      const lineTotal = unitPrice * record.quantity;
+      subtotal += lineTotal;
+      rows.push(`<li><span>${record.item.name} — ${labels.join(' · ')} × ${record.quantity}</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
     }
   });
 
@@ -331,186 +199,37 @@ function updateSummary() {
   summaryList.innerHTML = rows.length ? rows.join('') : '<li><span>No items selected yet.</span></li>';
   deliveryOutput.textContent = formatCurrency(deliveryFee);
   totalOutput.textContent = formatCurrency(subtotal + deliveryFee);
-}
-
-function validateOrderForm() {
-  const requiredFields = ['eventName', 'guestCount', 'eventDate', 'contactName', 'email', 'confirmEmail', 'phone', 'eventAddress'];
-  let valid = true;
-
-  requiredFields.forEach((fieldName) => {
-    const element = document.getElementById(fieldName);
-    if (!element || !element.value.trim()) {
-      valid = false;
-      if (element) element.setCustomValidity('Required');
-    } else {
-      element.setCustomValidity('');
-    }
-  });
-
-  const email = document.getElementById('email');
-  const confirmEmail = document.getElementById('confirmEmail');
-  if (email && confirmEmail) {
-    confirmEmail.setCustomValidity(email.value.trim() !== confirmEmail.value.trim() ? 'Emails must match' : '');
-    if (confirmEmail.validationMessage) valid = false;
-  }
-
-  const guestCount = Number(document.getElementById('guestCount')?.value || 0);
-  if (guestCount <= 0 || Number.isNaN(guestCount)) {
-    valid = false;
-    const input = document.getElementById('guestCount');
-    if (input) input.setCustomValidity('Guest count must be greater than zero');
-  }
-
-  const eventDate = document.getElementById('eventDate');
-  if (eventDate?.value) {
-    const selectedDate = new Date(eventDate.value + 'T00:00:00');
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    eventDate.setCustomValidity(selectedDate < today ? 'Event date cannot be in the past' : '');
-    if (eventDate.validationMessage) valid = false;
-  }
-
-  const message = document.querySelector('[data-order-message]');
-  if (orderState.selected.size === 0) {
-    valid = false;
-    if (message) message.textContent = 'Please enter a quantity for at least one menu item.';
-  } else if (!hasValidOptions()) {
-    valid = false;
-    if (message) message.textContent = 'Please finish selecting the options for your items.';
-  } else if (message) {
-    message.textContent = '';
-  }
-
-  return valid;
-}
-
-function buildOrderItems() {
+}function buildOrderItems() {
   const items = [];
   orderState.selected.forEach((record) => {
-    const options = getOptionDefinitions(record.item);
-    const selections = Array.from(getSelectedOptions(record.item.id));
+    const groups = getOptionGroups(record.item);
+    const selections = getSelectedOptions(record.item.id);
+    const basePrice = getPriceByKey(record.item.priceKey);
 
-    if (!options.length || selections.length === 0) {
-      const unitPrice = getPriceByKey(record.item.priceKey);
+    if (!groups.length) {
       items.push({
-        menu_item_id: record.item.id,
-        item_name: record.item.name,
-        category: record.item.category,
-        quantity: record.quantity,
-        unit: record.item.unit,
-        unit_price: unitPrice,
-        line_total: unitPrice * record.quantity,
-        option: null
+        menu_item_id: record.item.id, item_name: record.item.name, category: record.item.category,
+        quantity: record.quantity, unit: record.item.unit, unit_price: basePrice,
+        line_total: basePrice * record.quantity, option: null
       });
       return;
     }
 
-    if (selections.length === 1) {
-      const option = options.find((entry) => entry.label === selections[0]);
-      const unitPrice = getPriceByKey(record.item.priceKey) + (option?.adjustment ?? 0);
-      items.push({
-        menu_item_id: record.item.id,
-        item_name: record.item.name,
-        category: record.item.category,
-        quantity: record.quantity,
-        unit: record.item.unit,
-        unit_price: unitPrice,
-        line_total: unitPrice * record.quantity,
-        option: selections[0]
-      });
-      return;
-    }
+    let unitPrice = basePrice;
+    const labels = [];
+    groups.forEach((group, index) => {
+      const label = selections.get(index);
+      if (!label) return;
+      const option = group.options.find((entry) => entry.label === label);
+      unitPrice += Number(option?.adjustment || 0);
+      labels.push(`${group.label}: ${label}`);
+    });
 
-    if (record.item.id === 'wings' && record.quantity === 1) {
-      const unitPrice = getPriceByKey(record.item.priceKey);
-      items.push({
-        menu_item_id: record.item.id,
-        item_name: record.item.name,
-        category: record.item.category,
-        quantity: 1,
-        unit: record.item.unit,
-        unit_price: unitPrice,
-        line_total: unitPrice,
-        option: `Mixed: ${selections.join(' + ')}`
-      });
-      return;
-    }
-
-    selections.forEach((label) => {
-      const option = options.find((entry) => entry.label === label);
-      const quantity = orderState.optionSplits.get(`${record.item.id}--${label}`) ?? 0;
-      if (!quantity) return;
-      const unitPrice = getPriceByKey(record.item.priceKey) + (option?.adjustment ?? 0);
-      items.push({
-        menu_item_id: record.item.id,
-        item_name: record.item.name,
-        category: record.item.category,
-        quantity,
-        unit: record.item.unit,
-        unit_price: unitPrice,
-        line_total: unitPrice * quantity,
-        option: label
-      });
+    items.push({
+      menu_item_id: record.item.id, item_name: record.item.name, category: record.item.category,
+      quantity: record.quantity, unit: record.item.unit, unit_price: unitPrice,
+      line_total: unitPrice * record.quantity, option: labels.join(' · ')
     });
   });
   return items;
 }
-
-function calculateSubtotals(items) {
-  return items.reduce((totals, item) => {
-    if (item.category === 'meats') totals.meats += item.line_total;
-    else if (item.category === 'sides') totals.sides += item.line_total;
-    else if (item.category === 'desserts') totals.desserts += item.line_total;
-    return totals;
-  }, { meats: 0, sides: 0, desserts: 0 });
-}
-
-function attachOrderHandler() {
-  const form = document.getElementById('order-form');
-  if (!form || form.dataset.handlerAttached) return;
-  form.dataset.handlerAttached = 'true';
-
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    form.classList.add('validated');
-
-    if (!validateOrderForm()) {
-      document.querySelector('[data-order-message]')?.scrollIntoView({ block: 'center' });
-      form.reportValidity();
-      return;
-    }
-
-    if (typeof window.submitOrder === 'function') {
-      window.submitOrder();
-    } else {
-      const message = document.querySelector('[data-order-message]');
-      if (message) message.textContent = 'The order submission system is still loading. Please refresh and try again.';
-    }
-  });
-}
-
-async function initializeOrderPage() {
-  attachOrderHandler();
-
-  try {
-    const result = await window.SET_MENU_API.load();
-    orderState.menu = result.menu;
-    orderState.prices = result.prices;
-    renderOrderOptions();
-    updateSummary();
-  } catch (error) {
-    const message = document.querySelector('[data-order-message]');
-    if (message) {
-      message.textContent = error.message || 'Unable to load the order form.';
-      message.classList.add('form-error');
-    }
-  }
-}
-
-window.orderState = orderState;
-window.buildOrderItems = buildOrderItems;
-window.calculateSubtotals = calculateSubtotals;
-window.validateOrderForm = validateOrderForm;
-
-document.addEventListener('DOMContentLoaded', initializeOrderPage);
