@@ -239,11 +239,23 @@
     });
   }
 
+  // render() rebuilds every field from state, so anything typed and not yet saved has
+  // to be read back first or it is silently discarded.
+  function keepPendingEdits() {
+    if (!document.querySelector('.menu-editor-table')) return;
+    try {
+      readForm();
+    } catch (error) {
+      setMessage(error?.message || 'Some edits could not be kept.', 'error');
+    }
+  }
+
   function moveItem(categoryIndex, itemIndex, direction) {
     const category = state.menu.categories[categoryIndex];
     if (!category) return;
     const newIndex = direction === 'up' ? itemIndex - 1 : itemIndex + 1;
     if (newIndex < 0 || newIndex >= category.items.length) return;
+    keepPendingEdits();
     [category.items[itemIndex], category.items[newIndex]] =
       [category.items[newIndex], category.items[itemIndex]];
     render();
@@ -258,6 +270,7 @@
       `Delete "${item.name}" from the menu? This cannot be undone after you save the changes.`
     );
     if (!confirmed) return;
+    keepPendingEdits();
     category.items.splice(itemIndex, 1);
     delete state.prices.items[item.priceKey];
     render();
@@ -304,18 +317,12 @@
       category: category.id
     };
 
+    keepPendingEdits();
+    state.prices.items[id] = { basePrice: price };
     if (options.length) {
       applyOptions(item, state.prices.items[id], options);
     }
-
     category.items.push(item);
-    state.prices.items[id] = { basePrice: price };
-    if (options.length) {
-      state.prices.items[id].adjustments = options.map((option) => ({
-        label: option.label,
-        value: option.adjustment
-      }));
-    }
 
     closeAddItem();
     render();
