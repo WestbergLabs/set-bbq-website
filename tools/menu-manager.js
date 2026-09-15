@@ -234,8 +234,11 @@ function createItemRow(category, categoryIndex, item, itemIndex) {
 
 function addOptionRow(row, item) {
   const list = row.querySelector('.option-list');
+  const groups = getOptionGroups(item);
+  const groupIndex = groups.length ? groups.length - 1 : 0;
   const optionRow = document.createElement('div');
   optionRow.className = 'option-line';
+  if (groups.length) optionRow.dataset.optionGroup = groupIndex;
   optionRow.innerHTML = `
     <input class="cell-input option-label-input" placeholder="Label" aria-label="Option label">
     <input class="cell-input option-adjustment price-input" type="number" step="0.01" inputmode="decimal" placeholder="0.00" value="0" aria-label="Option adjustment">
@@ -266,7 +269,9 @@ function renderOptions(row, item) {
   const list = row.querySelector('.option-list');
   list.innerHTML = '';
 
-  getOptionGroups(item).forEach((group, groupIndex) => {
+  const groups = getOptionGroups(item);
+
+  groups.forEach((group, groupIndex) => {
     const heading = document.createElement('div');
     heading.className = 'option-group-heading';
     heading.textContent = group.label || 'Options';
