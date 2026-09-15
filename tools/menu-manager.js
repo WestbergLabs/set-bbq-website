@@ -1,7 +1,8 @@
 const state = {
   menu: null,
   prices: null,
-  dirty: false
+  dirty: false,
+  saving: false
 };
 
 const $ = (id) => document.getElementById(id);
@@ -56,35 +57,38 @@ function getOptions(item) {
   });
 }
 
-function setStatus(message, dirty = false) {
+function setStatus(message, dirty = false, error = false) {
   const el = $('status');
   el.textContent = message;
   el.classList.toggle('dirty', dirty);
+  el.classList.toggle('error', error);
 }
 
-function markDirty(message = 'Unsaved changes — download the JSON files when you are finished.') {
+function markDirty(message = 'Unsaved changes — click Save Changes when you are finished.') {
   state.dirty = true;
   setStatus(message, true);
 }
 
 async function loadData() {
   try {
-    const [menuResponse, pricesResponse] = await Promise.all([
-      fetch('../data/menu.json'),
-      fetch('../data/prices.json')
-    ]);
-
-    if (!menuResponse.ok || !pricesResponse.ok) {
-      throw new Error('Could not load menu data.');
+    if (!window.SET_ADMIN_AUTH_API) {
+      throw new Error('Admin authentication is not available.');
     }
 
-    state.menu = await menuResponse.json();
-    state.prices = await pricesResponse.json();
+    const user = await window.SET_ADMIN_AUTH_API.checkSession();
+    if (!user) {
+      window.location.replace('../admin.html');
+      return;
+    }
+
+    const result = await window.SET_MENU_API.load();
+    state.menu = result.menu;
+    state.prices = result.prices;
     $('deliveryFee').value = money(state.prices.deliveryFee ?? 0);
     render();
-    setStatus('');
+    setStatus('Loaded from the menu database.');
   } catch (error) {
-    setStatus('Unable to load the menu files. Open this page through the website, not as a local file.', true);
+    setStatus(error?.message || 'Unable to load the menu database.', false, true);
   }
 }
 
@@ -96,6 +100,7 @@ function render() {
   state.menu.categories.forEach((category) => {
     totalItems += category.items.length;
   });
+
   $('itemCount').textContent =
     totalItems + (totalItems === 1 ? ' item' : ' items') +
     ' · ' + state.menu.categories.length + ' categories';
@@ -135,11 +140,14 @@ function render() {
       <td colspan="3"><span class="category-name"></span><span class="category-description"></span></td>
       <td colspan="4" class="category-actions"><button class="add-category-item" type="button">+ Add Item</button></td>
     `;
+
     categoryRow.querySelector('.category-name').textContent = category.name;
     categoryRow.querySelector('.category-description').textContent =
       category.description ? '— ' + category.description : '';
+
     categoryRow.querySelector('.add-category-item')
       .addEventListener('click', () => addItem(categoryIndex));
+
     tbody.appendChild(categoryRow);
 
     category.items.forEach((item, itemIndex) => {
@@ -194,7 +202,7 @@ function createItemRow(category, categoryIndex, item, itemIndex) {
   row.querySelectorAll('input:not(.option-label-input):not(.option-adjustment), textarea')
     .forEach((input) => {
       input.addEventListener('input', () => {
-        syncRow(category, item, row);
+        syncRow(item, row);
         markDirty();
       });
     });
@@ -203,7 +211,7 @@ function createItemRow(category, categoryIndex, item, itemIndex) {
 
   row.querySelector('.add-option').addEventListener('click', () => {
     addOptionRow(row, item);
-    markDirty('Unsaved changes — finish the option, then download the JSON files.');
+    markDirty('Unsaved changes — finish the option, then save.');
   });
 
   row.querySelector('.delete-button')
@@ -240,15 +248,15 @@ function addOptionRow(row, item) {
 function bindOptionRow(optionRow, row, item) {
   optionRow.querySelectorAll('input').forEach((input) => {
     input.addEventListener('input', () => {
-      syncRow(null, item, row);
+      syncRow(item, row);
       markDirty();
     });
   });
 
   optionRow.querySelector('.option-remove').addEventListener('click', () => {
     optionRow.remove();
-    syncRow(null, item, row);
-    markDirty('Option removed. Download the JSON files to keep the change.');
+    syncRow(item, row);
+    markDirty('Option removed. Save Changes to keep the change.');
   });
 }
 
@@ -264,6 +272,7 @@ function renderOptions(row, item) {
       <input class="cell-input option-adjustment price-input" type="number" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Option adjustment">
       <button class="option-remove" type="button" title="Remove option" aria-label="Remove option">×</button>
     `;
+
     optionRow.querySelector('.option-label-input').value = option.label || '';
     optionRow.querySelector('.option-adjustment').value = option.adjustment ?? 0;
     list.appendChild(optionRow);
@@ -271,7 +280,7 @@ function renderOptions(row, item) {
   });
 }
 
-function syncRow(category, item, row) {
+function syncRow(item, row) {
   item.name = row.querySelector('[data-field="name"]').value.trim();
   item.unit = row.querySelector('[data-field="unit"]').value.trim();
   item.description = row.querySelector('[data-field="description"]').value.trim();
@@ -323,7 +332,7 @@ function addItem(categoryIndex = 0) {
   category.items.push(item);
   state.prices.items[id] = { basePrice: 0 };
   render();
-  markDirty('New item added. Edit the row, then download the JSON files.');
+  markDirty('New item added. Edit it, then click Save Changes.');
   focusNewItem(id);
 }
 
@@ -347,7 +356,7 @@ function deleteItem(categoryIndex, itemIndex) {
   if (item.priceKey) delete state.prices.items[item.priceKey];
 
   render();
-  markDirty('Item deleted. Download the JSON files to keep the change.');
+  markDirty('Item deleted. Click Save Changes to keep the change.');
 }
 
 function moveItem(categoryIndex, itemIndex, direction) {
@@ -359,7 +368,7 @@ function moveItem(categoryIndex, itemIndex, direction) {
   category.items.splice(newIndex, 0, item);
 
   render();
-  markDirty('Item order changed. Download the JSON files to keep the new order.');
+  markDirty('Item order changed. Click Save Changes to keep the new order.');
 }
 
 function syncAllRows() {
@@ -369,42 +378,37 @@ function syncAllRows() {
       .flatMap((category) => category.items)
       .find((item) => item.id === id);
 
-    if (found) syncRow(null, found, row);
+    if (found) syncRow(found, row);
   });
 
   state.prices.deliveryFee = Number($('deliveryFee').value || 0);
 }
 
-function download(filename, data) {
-  const blob = new Blob([JSON.stringify(data, null, 2) + '\\n'], {
-    type: 'application/json'
-  });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
+async function saveChanges() {
+  if (state.saving) return;
+
+  try {
+    syncAllRows();
+    state.saving = true;
+    $('saveMenu').disabled = true;
+    setStatus('Saving changes to the menu database…');
+
+    await window.SET_MENU_API.save(state.menu, state.prices);
+
+    state.dirty = false;
+    setStatus('Saved successfully to the menu database.');
+  } catch (error) {
+    setStatus(error?.message || 'Unable to save the menu database.', false, true);
+  } finally {
+    state.saving = false;
+    $('saveMenu').disabled = false;
+  }
 }
 
 $('deliveryFee').addEventListener('input', () => markDirty());
 
 $('addItem').addEventListener('click', () => addItem(0));
 
-$('downloadMenu').addEventListener('click', () => {
-  syncAllRows();
-  download('menu.json', state.menu);
-  state.dirty = false;
-  setStatus('Downloaded menu.json. Replace data/menu.json with it, then test.');
-});
-
-$('downloadPrices').addEventListener('click', () => {
-  syncAllRows();
-  download('prices.json', state.prices);
-  state.dirty = false;
-  setStatus('Downloaded prices.json. Replace data/prices.json with it, then test.');
-});
+$('saveMenu').addEventListener('click', saveChanges);
 
 loadData();
