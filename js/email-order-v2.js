@@ -124,8 +124,18 @@
     return `<style>
 @media only screen and (max-width:600px) {
   .order-meta td { display:block !important; width:100% !important; padding-right:0 !important; padding-bottom:12px !important; }
+  .order-items-table { table-layout:fixed !important; }
   .order-items-table th { font-size:11px !important; }
   .order-items-table td { padding-left:4px !important; padding-right:4px !important; }
+  .order-items-table col:nth-child(1) { width:37% !important; }
+  .order-items-table col:nth-child(2) { width:10% !important; }
+  .order-items-table col:nth-child(3) { width:18% !important; }
+  .order-items-table col:nth-child(4) { width:17.5% !important; }
+  .order-items-table col:nth-child(5) { width:17.5% !important; }
+  .order-items-table th:nth-child(4),
+  .order-items-table th:nth-child(5),
+  .order-items-table td:nth-child(4),
+  .order-items-table td:nth-child(5) { padding-left:6px !important; padding-right:6px !important; }
 }
 </style><div style="font-family:Arial,Helvetica,sans-serif;background:#f5f2ee;padding:24px;color:#202020">
       <div style="max-width:760px;margin:0 auto;background:#fff;border:1px solid #d8d8d8">
