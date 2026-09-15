@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SET BBQ menu and pricing editor.">
+  <title>SET BBQ — Menu & Pricing Manager</title>
+  <link rel="stylesheet" href="menu-manager.css">
+</head>
+<body>
+  <header class="manager-header">
+    <div class="manager-header-inner">
+      <div>
+        <div class="eyebrow">South East Texas BBQ & Catering</div>
+        <h1>Menu & Pricing Manager</h1>
+        <p>Edit the menu in a simple table. Internal item IDs stay hidden.</p>
+      </div>
+      <a class="back-link" href="../index.html">← Back to website</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="notice">
+      <strong>How this works:</strong> Make your changes below, then download the updated JSON file(s).
+      Replace the matching files in <code>data/</code> and test the order form before publishing.
+      This page does not change GitHub automatically.
+    </div>
+
+    <section class="toolbar card">
+      <div>
+        <h2>Pricing</h2>
+        <p>Change the delivery fee here, or edit individual item prices below.</p>
+      </div>
+      <label class="field compact">
+        <span>Delivery fee</span>
+        <div class="input-prefix"><span>$</span><input id="deliveryFee" type="number" min="0" step="0.01"></div>
+      </label>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <div>
+          <h2>Menu items</h2>
+          <p>Change names, descriptions, units, prices, and customer-facing options.</p>
+        </div>
+        <div class="actions">
+          <button id="downloadMenu" class="button">Download menu.json</button>
+          <button id="downloadPrices" class="button secondary">Download prices.json</button>
+        </div>
+      </div>
+
+      <div id="status" class="status" aria-live="polite"></div>
+      <div id="editor"></div>
+    </section>
+
+    <section class="card help">
+      <h2>Before publishing</h2>
+      <ol>
+        <li>Download the changed JSON file(s).</li>
+        <li>Replace the matching file in <code>data/</code>.</li>
+        <li>Test the order form on desktop and mobile.</li>
+        <li>Submit a test order if pricing or options changed.</li>
+        <li>Keep special items such as wings, brisket, pork belly, baked beans, banana pudding, and Custom Dessert working as intended.</li>
+      </ol>
+    </section>
+  </main>
+
+  <script src="menu-manager.js"></script>
+</body>
+</html>
