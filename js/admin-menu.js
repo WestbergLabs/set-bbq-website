@@ -54,6 +54,19 @@
     };
   }
 
+  // A group scope points at choices in the first group by exact name, so a typo or a
+  // renamed choice would quietly stop the group from ever being offered.
+  function unknownScopeNames(groups) {
+    const known = new Set((groups[0]?.options || []).map((option) => option.label));
+    const unknown = [];
+    groups.slice(1).forEach((group) => {
+      (group.appliesTo || []).forEach((name) => {
+        if (!known.has(name) && !unknown.includes(name)) unknown.push(name);
+      });
+    });
+    return unknown;
+  }
+
   function optionSummary(item) {
     const groups = getOptionGroups(item);
     if (!groups.length) return 'No options';
@@ -350,12 +363,21 @@
     const field = optionsRow.querySelector('.menu-options');
     const category = state.menu.categories[Number(optionsRow.dataset.categoryIndex)];
     const item = category?.items[Number(optionsRow.dataset.itemIndex)];
+    const groups = parseOptions($('#options-editor').value);
+    const unknown = unknownScopeNames(groups);
+    if (unknown.length) {
+      setMessage(
+        `No choice named ${unknown.map((name) => `"${name}"`).join(', ')} in ${groups[0]?.label || 'the first group'}. ` +
+        'Fix the names in brackets or that group will never be offered.',
+        'error'
+      );
+      return;
+    }
+
     field.value = $('#options-editor').value;
 
     // Preview the parsed shape, so a typo in a group line is visible before saving.
-    const preview = { pricing: undefined, orderOptions: undefined };
-    const groups = parseOptions(field.value);
-    if (groups.length) preview.pricing = { type: 'groups', groups };
+    const preview = groups.length ? { pricing: { type: 'groups', groups } } : {};
     optionsRow.querySelector('.options-preview').textContent = optionSummary(preview);
 
     closeOptions();
