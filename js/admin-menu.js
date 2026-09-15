@@ -54,6 +54,18 @@
     };
   }
 
+  function optionSummary(item) {
+    const groups = getOptionGroups(item);
+    if (!groups.length) return 'No options';
+    return groups.map((group) => {
+      const count = (group.options || []).length;
+      const scope = group.appliesTo?.length
+        ? (group.appliesTo.length === 1 ? ` for ${group.appliesTo[0]}` : ` for ${group.appliesTo.length} choices`)
+        : '';
+      return `${group.label || 'Options'} (${count})${scope}`;
+    }).join('\n');
+  }
+
   function optionText(item) {
     return getOptionGroups(item).map((group) => {
       const lines = [];
@@ -146,7 +158,10 @@
             <td><input class="menu-name" value="${escapeHTML(item.name)}" aria-label="Item name"></td>
             <td><input class="menu-unit" value="${escapeHTML(item.unit || '')}" aria-label="Unit"></td>
             <td><input class="menu-price" type="number" min="0" step="0.01" value="${money(price)}" aria-label="Price"></td>
-            <td><textarea class="menu-options" rows="1" placeholder="Group: Flavor&#10;Option | adjustment&#10;Group: Cookies&#10;Option | adjustment">${escapeHTML(optionText(item))}</textarea></td>
+            <td><button type="button" class="options-open" data-options-open>
+              <span class="options-preview">${escapeHTML(optionSummary(item))}</span>
+              <span class="options-edit-hint">Edit</span>
+            </button><textarea class="menu-options" hidden>${escapeHTML(optionText(item))}</textarea></td>
             <td><textarea class="menu-description" rows="1" aria-label="Description">${escapeHTML(item.description || '')}</textarea></td>
             <td class="menu-id">${escapeHTML(item.id)}</td>
             <td class="menu-delete-cell"><button type="button" class="delete-item" aria-label="Delete ${escapeHTML(item.name)}">Delete</button></td>
@@ -187,6 +202,23 @@
       </div>
       <div id="menu-editor-message" class="admin-message" aria-live="polite"></div>
       <p class="editor-help">Options use <code>Option name | price adjustment</code>. To create separate option groups, add <code>Group: Group Name</code> on its own line. Write <code>Group: Cookies [Flavor A, Flavor B]</code> to offer that group only for those options. The adjustment is added to the base price.</p>
+      <div id="options-modal" class="admin-modal" hidden>
+        <div class="admin-modal-card admin-modal-card-wide" role="dialog" aria-modal="true" aria-labelledby="options-modal-title">
+          <div class="admin-modal-head">
+            <div>
+              <div class="brand">Options</div>
+              <h2 id="options-modal-title">Edit Options</h2>
+            </div>
+            <button type="button" class="modal-close" id="close-options" aria-label="Close">&times;</button>
+          </div>
+          <textarea id="options-editor" class="options-editor" spellcheck="false" placeholder="Group: Flavor&#10;Blueberry Lemon Drop | 0&#10;Group: Cookies [Blueberry Lemon Drop]&#10;No Cookies | 0&#10;Regular Cookies | 10"></textarea>
+          <p class="editor-help">One choice per line as <code>Name | price adjustment</code>. Start a group with <code>Group: Name</code>, and limit a group to certain choices with <code>Group: Cookies [Flavor A, Flavor B]</code>.</p>
+          <div class="modal-actions">
+            <button type="button" class="secondary" id="cancel-options">Cancel</button>
+            <button type="button" id="apply-options">Done</button>
+          </div>
+        </div>
+      </div>
       <div id="add-item-modal" class="admin-modal" hidden>
         <div class="admin-modal-card" role="dialog" aria-modal="true" aria-labelledby="add-item-title">
           <div class="admin-modal-head">
@@ -215,16 +247,22 @@
         </div>
       </div>`;
 
-    // Grow the options and description boxes to their content: a grouped option list
-    // is a dozen lines and the fixed one-line height hid all but the first few.
+    // Grow the description boxes to their content instead of pinning one line.
     const autosize = (field) => {
       field.style.height = 'auto';
       field.style.height = `${Math.min(field.scrollHeight, 280)}px`;
     };
-    document.querySelectorAll('.menu-options, .menu-description').forEach((field) => {
+    document.querySelectorAll('.menu-description').forEach((field) => {
       autosize(field);
       field.addEventListener('input', () => autosize(field));
     });
+
+    document.querySelectorAll('[data-options-open]').forEach((button) => {
+      button.addEventListener('click', () => openOptions(button.closest('tr')));
+    });
+    $('#close-options').addEventListener('click', closeOptions);
+    $('#cancel-options').addEventListener('click', closeOptions);
+    $('#apply-options').addEventListener('click', applyOptionsEditor);
 
     $('#save-menu').addEventListener('click', save);
     $('#reload-menu').addEventListener('click', load);
@@ -286,6 +324,42 @@
     delete state.prices.items[item.priceKey];
     render();
     setMessage(`${item.name} removed. Save Changes to make it live.`);
+  }
+
+  let optionsRow = null;
+
+  function openOptions(row) {
+    const modal = $('#options-modal');
+    const field = row?.querySelector('.menu-options');
+    if (!modal || !field) return;
+    optionsRow = row;
+    $('#options-modal-title').textContent = `${row.querySelector('.menu-name').value.trim() || 'Item'} options`;
+    $('#options-editor').value = field.value;
+    modal.hidden = false;
+    $('#options-editor').focus();
+  }
+
+  function closeOptions() {
+    const modal = $('#options-modal');
+    if (modal) modal.hidden = true;
+    optionsRow = null;
+  }
+
+  function applyOptionsEditor() {
+    if (!optionsRow) return closeOptions();
+    const field = optionsRow.querySelector('.menu-options');
+    const category = state.menu.categories[Number(optionsRow.dataset.categoryIndex)];
+    const item = category?.items[Number(optionsRow.dataset.itemIndex)];
+    field.value = $('#options-editor').value;
+
+    // Preview the parsed shape, so a typo in a group line is visible before saving.
+    const preview = { pricing: undefined, orderOptions: undefined };
+    const groups = parseOptions(field.value);
+    if (groups.length) preview.pricing = { type: 'groups', groups };
+    optionsRow.querySelector('.options-preview').textContent = optionSummary(preview);
+
+    closeOptions();
+    setMessage(`Options updated for ${item?.name || 'the item'}. Save Changes to make it live.`);
   }
 
   function openAddItem(categoryIndex = 0) {
