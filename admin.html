@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex,nofollow">
   <title>SET BBQ — Admin</title>
-  <link rel="stylesheet" href="css/admin.css?v=33">
+  <link rel="stylesheet" href="css/admin.css?v=34">
 </head>
 <body>
   <main class="admin-shell">
@@ -24,7 +24,7 @@
       <a href="index.html">← Back to website</a>
     </section>
 
-    <section class="admin-card admin-dashboard" id="admin-dashboard" hidden>
+    <section class="admin-card admin-dashboard" id="dashboard">
       <div class="admin-page-head">
         <div>
           <div class="brand">SET BBQ · Administration</div>
@@ -38,10 +38,21 @@
         </div>
       </div>
 
-      <nav class="admin-nav" aria-label="Admin sections">
-        <a href="#menu">Menu</a>
-        <a href="#website">Website</a>
-        <a href="#system">System</a>
+      <nav class="admin-nav" aria-label="Admin navigation">
+        <div class="nav-brand">SET BBQ · ADMIN</div>
+        <a class="nav-link nav-dashboard" href="#dashboard">Dashboard</a>
+
+        <div class="nav-label">Menu</div>
+        <a class="nav-link" href="menu-editor.html">Menu Editor</a>
+        <a class="nav-link" href="menu.html" target="_blank" rel="noopener">View Menu</a>
+
+        <div class="nav-label">Customer Pages</div>
+        <a class="nav-link" href="index.html" target="_blank" rel="noopener">Website</a>
+        <a class="nav-link" href="contact.html" target="_blank" rel="noopener">Contact</a>
+        <a class="nav-link" href="order.html" target="_blank" rel="noopener">Order Page</a>
+
+        <div class="nav-label">System</div>
+        <a class="nav-link" href="#system">System Status</a>
       </nav>
 
       <section class="admin-section" id="menu">
@@ -66,42 +77,6 @@
             <span class="tool-copy">
               <strong>View Menu</strong>
               <span>Open the customer-facing menu to confirm what visitors see.</span>
-            </span>
-            <span class="tool-arrow" aria-hidden="true">→</span>
-          </a>
-        </div>
-      </section>
-
-      <section class="admin-section" id="website">
-        <div class="admin-section-heading">
-          <div>
-            <span class="section-kicker">Website</span>
-            <h2>Customer Pages</h2>
-          </div>
-          <span class="section-note">Public site</span>
-        </div>
-        <div class="admin-tool-list">
-          <a class="admin-tool" href="index.html" target="_blank" rel="noopener">
-            <span class="tool-icon" aria-hidden="true">⌂</span>
-            <span class="tool-copy">
-              <strong>View Website</strong>
-              <span>Open the public SET BBQ homepage.</span>
-            </span>
-            <span class="tool-arrow" aria-hidden="true">→</span>
-          </a>
-          <a class="admin-tool" href="contact.html" target="_blank" rel="noopener">
-            <span class="tool-icon" aria-hidden="true">✉</span>
-            <span class="tool-copy">
-              <strong>Contact Page</strong>
-              <span>Review the customer-facing contact information.</span>
-            </span>
-            <span class="tool-arrow" aria-hidden="true">→</span>
-          </a>
-          <a class="admin-tool" href="order.html" target="_blank" rel="noopener">
-            <span class="tool-icon" aria-hidden="true">▤</span>
-            <span class="tool-copy">
-              <strong>Order Page</strong>
-              <span>Open the catering request form for review or testing.</span>
             </span>
             <span class="tool-arrow" aria-hidden="true">→</span>
           </a>
@@ -161,7 +136,7 @@
   <script src="js/supabase-config.js?v=2"></script>
   <script src="js/admin-auth.js?v=1"></script>
   <script src="js/menu-store.js?v=2"></script>
-  <script src="js/site-version.js?v=33"></script>
+  <script src="js/site-version.js?v=34"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const form = document.getElementById('admin-login-form');
@@ -220,7 +195,7 @@
 
         if (currentUser?.email) {
           document.getElementById('admin-user-email').textContent = currentUser.email;
-          document.getElementById('account-email').textContent = currentUser.email;
+          
         }
       };
 
@@ -244,7 +219,6 @@
           loginCard.hidden = true;
           dashboard.hidden = false;
           document.getElementById('admin-user-email').textContent = currentUser.email || 'Signed in';
-          document.getElementById('account-email').textContent = currentUser.email || '—';
           runStatusChecks();
         }
       } catch (error) {
