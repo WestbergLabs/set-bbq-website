@@ -218,7 +218,11 @@ button:disabled { opacity: .6; cursor: wait; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 18px;
+}
+.category-row-head > div:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 .category-title {
   font-size: 14px;
@@ -226,11 +230,17 @@ button:disabled { opacity: .6; cursor: wait; }
   margin-bottom: 4px;
 }
 .menu-category-description {
-  width: min(700px, 100%);
+  display: block;
+  width: 100%;
+  max-width: 900px;
+  min-width: 520px;
   padding: 5px 7px;
   color: #666;
   background: #fff;
   font-size: 12px;
+}
+.category-row-head .add-item-button {
+  flex: 0 0 auto;
 }
 .menu-id {
   color: #777;
