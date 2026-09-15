@@ -61,30 +61,58 @@
   }
 
   function invoiceHtml(order) {
-    const rows = order.items.map((item) => {
-      const isCustom = item.menu_item_id === 'custom-dessert';
-      const itemName = isCustom ? 'CUSTOM DESSERT — STARTING AT $40' : item.item_name;
-      const optionText = isCustom ? 'Final pricing to be confirmed after discussion' : item.option;
-      const unitText = isCustom ? 'Starting at $40' : (item.unit || '—');
-      const unitPrice = isCustom ? 40 : item.unit_price;
-      const lineTotal = isCustom ? item.line_total : item.line_total;
+    const renderSection = (title, items, accent = '#7a1f1f') => {
+      if (!items.length) return '';
+      const rows = items.map((item) => {
+        const isCustom = item.menu_item_id === 'custom-dessert';
+        const itemName = isCustom ? 'CUSTOM DESSERT — STARTING AT $40' : item.item_name;
+        const optionText = isCustom ? 'Final pricing to be confirmed after discussion' : item.option;
+        const unitText = isCustom ? 'Starting at $40' : (item.unit || '—');
+        const unitPrice = isCustom ? 40 : item.unit_price;
+        return `
+          <tr>
+            <td style="padding:9px 8px;border-bottom:1px solid #ddd;vertical-align:top;\${isCustom ? 'font-weight:700' : ''}">${esc(itemName)}${optionText ? `<div style="font-size:12px;color:#666;margin-top:3px;font-weight:400">${esc(optionText)}</div>` : ''}</td>
+            <td align="center" style="padding:9px 8px;border-bottom:1px solid #ddd;vertical-align:top">${esc(item.quantity)}</td>
+            <td style="padding:9px 8px;border-bottom:1px solid #ddd;vertical-align:top">${esc(unitText)}</td>
+            <td align="right" style="padding:9px 8px;border-bottom:1px solid #ddd;vertical-align:top;white-space:nowrap">${money(unitPrice)}</td>
+            <td align="right" style="padding:9px 8px;border-bottom:1px solid #ddd;vertical-align:top;white-space:nowrap">${money(item.line_total)}</td>
+          </tr>`;
+      }).join('');
+
       return `
-      <tr>
-        <td style="padding:9px 8px;border-bottom:1px solid #ddd;${isCustom ? 'font-weight:700' : ''}">${esc(itemName)}${optionText ? `<div style="font-size:12px;color:#666;margin-top:3px;font-weight:400">${esc(optionText)}</div>` : ''}</td>
-        <td align="center" style="padding:9px 8px;border-bottom:1px solid #ddd">${esc(item.quantity)}</td>
-        <td style="padding:9px 8px;border-bottom:1px solid #ddd">${esc(unitText)}</td>
-        <td align="right" style="padding:9px 8px;border-bottom:1px solid #ddd">${money(unitPrice)}</td>
-        <td align="right" style="padding:9px 8px;border-bottom:1px solid #ddd">${money(lineTotal)}</td>
-      </tr>`;
-    }).join('');
+        <div style="font-size:11px;font-weight:800;letter-spacing:.08em;color:#555;margin:18px 0 8px">${esc(title)}</div>
+        <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:13px;border:1px solid #ddd">
+          <thead>
+            <tr style="background:${accent};color:#fff">
+              <th align="left" style="padding:9px 8px">ITEM</th>
+              <th align="center" style="padding:9px 8px">QTY</th>
+              <th align="left" style="padding:9px 8px">SIZE / UNIT</th>
+              <th align="right" style="padding:9px 8px">UNIT</th>
+              <th align="right" style="padding:9px 8px">TOTAL</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    };
+
+    const bbqItems = order.items.filter((item) => item.category !== 'desserts');
+    const dessertItems = order.items.filter((item) => item.category === 'desserts');
+    const bbqSubtotal = Number(order.subtotalMeats || 0) + Number(order.subtotalSides || 0);
+    const dessertSubtotal = Number(order.subtotalDesserts || 0);
 
     const customDetails = customDessertDetails(order);
     const customBlock = customDetails.length ? `
       <div style="margin-top:16px;padding:13px 14px;border:1px solid #c98b36;border-radius:6px;background:#fff8eb">
         <div style="font-size:11px;font-weight:800;letter-spacing:.08em;color:#8a621f">CUSTOM DESSERT REQUEST</div>
         <div style="margin-top:7px;font-weight:700">Final pricing will be confirmed after SET BBQ &amp; Catering discusses the request with the customer.</div>
-        <div style="margin-top:8px;white-space:pre-wrap">${esc(customDetails.join('\n\n'))}</div>
+        <div style="margin-top:8px;white-space:pre-wrap">${esc(customDetails.join('\\n\\n'))}</div>
       </div>` : '';
+
+    const subtotalRows = [
+      bbqSubtotal > 0 ? `<tr><td align="right">BBQ Catering Subtotal</td><td align="right" width="120">${money(bbqSubtotal)}</td></tr>` : '',
+      dessertSubtotal > 0 ? `<tr><td align="right" style="padding-top:5px">Desserts Subtotal</td><td align="right" style="padding-top:5px">${money(dessertSubtotal)}</td></tr>` : '',
+      order.deliveryFee > 0 ? `<tr><td align="right" style="padding-top:5px">Delivery</td><td align="right" style="padding-top:5px">${money(order.deliveryFee)}</td></tr>` : ''
+    ].filter(Boolean).join('');
 
     return `<div style="font-family:Arial,Helvetica,sans-serif;background:#f5f2ee;padding:24px;color:#202020">
       <div style="max-width:760px;margin:0 auto;background:#fff;border:1px solid #d8d8d8">
@@ -102,17 +130,12 @@
           </tr></table>
         </div>
         <div style="padding:0 28px 24px">
-          <div style="font-size:11px;font-weight:800;letter-spacing:.08em;color:#777;margin-bottom:8px">ORDER ITEMS</div>
-          <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:13px">
-            <thead><tr style="background:#7a1f1f;color:#fff"><th align="left" style="padding:9px 8px">ITEM</th><th align="center" style="padding:9px 8px">QTY</th><th align="left" style="padding:9px 8px">SIZE / UNIT</th><th align="right" style="padding:9px 8px">UNIT</th><th align="right" style="padding:9px 8px">TOTAL</th></tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
+          ${renderSection('ORDER ITEMS — BBQ CATERING', bbqItems)}
+          ${renderSection('DESSERTS BY IRENE', dessertItems)}
           ${customBlock}
           ${order.specialRequests ? `<div style="margin-top:18px;padding-top:13px;border-top:1px solid #ddd"><div style="font-size:10px;font-weight:800;color:#777;letter-spacing:.08em">SPECIAL REQUESTS</div><div style="margin-top:7px;white-space:pre-wrap">${esc(order.specialRequests)}</div></div>` : ''}
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;font-size:13px">
-            <tr><td align="right">BBQ Catering Subtotal</td><td align="right" width="120">${money(order.subtotalMeats + order.subtotalSides)}</td></tr>
-            <tr><td align="right" style="padding-top:5px">Desserts Subtotal</td><td align="right" style="padding-top:5px">${money(order.subtotalDesserts)}</td></tr>
-            <tr><td align="right" style="padding-top:5px">Delivery</td><td align="right" style="padding-top:5px">${money(order.deliveryFee)}</td></tr>
+            ${subtotalRows}
             <tr><td colspan="2"><div style="border-top:2px solid #7a1f1f;margin-top:8px"></div></td></tr>
             <tr><td align="right" style="padding-top:8px;font-size:16px;font-weight:800">ORDER TOTAL</td><td align="right" style="padding-top:8px;font-size:16px;font-weight:800">${money(order.total)}</td></tr>
           </table>
