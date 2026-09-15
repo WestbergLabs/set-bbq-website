@@ -7,7 +7,7 @@ const source = fs.readFileSync(path.join(__dirname, '..', 'js', 'order.js'), 'ut
 const EXPORTS = `
   return { orderState, renderOrderOptions, getOptionDefinitions, getModifierGroups, getLineGroup,
     getOptionLines, getSelectedLines, needsLineQuantities, getLineTotal, lineKey,
-    setOptionSelection, updateMainQuantity, hasValidOptions, buildOrderItems };`;
+    setOptionSelection, updateMainQuantity, setLineQuantity, hasValidOptions, buildOrderItems };`;
 
 function newDocument() {
   return {
@@ -164,6 +164,40 @@ const brisket = menu.categories[0].items[1];
   assert.strictEqual(api.hasValidOptions(), false, 'four of three assigned');
 }
 
+// Scenario: a line cannot take more than the item quantity has left.
+{
+  const api = fresh();
+  const id = 'banana-pudding-full-pan';
+  api.updateMainQuantity(id, 2);
+  api.setOptionSelection(id, 'Blueberry Lemon Drop', true);
+  api.setOptionSelection(id, 'Strawberry Banana Lovers', true);
+  assert.strictEqual(api.setLineQuantity(id, 'Blueberry Lemon Drop--No Cookies', 1), 1);
+  assert.strictEqual(api.setLineQuantity(id, 'Blueberry Lemon Drop--Half Cookies', 1), 1);
+  assert.strictEqual(api.setLineQuantity(id, 'Strawberry Banana Lovers--No Cookies', 4), 0, 'nothing left to give');
+  assert.strictEqual(api.getLineTotal(id), 2);
+  assert.strictEqual(api.hasValidOptions(), true);
+
+  // Freeing a line makes room again, and an oversized entry lands on what remains.
+  api.setLineQuantity(id, 'Blueberry Lemon Drop--Half Cookies', 0);
+  assert.strictEqual(api.setLineQuantity(id, 'Strawberry Banana Lovers--No Cookies', 9), 1);
+  assert.strictEqual(api.getLineTotal(id), 2);
+}
+
+// Scenario: lowering the item quantity trims the lines already entered.
+{
+  const api = fresh();
+  const id = 'banana-pudding-full-pan';
+  api.updateMainQuantity(id, 3);
+  api.setOptionSelection(id, 'Strawberry Only', true);
+  api.setLineQuantity(id, 'Strawberry Only--No Cookies', 2);
+  api.setLineQuantity(id, 'Strawberry Only--Half Cookies', 1);
+  api.updateMainQuantity(id, 1);
+  assert.strictEqual(api.getLineTotal(id), 1);
+  assert.strictEqual(api.hasValidOptions(), true);
+  assert.deepStrictEqual(api.buildOrderItems().map((i) => [i.quantity, i.option]),
+    [[1, 'Strawberry Only \u00b7 No Cookies']]);
+}
+
 // Scenario: wings mixed on a single unit, then split across several.
 {
   const api = fresh();
@@ -176,8 +210,8 @@ const brisket = menu.categories[0].items[1];
   api.updateMainQuantity('wings', 4);
   assert.strictEqual(api.needsLineQuantities('wings'), true);
   assert.strictEqual(api.hasValidOptions(), false);
-  api.orderState.optionSplits.set(api.lineKey('wings', 'Mild'), 3);
-  api.orderState.optionSplits.set(api.lineKey('wings', 'Spicy'), 1);
+  assert.strictEqual(api.setLineQuantity('wings', 'Mild', 3), 3);
+  assert.strictEqual(api.setLineQuantity('wings', 'Spicy', 2), 1, 'only one of four left');
   assert.deepStrictEqual(api.buildOrderItems().map((i) => [i.quantity, i.option]), [[3, 'Mild'], [1, 'Spicy']]);
 }
 

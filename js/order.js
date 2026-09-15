@@ -104,6 +104,34 @@ function getLineTotal(itemId) {
   return item ? getSelectedLines(item).reduce((sum, line) => sum + line.quantity, 0) : 0;
 }
 
+// A line can only take what the item quantity has left, so typing 4 against a
+// quantity of 2 lands on what remains instead of asking for a correction later.
+function setLineQuantity(itemId, optionKey, quantity) {
+  const key = `${itemId}--${optionKey}`;
+  const others = getLineTotal(itemId) - (orderState.optionSplits.get(key) ?? 0);
+  const allowed = Math.max(0, getMainQuantity(itemId) - others);
+  const capped = Math.min(Math.max(0, quantity), allowed);
+
+  if (capped > 0) orderState.optionSplits.set(key, capped);
+  else orderState.optionSplits.delete(key);
+  return capped;
+}
+
+// Lowering the item quantity trims the lines already entered, keeping the earlier ones.
+function clampLineQuantities(item, limit) {
+  let remaining = limit;
+  Array.from(getSelectedOptions(item.id)).forEach((label) => {
+    getOptionLines(item, label).forEach((line) => {
+      if (!line.quantity) return;
+      const capped = Math.min(line.quantity, remaining);
+      remaining -= capped;
+      const key = lineKey(item.id, label, line.modifierLabel);
+      if (capped > 0) orderState.optionSplits.set(key, capped);
+      else orderState.optionSplits.delete(key);
+    });
+  });
+}
+
 function clearOptionLines(item, optionLabel) {
   getOptionLines(item, optionLabel).forEach((line) => {
     orderState.optionSplits.delete(lineKey(item.id, optionLabel, line.modifierLabel));
@@ -240,6 +268,7 @@ function updateMainQuantity(itemId, quantity) {
 
   if (quantity > 0) {
     orderState.selected.set(itemId, { item, quantity });
+    clampLineQuantities(item, quantity);
     const selections = new Set(getSelectedOptions(itemId));
     if (itemId !== 'wings' && selections.size > quantity) {
       const keep = Array.from(selections).slice(0, quantity);
@@ -284,7 +313,16 @@ function updateOptionVisibility(itemId) {
   container.querySelectorAll('[data-option-detail]').forEach((detail) => {
     const label = detail.dataset.optionDetail.slice(itemId.length + 2);
     detail.hidden = !selections.has(label) || !showQuantities;
-    if (!detail.hidden) return;
+
+    if (!detail.hidden) {
+      detail.querySelectorAll('.item-quantity').forEach((input) => {
+        const stored = orderState.optionSplits.get(input.dataset.quantityKey) ?? 0;
+        const value = stored ? String(stored) : '';
+        if (input.value !== value) input.value = value;
+      });
+      return;
+    }
+
     detail.querySelectorAll('.item-quantity').forEach((input) => { input.value = ''; });
     if (item) clearOptionLines(item, label);
   });
@@ -321,9 +359,7 @@ function bindSelectionEvents() {
       const optionKey = event.target.dataset.optionKey;
 
       if (optionKey) {
-        const key = `${itemId}--${optionKey}`;
-        if (quantity > 0) orderState.optionSplits.set(key, quantity);
-        else orderState.optionSplits.delete(key);
+        setLineQuantity(itemId, optionKey, quantity);
         updateOptionVisibility(itemId);
         updateSummary();
       } else {
