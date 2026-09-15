@@ -494,17 +494,9 @@ async function initializeOrderPage() {
   attachOrderHandler();
 
   try {
-    const [menuResponse, pricesResponse] = await Promise.all([
-      fetch('data/menu.json'),
-      fetch('data/prices.json')
-    ]);
-
-    if (!menuResponse.ok || !pricesResponse.ok) {
-      throw new Error('Unable to load menu information.');
-    }
-
-    orderState.menu = await menuResponse.json();
-    orderState.prices = await pricesResponse.json();
+    const result = await window.SET_MENU_API.load();
+    orderState.menu = result.menu;
+    orderState.prices = result.prices;
     renderOrderOptions();
     updateSummary();
   } catch (error) {

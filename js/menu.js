@@ -4,18 +4,10 @@ const menuState = {
 };
 
 async function loadMenuData() {
-  const [menuResponse, priceResponse] = await Promise.all([
-    fetch('data/menu.json'),
-    fetch('data/prices.json')
-  ]);
-
-  const menu = await menuResponse.json();
-  const prices = await priceResponse.json();
-
-  menuState.menu = menu;
-  menuState.prices = prices;
-
-  return { menu, prices };
+  const result = await window.SET_MENU_API.load();
+  menuState.menu = result.menu;
+  menuState.prices = result.prices;
+  return result;
 }
 
 function formatCurrency(value) {

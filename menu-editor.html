@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex,nofollow">
-  <title>SET BBQ — Admin</title>
+  <title>SET BBQ — Menu Editor</title>
   <link rel="stylesheet" href="css/admin.css?v=23">
 </head>
 <body>
@@ -24,23 +24,16 @@
       <a href="index.html">← Back to website</a>
     </section>
 
-    <section class="admin-card admin-dashboard" id="admin-dashboard" hidden>
-      <div class="brand">SET BBQ</div>
-      <h1>Admin</h1>
-      <p>Business tools and site management.</p>
-
-      <div class="tool-grid">
-        <a class="tool-card" href="menu-editor.html">
-          <span class="tool-kicker">Menu & Prices</span>
-          <strong>Menu Editor</strong>
-          <span>Edit item names, descriptions, units, prices, options, and delivery fee.</span>
-        </a>
+    <section class="admin-card menu-editor-page" id="menu-editor-card" hidden>
+      <div class="admin-page-head">
+        <div>
+          <div class="brand">SET BBQ · Admin Tool</div>
+          <h1>Menu Editor</h1>
+          <p>Update the menu without editing JSON files.</p>
+        </div>
+        <a class="back-link" href="admin.html">← Admin</a>
       </div>
-
-      <div class="admin-dashboard-actions">
-        <button id="admin-logout" class="secondary" type="button">Sign Out</button>
-        <a href="index.html">← Back to website</a>
-      </div>
+      <div id="menu-editor"></div>
     </section>
   </main>
 
@@ -49,11 +42,14 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js?v=1"></script>
   <script src="js/admin-auth.js?v=1"></script>
+  <script src="js/menu-store.js?v=1"></script>
+  <script src="js/admin-menu.js?v=3"></script>
   <script src="js/site-version.js?v=22"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const form = document.getElementById('admin-login-form');
       const message = document.getElementById('admin-message');
+
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
         message.textContent = 'Signing in…';
@@ -72,16 +68,12 @@
         const user = await window.SET_ADMIN_AUTH_API.checkSession();
         if (user) {
           document.getElementById('login-card').hidden = true;
-          document.getElementById('admin-dashboard').hidden = false;
+          document.getElementById('menu-editor-card').hidden = false;
+          window.SET_ADMIN_MENU_API.init();
         }
       } catch (error) {
         message.textContent = error?.message || 'Unable to verify admin access.';
       }
-
-      document.getElementById('admin-logout').addEventListener('click', async () => {
-        await window.SET_ADMIN_AUTH_API.signOut();
-        window.location.reload();
-      });
     });
   </script>
 </body>
