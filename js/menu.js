@@ -90,6 +90,7 @@ function renderMenuPage() {
           <span class="menu-item-name">${item.name}</span>
           ${optionGroups.length ? '' : `<span class="menu-item-price">${formatCurrency(itemPrice)}</span>`}
         </div>
+        ${item.description ? `<div class="menu-item-description">${item.description}</div>` : ''}
         ${pricingHtml}
       `;
 
