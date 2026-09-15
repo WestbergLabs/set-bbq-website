@@ -355,8 +355,6 @@
 
       // Persist first so PostgreSQL assigns the one authoritative order number.
       // PDF generation and EmailJS remain entirely outside Supabase.
-      // sending confirmation email. The Edge Function owns the database insert
-      // and generates the unique order number atomically.
       if (message) message.textContent = 'Saving your order…';
       button.textContent = 'Saving...';
 
