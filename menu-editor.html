@@ -1,80 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="noindex,nofollow">
-  <title>SET BBQ — Menu Editor</title>
-  <link rel="stylesheet" href="css/admin.css?v=44">
-</head>
-<body>
-  <main class="admin-shell">
-    <section class="admin-card" id="login-card">
-      <div class="brand">SET BBQ</div>
-      <h1>Admin Sign In</h1>
-      <p>Sign in with your authorized Supabase admin account.</p>
-      <form id="admin-login-form">
-        <label for="admin-email">Email</label>
-        <input id="admin-email" type="email" autocomplete="username" required>
-        <label for="admin-password">Password</label>
-        <input id="admin-password" type="password" autocomplete="current-password" required>
-        <button type="submit">Sign In</button>
-        <div class="admin-message" id="admin-message" aria-live="polite"></div>
-      </form>
-      <a href="index.html">← Back to website</a>
-    </section>
-
-    <section class="admin-card menu-editor-page" id="menu-editor-card" hidden>
-      <div class="admin-page-head">
-        <div>
-          <div class="brand">SET BBQ · Admin Tool</div>
-          <h1>Menu Editor</h1>
-          <p>Update the menu without editing JSON files.</p>
-        </div>
-        <a class="back-link" href="admin.html">← Admin</a>
-      </div>
-      <div id="menu-editor"></div>
-    </section>
-  </main>
-
-  <footer class="admin-footer">Build <span data-site-version>v0.1.35</span></footer>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabase-config.js?v=1"></script>
-  <script src="js/admin-auth.js?v=1"></script>
-  <script src="js/menu-store.js?v=1"></script>
-  <script src="js/admin-menu.js?v=8"></script>
-  <script src="js/site-version.js?v=45"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const form = document.getElementById('admin-login-form');
-      const message = document.getElementById('admin-message');
-
-      form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        message.textContent = 'Signing in…';
-        try {
-          await window.SET_ADMIN_AUTH_API.signIn(
-            document.getElementById('admin-email').value.trim(),
-            document.getElementById('admin-password').value
-          );
-          window.location.reload();
-        } catch (error) {
-          message.textContent = error?.message || 'Unable to sign in.';
-        }
-      });
-
-      try {
-        const user = await window.SET_ADMIN_AUTH_API.checkSession();
-        if (user) {
-          document.getElementById('login-card').hidden = true;
-          document.getElementById('menu-editor-card').hidden = false;
-          window.SET_ADMIN_MENU_API.init();
-        }
-      } catch (error) {
-        message.textContent = error?.message || 'Unable to verify admin access.';
-      }
-    });
-  </script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Menu Editor — moved</title>
+    <meta name="robots" content="noindex" />
+    <link rel="canonical" href="admin.html" />
+    <meta http-equiv="refresh" content="0; url=admin.html#menu" />
+    <link rel="stylesheet" href="css/admin.css?v=45" />
+  </head>
+  <body>
+    <main class="admin-shell">
+      <section class="admin-card">
+        <div class="brand">SET BBQ</div>
+        <h1>The Menu Editor moved</h1>
+        <p>It is now a section of the admin dashboard. Redirecting you there.</p>
+        <a href="admin.html#menu">Go to Menu &amp; Pricing</a>
+      </section>
+    </main>
+    <script>
+      window.location.replace('admin.html#menu');
+    </script>
+  </body>
 </html>

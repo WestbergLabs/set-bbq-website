@@ -975,20 +975,6 @@ code { background: #eee; padding: 2px 4px; border-radius: 4px; }
   .delivery-price { align-self: center; }
 }
 
-/* The menu grid needs the full desktop width so the complete spreadsheet fits
-   without an unnecessary horizontal scrollbar. Keep the other admin pages at
-   the normal card width. */
-.menu-editor-page {
-  width: min(100%, 1270px);
-}
-.menu-editor-page .admin-page-head {
-  margin-bottom: 0;
-}
-@media (max-width: 1300px) {
-  .menu-editor-page {
-    width: min(100%, calc(100vw - 36px));
-  }
-}
 
 
 /* SET BBQ dashboard refinement: compact controls, deliberate whitespace, no stretched cards. */
@@ -1073,19 +1059,6 @@ code { background: #eee; padding: 2px 4px; border-radius: 4px; }
 
 .dashboard-footer { padding-top: 15px; padding-bottom: 18px; }
 
-/* Preserve the established spreadsheet editor. The dashboard redesign must
-   never alter its table proportions or controls. */
-.menu-editor-page {
-  width: min(100%, 1270px);
-  margin: 18px auto;
-  padding: 32px;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 16px;
-  box-shadow: 0 8px 28px rgba(0,0,0,.06);
-}
-.menu-editor-page .admin-page-head { margin-bottom: 0; }
-.menu-editor-page .back-link { white-space: nowrap; padding-top: 4px; }
 
 @media (max-width: 1050px) {
   .admin-tool { flex-basis: 330px; width: 330px; }
@@ -1196,11 +1169,6 @@ code { background: #eee; padding: 2px 4px; border-radius: 4px; }
   border-left-color: #777;
 }
 
-.nav-link.nav-dashboard {
-  color: #fff;
-  background: #242424;
-  border-left-color: var(--admin-red);
-}
 
 .nav-link[target="_blank"]::after {
   content: "↗";
@@ -1213,32 +1181,9 @@ code { background: #eee; padding: 2px 4px; border-radius: 4px; }
   color: #aaa;
 }
 
-/* The menu editor is a working spreadsheet, so give it the whole canvas. */
-.menu-editor-page {
-  width: 100%;
-  max-width: none;
-  min-height: 100vh;
-  margin: 0;
-  padding: 28px clamp(20px, 3vw, 48px) 38px;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  background: #fff;
-}
 
-.menu-editor-page .admin-page-head {
-  padding: 0 0 22px;
-  margin: 0 0 20px;
-  border-bottom: 1px solid var(--admin-line);
-}
 
-.menu-editor-page .editor-toolbar {
-  margin-top: 0;
-}
 
-.menu-editor-page .menu-table-wrap {
-  width: 100%;
-}
 
 .menu-editor-table {
   min-width: 1240px;
@@ -1270,20 +1215,8 @@ code { background: #eee; padding: 2px 4px; border-radius: 4px; }
     border-bottom: 2px solid transparent;
   }
 
-  .nav-link.nav-dashboard {
-    border-left: 0;
-    border-bottom-color: var(--admin-red);
-  }
 
-  .menu-editor-page {
-    min-height: 100vh;
-    padding: 20px 12px 30px;
-  }
 
-  .menu-editor-page .admin-page-head {
-    padding-bottom: 17px;
-    margin-bottom: 16px;
-  }
 }
 
 @media (max-width: 680px) {

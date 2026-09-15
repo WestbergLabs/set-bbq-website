@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex,nofollow">
   <title>SET BBQ — Admin</title>
-  <link rel="stylesheet" href="css/admin.css?v=44">
+  <link rel="stylesheet" href="css/admin.css?v=46">
 </head>
 <body>
   <main class="admin-shell">
@@ -40,19 +40,16 @@
 
       <nav class="admin-nav" aria-label="Admin navigation">
         <div class="nav-brand">SET BBQ · ADMIN</div>
-        <a class="nav-link nav-dashboard" href="#admin-dashboard">Dashboard</a>
 
-        <div class="nav-label">Menu</div>
-        <a class="nav-link" href="menu-editor.html">Menu Editor</a>
-        <a class="nav-link" href="menu.html" target="_blank" rel="noopener">View Menu</a>
-
-        <div class="nav-label">Customer Pages</div>
-        <a class="nav-link" href="index.html" target="_blank" rel="noopener">Website</a>
-        <a class="nav-link" href="contact.html" target="_blank" rel="noopener">Contact</a>
-        <a class="nav-link" href="order.html" target="_blank" rel="noopener">Order Page</a>
-
-        <div class="nav-label">System</div>
+        <div class="nav-label">This page</div>
+        <a class="nav-link" href="#menu">Menu &amp; Pricing</a>
         <a class="nav-link" href="#system">System Status</a>
+
+        <div class="nav-label">Open the website</div>
+        <a class="nav-link" href="index.html" target="_blank" rel="noopener">Home &#8599;</a>
+        <a class="nav-link" href="menu.html" target="_blank" rel="noopener">Menu &#8599;</a>
+        <a class="nav-link" href="order.html" target="_blank" rel="noopener">Order Form &#8599;</a>
+        <a class="nav-link" href="contact.html" target="_blank" rel="noopener">Contact &#8599;</a>
       </nav>
 
       <section class="admin-section" id="menu">
@@ -60,26 +57,11 @@
           <div>
             <span class="section-kicker">Menu</span>
             <h2>Menu &amp; Pricing</h2>
+            <p>Items, descriptions, prices, options, delivery fee, and item order. Saving publishes to the customer menu and order form immediately.</p>
           </div>
+          <a class="text-button" href="menu.html" target="_blank" rel="noopener">View customer menu &#8599;</a>
         </div>
-        <div class="admin-tool-list">
-          <a class="admin-tool" href="menu-editor.html">
-            <span class="tool-icon" aria-hidden="true">≡</span>
-            <span class="tool-copy">
-              <strong>Menu Editor</strong>
-              <span>Update items, descriptions, prices, options, delivery fee, and item order.</span>
-            </span>
-            <span class="tool-arrow" aria-hidden="true">→</span>
-          </a>
-          <a class="admin-tool" href="menu.html" target="_blank" rel="noopener">
-            <span class="tool-icon" aria-hidden="true">↗</span>
-            <span class="tool-copy">
-              <strong>View Menu</strong>
-              <span>Open the customer-facing menu to confirm what visitors see.</span>
-            </span>
-            <span class="tool-arrow" aria-hidden="true">→</span>
-          </a>
-        </div>
+        <div id="menu-editor"></div>
       </section>
 
       <section class="admin-section" id="system">
@@ -120,13 +102,13 @@
 
         <div class="system-note">
           <strong>Need to test an actual order?</strong>
-          <span>Use the Order Page above. This check does not submit an order or send an email.</span>
+          <span>Open the Order Form from the navigation. These checks do not submit an order or send an email.</span>
         </div>
       </section>
 
       <footer class="dashboard-footer">
         <a href="index.html">← Back to website</a>
-        <span>Build <span>v0.1.35</span></span>
+        <span>Build <span data-site-version>v0.1.46</span></span>
       </footer>
     </section>
   </main>
@@ -135,7 +117,8 @@
   <script src="js/supabase-config.js?v=2"></script>
   <script src="js/admin-auth.js?v=1"></script>
   <script src="js/menu-store.js?v=2"></script>
-  <script src="js/site-version.js?v=45"></script>
+  <script src="js/admin-menu.js?v=9"></script>
+  <script src="js/site-version.js?v=46"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const form = document.getElementById('admin-login-form');
@@ -218,6 +201,7 @@
           loginCard.hidden = true;
           dashboard.hidden = false;
           document.getElementById('admin-user-email').textContent = currentUser.email || 'Signed in';
+          window.SET_ADMIN_MENU_API.init();
           runStatusChecks();
         }
       } catch (error) {

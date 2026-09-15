@@ -30,7 +30,7 @@ When an order is submitted:
 4. The business email's **Reply-To** is set to the customer.
 5. The business email also provides the current SMS notification workflow through Verizon email-to-text.
 
-The website itself is **static**. There is currently no database or server-side application.
+The pages themselves are **static**. The menu, prices, and admin sign-in are backed by Supabase, so menu changes go live without a deploy.
 
 ---
 
@@ -58,16 +58,20 @@ Keep `main` stable. Make and test major changes on `development`, then merge the
 ├── catering.html           # Catering information
 ├── order.html              # Customer order form
 ├── contact.html            # Contact information
+├── admin.html              # Admin dashboard: menu editor, system status
 │
 ├── data/
-│   ├── menu.json           # Menu names, descriptions, options
-│   └── prices.json         # Prices and delivery fee
+│   ├── menu.json           # Reference copy of the menu (live data is in Supabase)
+│   └── prices.json         # Reference copy of prices and the delivery fee
 │
 ├── css/
 │   └── style.css           # Shared site styling
 │
 ├── js/
 │   ├── order.js            # Order form, options, totals
+│   ├── admin-menu.js       # Menu editor inside admin.html
+│   ├── admin-auth.js       # Supabase admin sign-in
+│   ├── menu-store.js       # Loads and saves the Supabase menu row
 │   ├── custom-dessert.js   # Custom dessert handling
 │   ├── email-order-v2.js   # Email/PDF/order submission
 │   ├── emailjs-config.js   # EmailJS configuration
@@ -77,6 +81,9 @@ Keep `main` stable. Make and test major changes on `development`, then merge the
 ├── images/
 │   ├── logo/               # Site logos
 │   └── hero/               # Hero imagery
+│
+├── tools/
+│   └── test-options.js     # node tools/test-options.js, order option scenarios
 │
 └── docs/
     └── EMAILJS_SETUP.md    # EmailJS setup reference
@@ -88,49 +95,56 @@ There are several small order-related JavaScript files because the order system 
 
 # Changing menu items and prices
 
-Menu content and pricing are intentionally separated from the main application.
+The live menu and prices come from the Supabase `site_menu` row, not from the
+repository. `data/menu.json` and `data/prices.json` are reference copies only.
 
-### Change a price
+Edit everything in the admin dashboard:
 
-Open:
+**Admin:** https://westberglabs.github.io/set-bbq-website/admin.html
 
-```text
-data/prices.json
-```
+Sign in, then use **Menu & Pricing**. You can change item names, descriptions,
+unit wording, base prices, options, the delivery fee, and item order, and add or
+delete items. Save Changes publishes to the customer menu and order form
+immediately. Item IDs are shown for reference and should stay as they are; search
+the JavaScript for an ID before removing an item that has one.
 
-Find the item's price key and change its `basePrice`.
+### Options syntax
 
-Example:
-
-```json
-"brisket": { "basePrice": 155 }
-```
-
-Change only the number:
-
-```json
-"brisket": { "basePrice": 165 }
-```
-
-### Change a menu item
-
-Open:
+The Options cell opens a full size editor. One choice per line:
 
 ```text
-data/menu.json
+Mild | 0
+Spicy | 0
 ```
 
-You can change:
+The number after `|` is added to the item's base price, so `Regular Cookies | 10`
+prices that choice ten dollars above the base.
 
-- Name
-- Description
-- Unit/size wording
-- Options
-- Pricing reference
+Start a group with `Group:` on its own line. The **first** group is what the
+customer checks; every later group is a follow-up question about the choice they
+checked:
 
-**Important:** Keep the item's `priceKey` matched to `data/prices.json`.
+```text
+Group: Flavor
+Blueberry Lemon Drop | 0
+Regular Banana Pudding | 0
+Group: Cookies [Blueberry Lemon Drop]
+No Cookies | 0
+Half Cookies | 0
+Regular Cookies | 10
+Group: Cookies [Regular Banana Pudding]
+Regular Cookies | 0
+Different Cookies | 0
+```
 
-If an item is renamed or removed, search the JavaScript files for its ID before deleting anything.
+The names in brackets limit a group to those choices, which is how one flavor can
+offer different cookie amounts than another. They must match the first group's
+names exactly; the editor refuses a name it cannot find. A choice named in no
+bracket list is simply ordered without that question.
+
+On the order form each of these choices becomes its own quantity line, so two of
+the same flavor can be ordered with different cookie amounts, and the quantities
+have to add up to the item quantity.
 
 ### Desserts
 
@@ -148,38 +162,6 @@ Custom desserts are **starting-price requests**, not guaranteed final prices. So
 
 ---
 
-
-## Menu & Pricing Manager
-
-A simple browser-based editor is available for menu and pricing changes:
-
-**Menu & Pricing Manager:** https://westberglabs.github.io/set-bbq-website/tools/menu-manager.html
-
-It loads the current `menu.json` and `prices.json` and presents the editable information as a table. You can change:
-
-- Item names
-- Descriptions
-- Unit/size wording
-- Base prices
-- Customer-facing options
-- Option price adjustments
-- Delivery fee
-
-The editor intentionally hides internal item IDs so normal menu maintenance is easier and safer.
-
-### Important: how saving works
-
-The editor is a **static GitHub Pages tool**, so it cannot write directly back to the repository. After editing:
-
-1. Download `menu.json` and/or `prices.json`.
-2. Replace the matching file in the repository's `data/` folder.
-3. Test the order form.
-4. Commit the change to the development branch first when practical.
-5. Move the tested change to `main`.
-
-Do not use the editor to change special logic or internal IDs. Those remain in the application code.
-
-The manager is especially useful for routine price and wording changes; it does not replace testing after changes.
 
 # Email system
 
