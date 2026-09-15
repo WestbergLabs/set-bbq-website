@@ -3,7 +3,7 @@
   let client = null;
 
   const HOME_FIELDS = [
-    'eyebrow','heading','intro','delivery_text','serve_eyebrow','serve_heading',
+    'hero_eyebrow','hero_heading','hero_lead','hero_menu_button','hero_order_button','eyebrow','heading','intro','delivery_text','serve_eyebrow','serve_heading',
     'serve_categories','serve_description','serve_link_text','cta_eyebrow',
     'cta_heading','cta_text','cta_button_text'
   ];
