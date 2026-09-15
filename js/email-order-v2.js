@@ -12,14 +12,6 @@
     style: 'currency', currency: 'USD'
   }).format(Number(value || 0));
 
-  function orderNumber() {
-    const now = new Date();
-    const p = (v) => String(v).padStart(2, '0');
-    const date = `${String(now.getFullYear()).slice(-2)}${p(now.getMonth() + 1)}${p(now.getDate())}`;
-    const suffix = Math.random().toString(36).slice(2, 7).toUpperCase();
-    return `${date}-${suffix}`;
-  }
-
   function dateTime(dateValue, timeValue) {
     if (!dateValue) return '—';
     const d = new Date(`${dateValue}T${timeValue || '00:00'}:00`);
@@ -358,21 +350,11 @@
 
     try {
       const order = getOrder();
-      if (message) message.textContent = 'Preparing your invoice…';
       button.disabled = true;
-      button.textContent = 'Preparing...';
-      const pdfBytes = await makePdf(order);
+      button.textContent = 'Saving...';
 
-      const configured = config.publicKey && config.serviceId && config.businessTemplateId && config.customerTemplateId && !String(config.publicKey).startsWith('YOUR_');
-      if (!configured || !window.emailjs) {
-        throw new Error('EmailJS is not configured yet. Create the EmailJS service/templates, then add their IDs to js/emailjs-config.js.');
-      }
-
-      if (message) message.textContent = 'Sending your order…';
-      button.textContent = 'Sending...';
-      window.emailjs.init({ publicKey: config.publicKey });
-
-      // Persist the order through the server-side submit-order function before
+      // Persist first so PostgreSQL assigns the one authoritative order number.
+      // PDF generation and EmailJS remain entirely outside Supabase.
       // sending confirmation email. The Edge Function owns the database insert
       // and generates the unique order number atomically.
       if (message) message.textContent = 'Saving your order…';
@@ -428,6 +410,18 @@
 
       // Use the database-generated order number everywhere after persistence.
       order.orderNumber = savedOrder.order_number;
+
+      // The PDF is generated locally by the website, using the database order number.
+      if (message) message.textContent = 'Preparing your invoice…';
+      button.textContent = 'Preparing...';
+      const pdfBytes = await makePdf(order);
+
+      const configured = config.publicKey && config.serviceId && config.businessTemplateId && config.customerTemplateId && !String(config.publicKey).startsWith('YOUR_');
+      if (!configured || !window.emailjs) {
+        throw new Error('EmailJS is not configured yet. Create the EmailJS service/templates, then add their IDs to js/emailjs-config.js.');
+      }
+
+      window.emailjs.init({ publicKey: config.publicKey });
 
       if (message) message.textContent = 'Sending your order…';
       button.textContent = 'Sending...';
