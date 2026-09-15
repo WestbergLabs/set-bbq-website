@@ -1067,3 +1067,53 @@ code { background: #eee; padding: 2px 4px; border-radius: 4px; }
     flex-basis: auto;
   }
 }
+
+/* v0.1.33: keep section metadata beside its heading instead of pinning it
+   to the far edge of a wide desktop canvas. */
+.admin-section-heading {
+  justify-content: flex-start;
+  align-items: baseline;
+}
+.section-note {
+  margin-left: 14px;
+  padding-left: 14px;
+  border-left: 1px solid var(--admin-line-strong);
+  white-space: nowrap;
+}
+
+/* Signed-in identity belongs in the application header. Logout stays next to it
+   instead of making the user hunt through the page for account controls. */
+.admin-user {
+  align-items: center;
+  gap: 9px;
+  color: #555;
+}
+.header-signout {
+  margin-left: 7px;
+  padding: 7px 11px;
+  border: 1px solid #d7d7d3;
+  border-radius: 6px;
+  background: #fff;
+  color: #333;
+  font-size: 12px;
+  font-weight: 700;
+}
+.header-signout:hover {
+  background: #f4f4f1;
+  border-color: #bdbdb8;
+}
+@media (max-width: 680px) {
+  .admin-section-heading {
+    align-items: center;
+  }
+  .section-note {
+    margin-left: 0;
+    padding-left: 10px;
+  }
+  .admin-user {
+    flex-wrap: wrap;
+  }
+  .header-signout {
+    margin-left: auto;
+  }
+}
