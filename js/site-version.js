@@ -1,5 +1,5 @@
 (() => {
-  const SITE_VERSION = 'v0.1.16';
+  const SITE_VERSION = 'v0.1.17';
 
   document.addEventListener('DOMContentLoaded', () => {
     const footer = document.querySelector('.site-footer .container');
