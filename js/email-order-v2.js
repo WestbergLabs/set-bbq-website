@@ -81,7 +81,14 @@
 
       return `
         <div style="font-size:11px;font-weight:800;letter-spacing:.08em;color:#555;margin:18px 0 8px">${esc(title)}</div>
-        <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:13px;border:1px solid #ddd">
+        <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;table-layout:fixed;font-size:13px;border:1px solid #ddd">
+          <colgroup>
+            <col width="36%">
+            <col width="10%">
+            <col width="22%">
+            <col width="16%">
+            <col width="16%">
+          </colgroup>
           <thead>
             <tr style="background:${accent};color:#fff">
               <th align="left" style="padding:9px 8px">ITEM</th>
