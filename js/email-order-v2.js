@@ -81,21 +81,21 @@
 
       return `
         <div style="font-size:11px;font-weight:800;letter-spacing:.08em;color:#555;margin:18px 0 8px">${esc(title)}</div>
-        <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;table-layout:fixed;font-size:13px;border:1px solid #ddd">
+        <table class="order-items-table" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;table-layout:fixed;font-size:13px;border:1px solid #ddd">
           <colgroup>
-            <col width="36%">
-            <col width="10%">
-            <col width="22%">
-            <col width="16%">
-            <col width="16%">
+            <col width="40%">
+            <col width="9%">
+            <col width="21%">
+            <col width="15%">
+            <col width="15%">
           </colgroup>
           <thead>
             <tr style="background:${accent};color:#fff">
-              <th align="left" style="padding:9px 8px">ITEM</th>
-              <th align="center" style="padding:9px 8px">QTY</th>
-              <th align="left" style="padding:9px 8px">SIZE / UNIT</th>
-              <th align="right" style="padding:9px 8px">UNIT</th>
-              <th align="right" style="padding:9px 8px">TOTAL</th>
+              <th align="left" style="padding:9px 5px;white-space:nowrap">ITEM</th>
+              <th align="center" style="padding:9px 3px;white-space:nowrap">QTY</th>
+              <th align="left" style="padding:9px 4px;white-space:nowrap">SIZE / UNIT</th>
+              <th align="right" style="padding:9px 4px;white-space:nowrap">UNIT</th>
+              <th align="right" style="padding:9px 4px;white-space:nowrap">TOTAL</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -121,7 +121,13 @@
       order.deliveryFee > 0 ? `<tr><td align="right" style="padding-top:5px">Delivery</td><td align="right" style="padding-top:5px">${money(order.deliveryFee)}</td></tr>` : ''
     ].filter(Boolean).join('');
 
-    return `<div style="font-family:Arial,Helvetica,sans-serif;background:#f5f2ee;padding:24px;color:#202020">
+    return `<style>
+@media only screen and (max-width:600px) {
+  .order-meta td { display:block !important; width:100% !important; padding-right:0 !important; padding-bottom:12px !important; }
+  .order-items-table th { font-size:11px !important; }
+  .order-items-table td { padding-left:4px !important; padding-right:4px !important; }
+}
+</style><div style="font-family:Arial,Helvetica,sans-serif;background:#f5f2ee;padding:24px;color:#202020">
       <div style="max-width:760px;margin:0 auto;background:#fff;border:1px solid #d8d8d8">
         <div style="padding:24px 28px 18px;border-bottom:2px solid #7a1f1f">
           <table width="100%" cellpadding="0" cellspacing="0"><tr>
@@ -130,9 +136,9 @@
           </tr></table>
         </div>
         <div style="padding:18px 28px">
-          <table width="100%" cellpadding="0" cellspacing="0"><tr>
-            <td width="33%" valign="top"><div style="font-size:10px;font-weight:800;color:#777;letter-spacing:.08em">CUSTOMER</div><div style="margin-top:7px;font-weight:700">${esc(order.contactName)}</div><div style="margin-top:4px">${esc(order.phone)}</div><div style="margin-top:4px">${esc(order.email)}</div></td>
-            <td width="33%" valign="top"><div style="font-size:10px;font-weight:800;color:#777;letter-spacing:.08em">EVENT</div><div style="margin-top:7px;font-weight:700">${esc(order.eventName)}</div><div style="margin-top:4px">${esc(dateTime(order.eventDate, order.eventTime))}</div><div style="margin-top:4px">${esc(order.guestCount)} guests</div></td>
+          <table class="order-meta" width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td width="33%" valign="top" style="padding-right:14px"><div style="font-size:10px;font-weight:800;color:#777;letter-spacing:.08em">CUSTOMER</div><div style="margin-top:7px;font-weight:700">${esc(order.contactName)}</div><div style="margin-top:4px">${esc(order.phone)}</div><div style="margin-top:4px">${esc(order.email)}</div></td>
+            <td width="33%" valign="top" style="padding-right:14px"><div style="font-size:10px;font-weight:800;color:#777;letter-spacing:.08em">EVENT</div><div style="margin-top:7px;font-weight:700">${esc(order.eventName)}</div><div style="margin-top:4px">${esc(dateTime(order.eventDate, order.eventTime))}</div><div style="margin-top:4px">${esc(order.guestCount)} guests</div></td>
             <td width="34%" valign="top"><div style="font-size:10px;font-weight:800;color:#777;letter-spacing:.08em">VENUE / DELIVERY</div><div style="margin-top:7px">${esc(order.eventAddress)}</div><div style="margin-top:4px">${order.deliveryRequired ? 'Delivery required' : 'Pickup / no delivery'}</div></td>
           </tr></table>
         </div>
