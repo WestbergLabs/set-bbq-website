@@ -6,7 +6,6 @@
   const body = document.getElementById('orders-body');
   const count = document.getElementById('order-count');
   const search = document.getElementById('order-search');
-  const filter = document.getElementById('order-status-filter');
   const message = document.getElementById('orders-message');
   const modal = document.getElementById('order-modal');
   const detail = document.getElementById('order-detail-content');
@@ -17,15 +16,12 @@
   const money = value => Number(value || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
   const dateTime = value => value ? new Date(value).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '—';
   const dateOnly = value => value ? new Date(value).toLocaleDateString([], { dateStyle: 'medium' }) : '—';
-  const statusLabel = value => value ? value.charAt(0).toUpperCase() + value.slice(1) : 'Unknown';
 
   function visibleOrders() {
     const q = search.value.trim().toLowerCase();
-    const status = filter.value;
     return orders.filter(o => {
-      const matchesStatus = !status || o.status === status;
       const haystack = [o.order_number, o.contact_name, o.email, o.phone, o.event_name, o.venue_address].join(' ').toLowerCase();
-      return matchesStatus && (!q || haystack.includes(q));
+      return !q || haystack.includes(q);
     });
   }
 
@@ -33,7 +29,7 @@
     const rows = visibleOrders();
     count.textContent = rows.length === orders.length ? `${orders.length} order${orders.length === 1 ? '' : 's'}` : `${rows.length} of ${orders.length} orders`;
     if (!rows.length) {
-      body.innerHTML = '<tr><td colspan="7" class="orders-empty">No orders match your search.</td></tr>';
+      body.innerHTML = '<tr><td colspan="6" class="orders-empty">No orders match your search.</td></tr>';
       return;
     }
     body.innerHTML = rows.map(o => `
@@ -44,7 +40,6 @@
         <td>${esc(dateOnly(o.event_date))}</td>
         <td>${esc(o.guest_count || '—')}</td>
         <td><strong>${money(o.total)}</strong></td>
-        <td><span class="order-status status-${esc(o.status)}">${esc(statusLabel(o.status))}</span></td>
       </tr>`).join('');
   }
 
@@ -64,7 +59,6 @@
     detail.innerHTML = `
       <div class="order-detail-grid">
         <div><span class="detail-label">Customer</span><strong>${esc(o.contact_name)}</strong></div>
-        <div><span class="detail-label">Status</span><span class="order-status status-${esc(o.status)}">${esc(statusLabel(o.status))}</span></div>
         <div><span class="detail-label">Email</span><a href="mailto:${esc(o.email)}">${esc(o.email)}</a></div>
         <div><span class="detail-label">Phone</span><span>${esc(o.phone || '—')}</span></div>
         <div><span class="detail-label">Event</span><span>${esc(o.event_name || '—')}</span></div>
@@ -97,7 +91,7 @@
 
   async function loadOrders() {
     message.textContent = 'Loading…';
-    body.innerHTML = '<tr><td colspan="7" class="orders-empty">Loading orders…</td></tr>';
+    body.innerHTML = '<tr><td colspan="6" class="orders-empty">Loading orders…</td></tr>';
     try {
       const user = await api.checkSession();
       if (!user) { window.location.href = 'admin.html'; return; }
@@ -110,7 +104,7 @@
       render();
       message.textContent = '';
     } catch (error) {
-      body.innerHTML = '<tr><td colspan="7" class="orders-empty">Unable to load orders.</td></tr>';
+      body.innerHTML = '<tr><td colspan="6" class="orders-empty">Unable to load orders.</td></tr>';
       message.textContent = error?.message || 'Unable to load orders.';
       message.className = 'admin-message error';
     }
@@ -127,7 +121,6 @@
     }
   });
   search.addEventListener('input', render);
-  filter.addEventListener('change', render);
   document.getElementById('refresh-orders').addEventListener('click', loadOrders);
   document.getElementById('close-order-modal').addEventListener('click', () => { modal.hidden = true; document.body.classList.remove('modal-open'); });
   modal.addEventListener('click', e => { if (e.target === modal) { modal.hidden = true; document.body.classList.remove('modal-open'); } });
