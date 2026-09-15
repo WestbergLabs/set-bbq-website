@@ -169,22 +169,16 @@ button:disabled { opacity: .6; cursor: wait; }
 .menu-editor-table thead th:first-child { border-top-left-radius: 8px; }
 .menu-editor-table thead th:last-child { border-top-right-radius: 8px; }
 
-.menu-editor-table th:nth-child(1),
-.menu-editor-table td:nth-child(1) { width: 5%; }
-.menu-editor-table th:nth-child(2),
-.menu-editor-table td:nth-child(2) { width: 15%; }
-.menu-editor-table th:nth-child(3),
-.menu-editor-table td:nth-child(3) { width: 8%; }
-.menu-editor-table th:nth-child(4),
-.menu-editor-table td:nth-child(4) { width: 8%; }
-.menu-editor-table th:nth-child(5),
-.menu-editor-table td:nth-child(5) { width: 20%; }
-.menu-editor-table th:nth-child(6),
-.menu-editor-table td:nth-child(6) { width: 30%; }
-.menu-editor-table th:nth-child(7),
-.menu-editor-table td:nth-child(7) { width: 8%; }
-.menu-editor-table th:nth-child(8),
-.menu-editor-table td:nth-child(8) { width: 6%; }
+/* Explicit spreadsheet column proportions. Description gets extra room
+   for longer customer-facing copy as the menu grows. */
+.menu-editor-table col.col-order { width: 5%; }
+.menu-editor-table col.col-item { width: 15%; }
+.menu-editor-table col.col-unit { width: 8%; }
+.menu-editor-table col.col-price { width: 8%; }
+.menu-editor-table col.col-options { width: 19%; }
+.menu-editor-table col.col-description { width: 33%; }
+.menu-editor-table col.col-id { width: 7%; }
+.menu-editor-table col.col-actions { width: 5%; }
 
 .menu-editor-table tbody tr:not(.menu-category-row) {
   height: 56px;
