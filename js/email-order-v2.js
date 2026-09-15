@@ -303,7 +303,7 @@
         { x: margin + 4, label: 'ITEM' },
         { x: margin + 173, label: 'QTY' },
         { x: margin + 212, label: 'SIZE / UNIT' },
-        { x: margin + 299, label: 'OPTIONS' },
+        { x: margin + 280, label: 'OPTIONS' },
         { x: margin + 422, label: 'UNIT' },
         { x: margin + 483, label: 'TOTAL' }
       ];
@@ -327,8 +327,9 @@
         page.drawRectangle({ x: margin, y: y - rowH + 2, width: contentW, height: rowH, borderColor: line, borderWidth: .35, color: isCustom ? paleAccent : undefined });
         text(page, fitText(itemName, regular, 7.4, 160), cols[0].x, y - 12, 7.4, isCustom ? bold : regular, isCustom ? red : black);
         text(page, String(item.quantity).replace(/\.00$/, ''), cols[1].x + 10, y - 12, 7.4, regular);
-        text(page, fitText(unit, regular, 7.2, 78), cols[2].x, y - 12, 7.2, regular);
-        text(page, fitText(option, regular, 7.2, 112), cols[3].x, y - 12, 7.2, regular);
+        text(page, fitText(unit, regular, 7.2, 64), cols[2].x, y - 12, 7.2, regular);
+        const optionSize = regular.widthOfTextAtSize(option, 7.2) > 138 ? 6.3 : 7.2;
+        text(page, fitText(option, regular, optionSize, 138), cols[3].x, y - 12, optionSize, regular);
         text(page, moneyPdf(unitPrice), cols[4].x, y - 12, 7.1, regular);
         text(page, moneyPdf(item.line_total), cols[5].x, y - 12, 7.1, regular);
         y -= rowH;

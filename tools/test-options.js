@@ -4,108 +4,249 @@ const fs = require('fs');
 const path = require('path');
 
 const source = fs.readFileSync(path.join(__dirname, '..', 'js', 'order.js'), 'utf8');
-const stubs = {
-  addEventListener() {},
-  querySelector: () => null,
-  querySelectorAll: () => []
-};
-const load = new Function('document', 'window', `${source}
-  return { orderState, renderOrderOptions, optionAdjustment, optionFullLabel, modifiersComplete, getOptionDefinitions, getModifierGroups, modifierKey };`);
-const api = load(stubs, {});
+const EXPORTS = `
+  return { orderState, renderOrderOptions, getOptionDefinitions, getModifierGroups, getLineGroup,
+    getOptionLines, getSelectedLines, needsLineQuantities, getLineTotal, lineKey,
+    setOptionSelection, updateMainQuantity, hasValidOptions, buildOrderItems };`;
 
-const pudding = {
-  id: 'banana-pudding-full-pan',
-  name: 'Banana Pudding',
-  priceKey: 'banana-pudding-full-pan',
-  category: 'desserts',
-  pricing: {
-    type: 'groups',
-    groups: [
-      { label: 'Flavor', options: [{ label: 'Strawberry Only', adjustment: 0 }, { label: 'Regular Banana Pudding', adjustment: 0 }] },
-      { label: 'Cookies', appliesTo: ['Strawberry Only'], options: [{ label: 'No Cookies', adjustment: 0 }, { label: 'Half Cookies', adjustment: 0 }, { label: 'Regular Cookies', adjustment: 5 }] },
-      { label: 'Cookies', appliesTo: ['Regular Banana Pudding'], options: [{ label: 'Regular Cookies', adjustment: 0 }, { label: 'Different Cookies', adjustment: 0 }] }
+function newDocument() {
+  return {
+    addEventListener() {},
+    querySelector: () => null,
+    querySelectorAll: () => [],
+    createElement: () => ({ className: '', innerHTML: '', appendChild() {} })
+  };
+}
+
+const load = new Function('document', 'window', source + EXPORTS);
+
+const FLAVORS = ['Blueberry Lemon Drop', 'Strawberry Only', 'Strawberry Banana Lovers', 'Regular Banana Pudding'];
+const menu = {
+  categories: [{
+    id: 'desserts',
+    items: [
+      {
+        id: 'banana-pudding-full-pan', name: 'Banana Pudding', priceKey: 'banana-pudding-full-pan',
+        category: 'desserts', unit: 'Full Size',
+        pricing: { type: 'groups', groups: [
+          { label: 'Flavor', options: FLAVORS.map((label) => ({ label, adjustment: 0 })) },
+          { label: 'Cookies', appliesTo: FLAVORS.slice(0, 3), options: [
+            { label: 'No Cookies', adjustment: 0 }, { label: 'Half Cookies', adjustment: 0 }, { label: 'Regular Cookies', adjustment: 5 }] },
+          { label: 'Cookies', appliesTo: [FLAVORS[3]], options: [
+            { label: 'Regular Cookies', adjustment: 0 }, { label: 'Different Cookies', adjustment: 0 }] }
+        ] }
+      },
+      {
+        id: 'brisket', name: 'Brisket', priceKey: 'brisket', category: 'meats', unit: 'Select size',
+        pricing: { type: 'adjustment', options: [{ label: '10-14 lbs', adjustment: 0 }, { label: '14+ lbs', adjustment: 30 }] }
+      },
+      { id: 'wings', name: 'Wings', priceKey: 'wings', category: 'meats', unit: '10 lbs', orderOptions: ['Mild', 'Spicy'] },
+      { id: 'cole-slaw', name: 'Cole Slaw', priceKey: 'cole-slaw', category: 'sides', unit: '1 pan' }
     ]
-  }
+  }]
 };
-const brisket = {
-  id: 'brisket',
-  name: 'Brisket',
-  priceKey: 'brisket',
-  category: 'meats',
-  pricing: { type: 'adjustment', options: [{ label: '10-14 lbs', adjustment: 0 }, { label: '14+ lbs', adjustment: 30 }] }
-};
+const prices = { currency: 'USD', deliveryFee: 20, items: {
+  'banana-pudding-full-pan': { basePrice: 35 }, brisket: { basePrice: 155 }, wings: { basePrice: 75 }, 'cole-slaw': { basePrice: 50 }
+} };
 
-api.orderState.menu = { categories: [{ id: 'x', items: [pudding, brisket] }] };
-api.orderState.prices = { currency: 'USD', deliveryFee: 20, items: { 'banana-pudding-full-pan': { basePrice: 35 }, brisket: { basePrice: 155 } } };
+function fresh() {
+  const api = load(newDocument(), {});
+  api.orderState.menu = menu;
+  api.orderState.prices = prices;
+  return api;
+}
 
-// The primary group drives the checkboxes; later groups are modifiers.
-assert.deepStrictEqual(api.getOptionDefinitions(pudding).map((o) => o.label), ['Strawberry Only', 'Regular Banana Pudding']);
-// Each flavor only offers the cookie group that names it.
-assert.deepStrictEqual(
-  api.getModifierGroups(pudding, 'Strawberry Only').flatMap((g) => g.options.map((o) => o.label)),
-  ['No Cookies', 'Half Cookies', 'Regular Cookies']
-);
-assert.deepStrictEqual(
-  api.getModifierGroups(pudding, 'Regular Banana Pudding').flatMap((g) => g.options.map((o) => o.label)),
-  ['Regular Cookies', 'Different Cookies']
-);
+const pudding = menu.categories[0].items[0];
+const brisket = menu.categories[0].items[1];
 
-// A flavor with no cookie choice is incomplete and carries no modifier price.
-assert.strictEqual(api.modifiersComplete(pudding, 'Strawberry Only'), false);
-assert.strictEqual(api.optionAdjustment(pudding, 'Strawberry Only'), 0);
-assert.strictEqual(api.optionFullLabel(pudding, 'Strawberry Only'), 'Strawberry Only');
+// Data shape: the first group drives the checkboxes, later groups are scoped modifiers.
+{
+  const api = fresh();
+  assert.deepStrictEqual(api.getOptionDefinitions(pudding).map((o) => o.label), FLAVORS);
+  assert.deepStrictEqual(api.getLineGroup(pudding, 'Strawberry Only').options.map((o) => o.label),
+    ['No Cookies', 'Half Cookies', 'Regular Cookies']);
+  assert.deepStrictEqual(api.getLineGroup(pudding, 'Regular Banana Pudding').options.map((o) => o.label),
+    ['Regular Cookies', 'Different Cookies']);
+  assert.strictEqual(api.getLineGroup(brisket, '14+ lbs'), null, 'a single-group item has no modifier lines');
+}
 
-// Each flavor keeps its own cookie choice.
-api.orderState.optionModifiers.set(api.modifierKey('banana-pudding-full-pan', 'Strawberry Only', 'Cookies'), 'Regular Cookies');
-api.orderState.optionModifiers.set(api.modifierKey('banana-pudding-full-pan', 'Regular Banana Pudding', 'Cookies'), 'Different Cookies');
-assert.strictEqual(api.modifiersComplete(pudding, 'Strawberry Only'), true);
-assert.strictEqual(api.optionAdjustment(pudding, 'Strawberry Only'), 5);
-assert.strictEqual(api.optionAdjustment(pudding, 'Regular Banana Pudding'), 0);
-assert.strictEqual(api.optionFullLabel(pudding, 'Strawberry Only'), 'Strawberry Only · Regular Cookies');
-assert.strictEqual(api.optionFullLabel(pudding, 'Regular Banana Pudding'), 'Regular Banana Pudding · Different Cookies');
-assert.strictEqual(api.modifiersComplete(pudding, 'Regular Banana Pudding'), true);
+// Scenario: a plain item with no options.
+{
+  const api = fresh();
+  api.updateMainQuantity('cole-slaw', 3);
+  assert.strictEqual(api.hasValidOptions(), true);
+  assert.deepStrictEqual(api.buildOrderItems().map((i) => [i.item_name, i.quantity, i.unit_price, i.option]),
+    [['Cole Slaw', 3, 50, null]]);
+}
 
-// A choice that belongs to the other flavor's cookie group does not count.
-api.orderState.optionModifiers.set(api.modifierKey('banana-pudding-full-pan', 'Regular Banana Pudding', 'Cookies'), 'Half Cookies');
-assert.strictEqual(api.modifiersComplete(pudding, 'Regular Banana Pudding'), false);
+// Scenario: one priced option, no modifiers. No quantities asked for, adjustment applies.
+{
+  const api = fresh();
+  api.updateMainQuantity('brisket', 2);
+  api.setOptionSelection('brisket', '14+ lbs', true);
+  assert.strictEqual(api.needsLineQuantities('brisket'), false);
+  assert.strictEqual(api.hasValidOptions(), true);
+  assert.deepStrictEqual(api.buildOrderItems().map((i) => [i.quantity, i.unit_price, i.option]), [[2, 185, '14+ lbs']]);
+}
 
-// Single-group items keep the old behavior.
-assert.strictEqual(api.modifiersComplete(brisket, '14+ lbs'), true);
-assert.strictEqual(api.optionAdjustment(brisket, '14+ lbs'), 30);
-assert.strictEqual(api.optionFullLabel(brisket, '14+ lbs'), '14+ lbs');
+// Scenario: quantity 1 caps the flavors at one.
+{
+  const api = fresh();
+  api.updateMainQuantity('banana-pudding-full-pan', 1);
+  api.setOptionSelection('banana-pudding-full-pan', 'Strawberry Only', true);
+  api.setOptionSelection('banana-pudding-full-pan', 'Blueberry Lemon Drop', true);
+  assert.deepStrictEqual(Array.from(api.orderState.optionSelections.get('banana-pudding-full-pan')), ['Strawberry Only']);
+}
 
-// The rendered markup must put each option's controls on its own row, scoped to that option.
-const rendered = [];
-const renderDoc = {
-  addEventListener() {},
-  querySelector: (selector) => (selector === '[data-order-categories]'
+// Scenario: quantity 1, one flavor. The cookie choice still has to be made.
+{
+  const api = fresh();
+  api.updateMainQuantity('banana-pudding-full-pan', 1);
+  api.setOptionSelection('banana-pudding-full-pan', 'Strawberry Only', true);
+  assert.strictEqual(api.needsLineQuantities('banana-pudding-full-pan'), true);
+  assert.strictEqual(api.hasValidOptions(), false, 'no cookie quantity yet');
+  api.orderState.optionSplits.set(api.lineKey('banana-pudding-full-pan', 'Strawberry Only', 'Regular Cookies'), 1);
+  assert.strictEqual(api.hasValidOptions(), true);
+  assert.deepStrictEqual(api.buildOrderItems().map((i) => [i.quantity, i.unit_price, i.option]),
+    [[1, 40, 'Strawberry Only · Regular Cookies']], 'the cookie upcharge is added');
+}
+
+// Scenario: two of the same flavor, one with cookies and one without.
+{
+  const api = fresh();
+  const id = 'banana-pudding-full-pan';
+  api.updateMainQuantity(id, 2);
+  api.setOptionSelection(id, 'Blueberry Lemon Drop', true);
+  api.orderState.optionSplits.set(api.lineKey(id, 'Blueberry Lemon Drop', 'Half Cookies'), 1);
+  api.orderState.optionSplits.set(api.lineKey(id, 'Blueberry Lemon Drop', 'No Cookies'), 1);
+  assert.strictEqual(api.getLineTotal(id), 2);
+  assert.strictEqual(api.hasValidOptions(), true);
+  assert.deepStrictEqual(api.buildOrderItems().map((i) => [i.quantity, i.option]), [
+    [1, 'Blueberry Lemon Drop · No Cookies'],
+    [1, 'Blueberry Lemon Drop · Half Cookies']
+  ]);
+}
+
+// Scenario: two flavors, each with its own cookie amount.
+{
+  const api = fresh();
+  const id = 'banana-pudding-full-pan';
+  api.updateMainQuantity(id, 2);
+  api.setOptionSelection(id, 'Strawberry Only', true);
+  api.setOptionSelection(id, 'Regular Banana Pudding', true);
+  api.orderState.optionSplits.set(api.lineKey(id, 'Strawberry Only', 'Half Cookies'), 1);
+  api.orderState.optionSplits.set(api.lineKey(id, 'Regular Banana Pudding', 'Different Cookies'), 1);
+  assert.strictEqual(api.hasValidOptions(), true);
+  assert.deepStrictEqual(api.buildOrderItems().map((i) => i.option),
+    ['Strawberry Only · Half Cookies', 'Regular Banana Pudding · Different Cookies']);
+}
+
+// Scenario: a cookie choice from the other flavor's group cannot be used.
+{
+  const api = fresh();
+  const id = 'banana-pudding-full-pan';
+  api.updateMainQuantity(id, 1);
+  api.setOptionSelection(id, 'Regular Banana Pudding', true);
+  api.orderState.optionSplits.set(api.lineKey(id, 'Regular Banana Pudding', 'Half Cookies'), 1);
+  assert.strictEqual(api.getLineTotal(id), 0, 'Half Cookies is not offered for this flavor');
+  assert.strictEqual(api.hasValidOptions(), false);
+}
+
+// Scenario: the quantities have to add up to the item quantity.
+{
+  const api = fresh();
+  const id = 'banana-pudding-full-pan';
+  api.updateMainQuantity(id, 3);
+  api.setOptionSelection(id, 'Strawberry Only', true);
+  api.orderState.optionSplits.set(api.lineKey(id, 'Strawberry Only', 'No Cookies'), 2);
+  assert.strictEqual(api.hasValidOptions(), false, 'two of three assigned');
+  api.orderState.optionSplits.set(api.lineKey(id, 'Strawberry Only', 'No Cookies'), 4);
+  assert.strictEqual(api.hasValidOptions(), false, 'four of three assigned');
+}
+
+// Scenario: wings mixed on a single unit, then split across several.
+{
+  const api = fresh();
+  api.updateMainQuantity('wings', 1);
+  api.setOptionSelection('wings', 'Mild', true);
+  api.setOptionSelection('wings', 'Spicy', true);
+  assert.strictEqual(api.needsLineQuantities('wings'), false);
+  assert.deepStrictEqual(api.buildOrderItems().map((i) => [i.quantity, i.option]), [[1, 'Mixed: Mild + Spicy']]);
+
+  api.updateMainQuantity('wings', 4);
+  assert.strictEqual(api.needsLineQuantities('wings'), true);
+  assert.strictEqual(api.hasValidOptions(), false);
+  api.orderState.optionSplits.set(api.lineKey('wings', 'Mild'), 3);
+  api.orderState.optionSplits.set(api.lineKey('wings', 'Spicy'), 1);
+  assert.deepStrictEqual(api.buildOrderItems().map((i) => [i.quantity, i.option]), [[3, 'Mild'], [1, 'Spicy']]);
+}
+
+// Scenario: dropping the item quantity to zero clears its options and quantities.
+{
+  const api = fresh();
+  const id = 'banana-pudding-full-pan';
+  api.updateMainQuantity(id, 2);
+  api.setOptionSelection(id, 'Strawberry Only', true);
+  api.orderState.optionSplits.set(api.lineKey(id, 'Strawberry Only', 'No Cookies'), 2);
+  api.updateMainQuantity(id, 0);
+  assert.strictEqual(api.orderState.selected.has(id), false);
+  assert.strictEqual(api.orderState.optionSelections.has(id), false);
+  assert.strictEqual(api.orderState.optionSplits.size, 0);
+}
+
+// Scenario: unchecking a flavor drops the quantities entered under it.
+{
+  const api = fresh();
+  const id = 'banana-pudding-full-pan';
+  api.updateMainQuantity(id, 2);
+  api.setOptionSelection(id, 'Strawberry Only', true);
+  api.orderState.optionSplits.set(api.lineKey(id, 'Strawberry Only', 'No Cookies'), 2);
+  api.setOptionSelection(id, 'Strawberry Only', false);
+  assert.strictEqual(api.orderState.optionSplits.size, 0);
+  assert.strictEqual(api.hasValidOptions(), false, 'an item with options needs one selected');
+}
+
+// Scenario: lowering the quantity trims the extra flavors and their quantities.
+{
+  const api = fresh();
+  const id = 'banana-pudding-full-pan';
+  api.updateMainQuantity(id, 2);
+  api.setOptionSelection(id, 'Strawberry Only', true);
+  api.setOptionSelection(id, 'Regular Banana Pudding', true);
+  api.orderState.optionSplits.set(api.lineKey(id, 'Regular Banana Pudding', 'Regular Cookies'), 1);
+  api.updateMainQuantity(id, 1);
+  assert.deepStrictEqual(Array.from(api.orderState.optionSelections.get(id)), ['Strawberry Only']);
+  assert.strictEqual(api.orderState.optionSplits.size, 0, 'the trimmed flavor takes its quantity with it');
+}
+
+// The markup puts each option's quantity lines directly under that option, scoped to it.
+{
+  const rendered = [];
+  const doc = newDocument();
+  doc.querySelector = (selector) => (selector === '[data-order-categories]'
     ? { innerHTML: '', appendChild(child) { rendered.push(child.innerHTML); } }
-    : null),
-  querySelectorAll: () => [],
-  createElement: () => ({ className: '', innerHTML: '', appendChild() {} })
-};
-const renderApi = load(renderDoc, {});
-renderApi.orderState.menu = api.orderState.menu;
-renderApi.orderState.prices = api.orderState.prices;
-renderApi.renderOrderOptions();
+    : null);
+  const api = load(doc, {});
+  api.orderState.menu = menu;
+  api.orderState.prices = prices;
+  api.renderOrderOptions();
 
-const html = rendered.join('');
-assert.strictEqual(html.match(/class="option-choice-row"/g).length, 4, 'one row per option across both items');
-assert.ok(html.includes('data-option-controls="banana-pudding-full-pan--Strawberry Only"'));
-assert.ok(!html.includes('option-split-row'), 'the duplicate detail list is gone');
+  const html = rendered.join('');
+  assert.strictEqual(html.match(/class="option-choice-row"/g).length, 8, 'four flavors, two sizes, two wing heats');
+  assert.ok(!html.includes('option-modifier-select'), 'the dropdown is gone');
 
-const puddingRows = html.split('class="option-choice-row"');
-const strawberryRow = puddingRows.find((row) => row.includes('data-option-key="Strawberry Only"'));
-assert.ok(strawberryRow.includes('Half Cookies'), 'Strawberry Only offers Half Cookies');
-assert.ok(!strawberryRow.includes('Different Cookies'), 'Strawberry Only does not offer Different Cookies');
+  const blocks = html.split('data-option-detail=');
+  const strawberry = blocks.find((block) => block.startsWith('"banana-pudding-full-pan--Strawberry Only"'));
+  assert.ok(strawberry.includes('data-option-key="Strawberry Only--Half Cookies"'));
+  assert.ok(!strawberry.includes('Different Cookies'));
 
-const regularRow = puddingRows.find((row) => row.includes('data-option-key="Regular Banana Pudding"'));
-assert.ok(regularRow.includes('Different Cookies'), 'Regular Banana Pudding offers Different Cookies');
-assert.ok(!regularRow.includes('Half Cookies'), 'Regular Banana Pudding does not offer Half Cookies');
+  const regular = blocks.find((block) => block.startsWith('"banana-pudding-full-pan--Regular Banana Pudding"'));
+  assert.ok(regular.includes('data-option-key="Regular Banana Pudding--Different Cookies"'));
+  assert.ok(!regular.includes('Half Cookies'));
 
-// Brisket has one group, so its rows carry a quantity control and no dropdown.
-const brisketRow = puddingRows.find((row) => row.includes('data-option-key="14+ lbs"'));
-assert.ok(!brisketRow.includes('option-modifier-select'));
-assert.ok(brisketRow.includes('data-split-quantity'));
+  const size = blocks.find((block) => block.startsWith('"brisket--14+ lbs"'));
+  assert.ok(size.includes('data-option-key="14+ lbs"'), 'an option with no modifiers gets one quantity box');
+  assert.ok(!size.includes('option-modifier-line'));
+}
 
-console.log('grouped option checks passed');
+console.log('all order option scenarios passed');
