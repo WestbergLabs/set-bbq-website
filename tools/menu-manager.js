@@ -298,32 +298,34 @@ function syncRow(item, row) {
   const price = getPrice(item);
   price.basePrice = Number(row.querySelector('[data-field="price"]').value || 0);
 
-  const options = [...row.querySelectorAll('.option-line')]
-    .map((optionRow) => ({
-      label: optionRow.querySelector('.option-label-input').value.trim(),
-      adjustment: Number(optionRow.querySelector('.option-adjustment').value || 0)
-    }))
-    .filter((option) => option.label);
-
-  if (options.length) {
-    item.orderOptions = options.map((option) => option.label);
-    item.pricing = {
-      type: 'adjustment',
-      options: options.map((option) => ({
-        label: option.label,
-        adjustment: option.adjustment
+  const lines = [...row.querySelectorAll('.option-line')];
+  const headings = [...row.querySelectorAll('.option-group-heading')];
+  const groups = headings.map((heading, groupIndex) => ({
+    label: heading.textContent.trim() || 'Options',
+    options: lines
+      .filter((line) => Number(line.dataset.optionGroup) === groupIndex)
+      .map((line) => ({
+        label: line.querySelector('.option-label-input').value.trim(),
+        adjustment: Number(line.querySelector('.option-adjustment').value || 0)
       }))
-    };
-    price.adjustments = options.map((option) => ({
-      label: option.label,
-      value: option.adjustment
-    }));
+      .filter((option) => option.label)
+  })).filter((group) => group.options.length);
+
+  if (groups.length) {
+    item.pricing = groups.length === 1 && groups[0].label === 'Options'
+      ? { type: 'adjustment', options: groups[0].options }
+      : { type: 'groups', groups };
+    delete item.orderOptions;
+    price.adjustments = groups.flatMap((group) =>
+      group.options.map((option) => ({ label: option.label, value: option.adjustment }))
+    );
   } else {
     delete item.orderOptions;
     delete item.pricing;
     delete price.adjustments;
   }
 }
+
 
 function addItem(categoryIndex = 0) {
   if (!state.menu.categories.length) return;
