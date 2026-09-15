@@ -1,19 +1,19 @@
-/* SET BBQ admin dashboard — full-width, tile-based application layout */
+/* SET BBQ admin dashboard — full-width application layout */
 :root {
-  --admin-bg: #f5f5f3;
-  --admin-surface: #fff;
-  --admin-ink: #171717;
-  --admin-muted: #666;
-  --admin-subtle: #8a8a8a;
-  --admin-line: #d9d9d6;
-  --admin-line-soft: #e9e9e6;
-  --admin-black: #090909;
-  --brand-red: #b6432d;
-  --brand-red-dark: #8f3323;
-  --brand-cream: #f8e7c2;
+  --admin-bg: #f4f4f1;
+  --admin-surface: #ffffff;
+  --admin-sidebar: #151515;
+  --admin-sidebar-text: #d7d7d7;
+  --admin-sidebar-muted: #929292;
+  --admin-ink: #202020;
+  --admin-muted: #6f6f6f;
+  --admin-line: #e4e4e1;
+  --admin-line-strong: #d4d4d0;
+  --admin-red: #a83a28;
+  --admin-red-dark: #8f3021;
   --admin-green: #2f7d4a;
   --admin-error: #a51d1d;
-  --radius: 6px;
+  --admin-radius: 10px;
 }
 
 * { box-sizing: border-box; }
@@ -31,36 +31,42 @@ body {
   color: var(--admin-ink);
 }
 
-body, button, input, textarea { font-family: Arial, Helvetica, sans-serif; }
-
-a { color: inherit; text-decoration: none; }
-button { font: inherit; }
-
-button {
-  border: 1px solid var(--brand-red);
-  border-radius: 4px;
-  padding: 9px 14px;
-  background: var(--brand-red);
-  color: #fff;
-  font-weight: 700;
-  cursor: pointer;
+body,
+button,
+input,
+textarea {
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-button:hover { background: var(--brand-red-dark); }
-button:disabled { opacity: .6; cursor: wait; }
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover { text-decoration: none; }
+
+button {
+  border: 0;
+  border-radius: 7px;
+  padding: 10px 15px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--admin-ink);
+  color: #fff;
+}
 
 button.secondary {
-  background: #fff;
-  border-color: var(--admin-line);
+  background: #ededeb;
   color: var(--admin-ink);
 }
 
-button.secondary:hover {
-  border-color: var(--brand-red);
-  color: var(--brand-red-dark);
+button:disabled {
+  opacity: .6;
+  cursor: wait;
 }
 
-/* Login is the one place where a focused card makes sense. */
+/* Login remains intentionally focused; the authenticated dashboard is full-screen. */
 .admin-shell {
   min-height: 100vh;
   padding: 0;
@@ -70,34 +76,37 @@ button.secondary:hover {
   width: min(460px, calc(100% - 32px));
   margin: 7vh auto;
   padding: 32px;
-  background: #fff;
+  background: var(--admin-surface);
   border: 1px solid var(--admin-line);
-  border-top: 4px solid var(--brand-red);
-  border-radius: 5px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.05);
+  border-radius: 14px;
+  box-shadow: 0 10px 35px rgba(0,0,0,.06);
 }
 
-.admin-card { background: var(--admin-surface); }
+.admin-card {
+  background: var(--admin-surface);
+}
 
 .brand {
-  color: #747474;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: .15em;
   text-transform: uppercase;
+  color: #747474;
 }
 
 h1 {
-  margin: 6px 0 7px;
+  margin: 7px 0 8px;
   font-size: clamp(30px, 3vw, 38px);
   line-height: 1.08;
+  font-weight: 700;
   letter-spacing: -.025em;
 }
 
 h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: 21px;
   line-height: 1.2;
+  font-weight: 700;
 }
 
 p {
@@ -111,13 +120,14 @@ form {
   max-width: 420px;
 }
 
-input, textarea {
+input,
+textarea {
   width: 100%;
+  font: inherit;
   border: 1px solid #cfcfcb;
-  border-radius: 4px;
+  border-radius: 6px;
   background: #fff;
   color: var(--admin-ink);
-  font: inherit;
 }
 
 form input {
@@ -125,7 +135,9 @@ form input {
   margin-bottom: 8px;
 }
 
-form button { margin-top: 4px; }
+form button {
+  margin-top: 4px;
+}
 
 #login-card > a {
   display: inline-block;
@@ -136,14 +148,14 @@ form button { margin-top: 4px; }
 }
 
 .admin-message {
-  min-height: 20px;
   margin-top: 8px;
+  min-height: 20px;
 }
 
 .admin-message.success { color: #176b35; }
 .admin-message.error { color: var(--admin-error); }
 
-/* FULL-WIDTH ADMIN APPLICATION */
+/* Full-width application shell */
 .admin-dashboard {
   width: 100%;
   min-height: 100vh;
@@ -152,77 +164,14 @@ form button { margin-top: 4px; }
   border: 0;
   border-radius: 0;
   box-shadow: none;
+
   display: grid;
-  grid-template-columns: 226px minmax(0, 1fr);
+  grid-template-columns: 238px minmax(0, 1fr);
   grid-template-rows: auto auto;
   align-items: start;
 }
 
-/* Persistent navigation */
-.admin-nav {
-  grid-column: 1;
-  grid-row: 1 / span 20;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  height: 100vh;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 2px;
-  padding: 24px 12px 20px;
-  background: var(--admin-black);
-  color: #ddd;
-  border-right: 3px solid var(--brand-red);
-}
-
-.admin-nav::before {
-  content: "SET BBQ · ADMIN";
-  display: block;
-  padding: 2px 13px 28px;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: .15em;
-}
-
-.admin-nav a {
-  display: flex;
-  align-items: center;
-  min-height: 42px;
-  padding: 9px 13px;
-  border-left: 3px solid transparent;
-  border-radius: 4px;
-  color: #999;
-  font-size: 13px;
-  font-weight: 700;
-  transition: background .15s, color .15s, border-color .15s;
-}
-
-.admin-nav a::before {
-  width: 22px;
-  margin-right: 8px;
-  color: #777;
-  text-align: center;
-}
-
-.admin-nav a[href="#menu"]::before { content: "☰"; }
-.admin-nav a[href="#website"]::before { content: "↗"; }
-.admin-nav a[href="#system"]::before { content: "●"; font-size: 7px; }
-.admin-nav a[href="#account"]::before { content: "○"; font-size: 13px; }
-
-.admin-nav a:hover,
-.admin-nav a:focus-visible {
-  color: #fff;
-  background: rgba(182,67,45,.12);
-  border-left-color: var(--brand-red);
-}
-
-.admin-nav a:hover::before,
-.admin-nav a:focus-visible::before { color: var(--brand-cream); }
-
-/* Header */
+/* Header belongs to the working area, not a centered card. */
 .admin-page-head {
   grid-column: 2;
   grid-row: 1;
@@ -231,14 +180,13 @@ form button { margin-top: 4px; }
   justify-content: space-between;
   align-items: flex-start;
   gap: 28px;
-  padding: 27px clamp(24px, 3.2vw, 48px) 22px;
+  padding: 30px clamp(24px, 4vw, 54px) 24px;
   background: #fff;
-  border-top: 4px solid var(--brand-red);
   border-bottom: 1px solid var(--admin-line);
 }
 
 .admin-page-head p {
-  margin: 6px 0 0;
+  margin: 7px 0 0;
   max-width: 620px;
 }
 
@@ -249,7 +197,7 @@ form button { margin-top: 4px; }
   max-width: 360px;
   padding-top: 5px;
   color: #666;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   overflow-wrap: anywhere;
   text-align: right;
@@ -266,14 +214,92 @@ form button { margin-top: 4px; }
 
 .status-dot { background: var(--admin-green); }
 
-/* Full-width content bands; tiles inside are deliberately compact. */
+/* Desktop navigation: quiet, persistent sidebar. */
+.admin-nav {
+  grid-column: 1;
+  grid-row: 1 / span 20;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: 100vh;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  padding: 28px 14px 20px;
+  background: var(--admin-sidebar);
+  color: var(--admin-sidebar-text);
+  border-right: 1px solid #262626;
+}
+
+.admin-nav::before {
+  content: "SET BBQ · ADMIN";
+  display: block;
+  padding: 0 12px 25px;
+  color: #f1f1f1;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .14em;
+}
+
+.admin-nav a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-left: 2px solid transparent;
+  border-radius: 6px;
+  color: var(--admin-sidebar-muted);
+  font-size: 13px;
+  font-weight: 700;
+  transition: color .15s, background .15s, border-color .15s;
+}
+
+.admin-nav a:hover,
+.admin-nav a:focus-visible {
+  color: #fff;
+  background: rgba(255,255,255,.055);
+  border-left-color: #777;
+}
+
+.admin-nav a[href="#menu"] {
+  margin-top: 4px;
+}
+
+.admin-nav a[href="#menu"]::before,
+.admin-nav a[href="#website"]::before,
+.admin-nav a[href="#system"]::before,
+.admin-nav a[href="#account"]::before {
+  width: 22px;
+  margin-right: 9px;
+  color: #777;
+  font-size: 12px;
+  text-align: center;
+}
+
+.admin-nav a[href="#menu"]::before { content: "☰"; }
+.admin-nav a[href="#website"]::before { content: "↗"; }
+.admin-nav a[href="#system"]::before { content: "●"; font-size: 8px; }
+.admin-nav a[href="#account"]::before { content: "○"; font-size: 14px; }
+
+.admin-nav a:hover::before,
+.admin-nav a:focus-visible::before {
+  color: var(--admin-red);
+}
+
+/* Main content uses the entire remaining browser width. */
 .admin-section {
   grid-column: 2;
   min-width: 0;
-  padding: 30px clamp(24px, 3.2vw, 48px) 34px;
-  background: var(--admin-bg);
+  padding: 32px clamp(24px, 4vw, 54px) 34px;
   border-bottom: 1px solid var(--admin-line);
   scroll-margin-top: 20px;
+  background: var(--admin-bg);
+}
+
+.admin-section:last-of-type {
+  border-bottom: 0;
 }
 
 .admin-section-heading {
@@ -281,13 +307,13 @@ form button { margin-top: 4px; }
   justify-content: space-between;
   align-items: end;
   gap: 20px;
-  margin-bottom: 14px;
+  margin-bottom: 15px;
 }
 
 .section-kicker {
   display: block;
   margin-bottom: 5px;
-  color: var(--brand-red);
+  color: #888;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: .13em;
@@ -295,105 +321,100 @@ form button { margin-top: 4px; }
 }
 
 .section-note {
-  color: #888;
-  font-size: 11px;
-  font-weight: 700;
+  color: #8a8a8a;
+  font-size: 12px;
+  font-weight: 600;
 }
 
-/*
- * Dashboard tiles:
- * compact, independent objects instead of stretched horizontal bars.
- * The canvas remains full width, but each action keeps a useful reading width.
- */
+/* Tool links are rows, not giant cards. They expand across the available canvas. */
 .admin-tool-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(280px, 420px));
-  gap: 12px;
-  justify-content: start;
-}
-
-#website .admin-tool-list {
-  grid-template-columns: repeat(3, minmax(230px, 320px));
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 8px;
 }
 
 .admin-tool {
-  position: relative;
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
-  grid-template-rows: auto auto;
-  column-gap: 13px;
-  row-gap: 6px;
-  min-height: 112px;
-  padding: 17px 17px 15px;
+  grid-template-columns: 34px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 12px;
+  min-height: 70px;
+  padding: 12px 14px;
   border: 1px solid var(--admin-line);
-  border-radius: var(--radius);
+  border-radius: var(--admin-radius);
   background: #fff;
-  transition: border-color .15s, box-shadow .15s, transform .15s;
-}
-
-.admin-tool::after {
-  content: "→";
-  position: absolute;
-  right: 15px;
-  bottom: 13px;
-  color: #aaa;
-  font-size: 16px;
-  transition: color .15s, transform .15s;
+  transition: border-color .15s, background .15s, transform .15s;
 }
 
 .admin-tool:hover {
-  border-color: #c9aaa3;
-  box-shadow: 0 5px 16px rgba(0,0,0,.06);
+  border-color: #c9c9c5;
+  background: #fdfdfc;
   transform: translateY(-1px);
 }
 
-.admin-tool:hover::after {
-  color: var(--brand-red);
-  transform: translateX(2px);
-}
-
 .tool-icon {
-  grid-row: 1 / span 2;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border: 1px solid #dededb;
-  border-radius: 5px;
-  background: #fafaf8;
-  color: var(--brand-red);
-  font-size: 16px;
+  border-radius: 7px;
+  color: #5f5f5f;
+  font-size: 15px;
+  font-weight: 400;
 }
 
 .tool-copy {
   display: grid;
-  gap: 4px;
-  align-content: start;
+  gap: 3px;
   min-width: 0;
-  padding-right: 20px;
 }
 
 .tool-copy strong {
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.25;
 }
 
 .tool-copy span {
   color: #747474;
   font-size: 12px;
-  line-height: 1.45;
+  font-weight: 400;
+  line-height: 1.4;
 }
 
-/* Status becomes a set of compact operational cards. */
+.tool-arrow {
+  color: #999;
+  font-size: 17px;
+  text-align: right;
+}
+
+/* Website section has three natural quick-access links. */
+#website .admin-tool-list {
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+}
+
+.text-button {
+  padding: 5px 0;
+  background: transparent;
+  color: #555;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.text-button:hover {
+  color: #111;
+  background: transparent;
+}
+
+/* Status is intentionally a clean, full-width operational list. */
 .status-summary {
   display: flex;
   align-items: center;
   gap: 11px;
-  padding: 12px 14px;
-  margin-bottom: 12px;
+  padding: 13px 15px;
+  margin-bottom: 10px;
   border: 1px solid var(--admin-line);
-  border-left: 3px solid var(--brand-red);
-  border-radius: var(--radius);
+  border-radius: var(--admin-radius);
   background: #fff;
 }
 
@@ -409,43 +430,36 @@ form button { margin-top: 4px; }
 .status-summary span { color: #777; font-size: 12px; }
 
 .status-list {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(170px, 1fr));
-  gap: 10px;
-  border: 0;
-  overflow: visible;
-  background: transparent;
-}
-
-.status-row {
-  min-height: 94px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px;
   border: 1px solid var(--admin-line);
-  border-radius: var(--radius);
+  border-radius: var(--admin-radius);
+  overflow: hidden;
   background: #fff;
 }
 
+.status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #ededeb;
+}
+
+.status-row:last-child { border-bottom: 0; }
+
 .status-row > div {
   display: grid;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 
-.status-row strong { font-size: 13px; }
-.status-row div span {
-  color: #777;
-  font-size: 11px;
-  line-height: 1.4;
-}
+.status-row strong { font-size: 14px; }
+.status-row div span { color: #777; font-size: 12px; }
 
 .check-result {
-  font-size: 11px;
-  font-weight: 800;
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .check-result.pending { color: #888; }
@@ -456,38 +470,23 @@ form button { margin-top: 4px; }
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
-  margin-top: 11px;
+  margin-top: 10px;
   color: #777;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.45;
 }
 
 .system-note strong { color: #555; }
 
-.text-button {
-  padding: 4px 0;
-  border: 0;
-  background: transparent;
-  color: #555;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.text-button:hover {
-  background: transparent;
-  color: var(--brand-red-dark);
-}
-
-/* Account is a compact information panel, not another giant card. */
+/* Account area stays light and compact. */
 .account-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 180px auto;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, .3fr) auto;
   align-items: center;
-  gap: 24px;
-  width: min(820px, 100%);
-  padding: 15px 16px;
+  gap: 26px;
+  padding: 16px;
   border: 1px solid var(--admin-line);
-  border-radius: var(--radius);
+  border-radius: var(--admin-radius);
   background: #fff;
 }
 
@@ -499,7 +498,7 @@ form button { margin-top: 4px; }
 
 .account-label {
   color: #888;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -515,41 +514,66 @@ form button { margin-top: 4px; }
   display: flex;
   justify-content: space-between;
   gap: 20px;
-  padding: 17px clamp(24px, 3.2vw, 48px) 22px;
+  padding: 18px clamp(24px, 4vw, 54px) 24px;
   background: #fff;
   color: #888;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .dashboard-footer a {
   color: #666;
-  font-weight: 700;
+  font-size: 12px;
 }
 
-.dashboard-footer a:hover { color: var(--brand-red); }
+.dashboard-footer a:hover {
+  color: var(--admin-red);
+}
 
 /* Tablet */
-@media (max-width: 1050px) {
-  .admin-dashboard { grid-template-columns: 200px minmax(0, 1fr); }
-
-  .admin-tool-list,
-  #website .admin-tool-list {
-    grid-template-columns: repeat(2, minmax(250px, 1fr));
+@media (max-width: 900px) {
+  .admin-dashboard {
+    grid-template-columns: 190px minmax(0, 1fr);
   }
 
-  .status-list { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
+  .admin-page-head {
+    padding-left: 26px;
+    padding-right: 26px;
+  }
+
+  .admin-section {
+    padding-left: 26px;
+    padding-right: 26px;
+  }
+
+  .dashboard-footer {
+    padding-left: 26px;
+    padding-right: 26px;
+  }
+
+  #website .admin-tool-list {
+    grid-template-columns: 1fr;
+  }
 }
 
-@media (max-width: 760px) {
-  .admin-dashboard { display: block; }
+/* Mobile: sidebar becomes a compact horizontal navigation. */
+@media (max-width: 680px) {
+  .admin-dashboard {
+    display: block;
+    min-height: 100vh;
+  }
 
   .admin-page-head {
+    position: relative;
     display: block;
-    padding: 21px 18px 18px;
+    padding: 22px 18px 18px;
+  }
+
+  .admin-page-head p {
+    margin-top: 6px;
   }
 
   .admin-user {
-    margin-top: 13px;
+    margin-top: 14px;
     padding-top: 0;
     max-width: none;
     text-align: left;
@@ -567,33 +591,43 @@ form button { margin-top: 4px; }
     gap: 4px;
     overflow-x: auto;
     padding: 7px 10px;
+    background: #171717;
     border-right: 0;
-    border-bottom: 2px solid var(--brand-red);
+    border-bottom: 1px solid #2a2a2a;
     scrollbar-width: none;
   }
 
-  .admin-nav::-webkit-scrollbar { display: none; }
-  .admin-nav::before { display: none; }
+  .admin-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .admin-nav::before {
+    display: none;
+  }
 
   .admin-nav a {
     flex: 0 0 auto;
-    min-height: 39px;
-    padding: 9px 12px;
+    min-height: 40px;
+    padding: 9px 11px;
     border-left: 0;
     border-bottom: 2px solid transparent;
-    border-radius: 4px;
+    border-radius: 5px;
     font-size: 12px;
   }
-
-  .admin-nav a::before { display: none; }
 
   .admin-nav a:hover,
   .admin-nav a:focus-visible {
     border-left: 0;
-    border-bottom-color: var(--brand-cream);
+    border-bottom-color: #777;
   }
 
-  .admin-section { padding: 24px 16px 28px; }
+  .admin-nav a::before {
+    display: none !important;
+  }
+
+  .admin-section {
+    padding: 24px 16px 28px;
+  }
 
   .admin-section-heading {
     align-items: center;
@@ -601,20 +635,27 @@ form button { margin-top: 4px; }
 
   .admin-tool-list,
   #website .admin-tool-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 
-  .admin-tool { min-height: 108px; }
+  .admin-tool {
+    min-height: 64px;
+    padding: 10px;
+  }
 
-  .status-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .status-row {
+    align-items: flex-start;
+    padding: 12px;
+  }
 
   .account-panel {
-    width: 100%;
     grid-template-columns: 1fr;
     gap: 13px;
   }
 
-  .account-panel button { justify-self: start; }
+  .account-panel button {
+    justify-self: start;
+  }
 
   .dashboard-footer {
     flex-direction: column;
@@ -623,15 +664,14 @@ form button { margin-top: 4px; }
   }
 }
 
-@media (max-width: 500px) {
-  .admin-tool-list,
-  #website .admin-tool-list,
-  .status-list {
-    grid-template-columns: 1fr;
+/* Very narrow phones */
+@media (max-width: 390px) {
+  #login-card {
+    padding: 24px 18px;
   }
 
-  .admin-tool {
-    min-height: 96px;
+  h1 {
+    font-size: 28px;
   }
 
   .admin-section-heading {
@@ -639,10 +679,391 @@ form button { margin-top: 4px; }
     flex-direction: column;
     gap: 7px;
   }
+
+  .status-row {
+    gap: 10px;
+  }
 }
 
-/* Very narrow phones */
-@media (max-width: 390px) {
-  #login-card { padding: 24px 18px; }
-  h1 { font-size: 28px; }
+.editor-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 20px;
+  margin: 22px 0 12px;
+}
+.editor-help { display: block; color: #777; font-size: 13px; margin-top: 4px; }
+.toolbar-actions { display: flex; align-items: center; gap: 10px; }
+.delivery-price {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  font-weight: 700;
+}
+.delivery-price input {
+  width: 82px;
+  padding: 7px 8px;
+  margin: 0;
+  font-weight: 600;
+}
+
+.add-item-button {
+  padding: 8px 12px;
+  border: 1px solid #c8c8c8;
+  background: #fff;
+  color: #202020;
+  font-size: 13px;
+}
+.add-item-button:hover { border-color: #999; background: #f7f7f7; }
+
+.menu-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #d4d4d4;
+  border-radius: 9px;
+  background: #fff;
+}
+.menu-editor-table {
+  width: 100%;
+  min-width: 1160px;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.menu-editor-table th,
+.menu-editor-table td {
+  padding: 7px 8px;
+  border-bottom: 1px solid #e7e7e7;
+  vertical-align: middle;
+  text-align: left;
+}
+.menu-editor-table thead th {
+  height: 34px;
+  padding: 7px 8px;
+  background: #f1f1f1;
+  color: #555;
+  font-size: 11px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  font-weight: 800;
+  border-bottom: 1px solid #d7d7d7;
+}
+.menu-editor-table thead th:first-child { border-top-left-radius: 8px; }
+.menu-editor-table thead th:last-child { border-top-right-radius: 8px; }
+
+/* Explicit spreadsheet column proportions. Description gets extra room
+   for longer customer-facing copy as the menu grows. */
+.menu-editor-table col.col-order { width: 5%; }
+.menu-editor-table col.col-item { width: 15%; }
+.menu-editor-table col.col-unit { width: 8%; }
+.menu-editor-table col.col-price { width: 8%; }
+.menu-editor-table col.col-options { width: 19%; }
+.menu-editor-table col.col-description { width: 33%; }
+.menu-editor-table col.col-id { width: 7%; }
+.menu-editor-table col.col-actions { width: 5%; }
+
+.menu-editor-table tbody tr:not(.menu-category-row) {
+  height: 56px;
+  transition: background .12s;
+}
+.menu-editor-table tbody tr:not(.menu-category-row):hover { background: #fafafa; }
+.menu-editor-table tbody tr:last-child td { border-bottom: 0; }
+
+.menu-editor-table input,
+.menu-editor-table textarea {
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid #d2d2d2;
+  border-radius: 5px;
+  font-size: 13px;
+  color: #202020;
+}
+.menu-editor-table input:focus,
+.menu-editor-table textarea:focus,
+.menu-category-description:focus,
+.delivery-price input:focus {
+  outline: 2px solid rgba(32,32,32,.12);
+  border-color: #888;
+}
+.menu-editor-table textarea {
+  min-height: 38px;
+  height: 38px !important;
+  resize: vertical;
+  line-height: 1.25;
+}
+.menu-category-row th {
+  padding: 9px 10px;
+  background: #f8f8f8;
+  border-bottom: 1px solid #d9d9d9;
+}
+.category-row-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+}
+.category-row-head > div:first-child {
+  width: 100%;
+  min-width: 0;
+}
+.category-title {
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.menu-category-description {
+  display: block;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  height: 38px;
+  padding: 8px 10px;
+  color: #666;
+  background: #fff;
+  font-size: 13px;
+}
+.category-row-head .add-item-button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.menu-id {
+  color: #777;
+  font: 11px/1.3 monospace;
+  overflow-wrap: anywhere;
+}
+.menu-order {
+  padding: 5px 6px !important;
+  text-align: center !important;
+  color: #777;
+  font-weight: 700;
+}
+.order-controls {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+  margin-top: 4px;
+}
+.move-item {
+  width: 25px;
+  height: 23px;
+  padding: 0;
+  border: 1px solid #d3d3d3;
+  border-radius: 5px;
+  background: #f7f7f7;
+  color: #333;
+  font-size: 13px;
+  line-height: 1;
+}
+.move-item:hover:not(:disabled) { background: #eee; border-color: #aaa; }
+.move-item:disabled { opacity: .3; cursor: default; }
+.menu-delete-cell { text-align: center !important; }
+.delete-item {
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background: #fff;
+  color: #9b2525;
+  font-size: 12px;
+}
+.delete-item:hover { border-color: #c9a0a0; background: #fff7f7; }
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 14px;
+}
+#save-menu { min-width: 130px; }
+#reload-menu { min-width: 130px; }
+code { background: #eee; padding: 2px 4px; border-radius: 4px; }
+
+.admin-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0,0,0,.42);
+}
+.admin-modal[hidden] { display: none; }
+.admin-modal-card {
+  width: min(100%,560px);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 18px 55px rgba(0,0,0,.18);
+}
+.admin-modal-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+.admin-modal-head h2 { margin-top: 6px; }
+.modal-close {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  background: #eee;
+  color: #202020;
+  font-size: 22px;
+  line-height: 1;
+}
+.add-item-form { display: grid; gap: 13px; }
+.add-item-form label { display: grid; gap: 6px; font-size: 13px; font-weight: 700; }
+.add-item-form input,
+.add-item-form select,
+.add-item-form textarea {
+  width: 100%;
+  padding: 9px 10px;
+}
+.add-item-form textarea { resize: vertical; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field-note { color: #777; font-weight: 400; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 4px; }
+
+@media (max-width: 650px) {
+  .admin-shell { padding: 10px; }
+  .admin-card { padding: 22px 16px; margin: 8px auto; }
+  h1 { font-size: 30px; }
+  .admin-page-head { flex-direction: column; }
+  .editor-toolbar { align-items: flex-start; flex-direction: column; }
+  .toolbar-actions { width: 100%; justify-content: space-between; }
+  .delivery-price { align-self: center; }
+}
+
+/* The menu grid needs the full desktop width so the complete spreadsheet fits
+   without an unnecessary horizontal scrollbar. Keep the other admin pages at
+   the normal card width. */
+.menu-editor-page {
+  width: min(100%, 1270px);
+}
+.menu-editor-page .admin-page-head {
+  margin-bottom: 0;
+}
+@media (max-width: 1300px) {
+  .menu-editor-page {
+    width: min(100%, calc(100vw - 36px));
+  }
+}
+
+
+/* SET BBQ dashboard refinement: compact controls, deliberate whitespace, no stretched cards. */
+.admin-tool-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 10px;
+}
+.admin-tool {
+  flex: 0 1 390px;
+  width: 390px;
+  min-height: 68px;
+  grid-template-columns: 34px minmax(0, 1fr) 16px;
+  gap: 11px;
+  padding: 11px 13px;
+  border-radius: 7px;
+  box-shadow: none;
+}
+.admin-tool:hover {
+  border-color: #c9aaa3;
+  background: #fff;
+  box-shadow: 0 3px 10px rgba(0,0,0,.045);
+}
+.tool-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  color: var(--admin-red);
+  background: #fff;
+}
+.tool-copy { gap: 2px; }
+.tool-copy strong { font-size: 14px; }
+.tool-copy span { font-size: 11px; line-height: 1.35; }
+.tool-arrow { color: #aaa; font-size: 15px; }
+
+#website .admin-tool-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+#website .admin-tool {
+  flex: 0 1 300px;
+  width: 300px;
+}
+
+.admin-section {
+  padding-top: 28px;
+  padding-bottom: 30px;
+}
+.admin-section-heading { margin-bottom: 12px; }
+.section-kicker { color: var(--admin-red); }
+
+.status-summary {
+  width: min(100%, 980px);
+  padding: 11px 14px;
+  margin-bottom: 8px;
+}
+.status-list {
+  width: min(100%, 980px);
+  border-radius: 8px;
+}
+.status-row {
+  padding: 11px 14px;
+  min-height: 0;
+}
+.status-row strong { font-size: 13px; }
+.status-row div span { font-size: 11px; }
+.check-result { font-size: 11px; }
+.system-note {
+  width: min(100%, 980px);
+  margin-top: 8px;
+  font-size: 11px;
+}
+
+.account-panel {
+  width: min(100%, 760px);
+  padding: 14px 15px;
+  gap: 22px;
+}
+
+.dashboard-footer { padding-top: 15px; padding-bottom: 18px; }
+
+/* Preserve the established spreadsheet editor. The dashboard redesign must
+   never alter its table proportions or controls. */
+.menu-editor-page {
+  width: min(100%, 1270px);
+  margin: 18px auto;
+  padding: 32px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.06);
+}
+.menu-editor-page .admin-page-head { margin-bottom: 0; }
+.menu-editor-page .back-link { white-space: nowrap; padding-top: 4px; }
+
+@media (max-width: 1050px) {
+  .admin-tool { flex-basis: 330px; width: 330px; }
+  #website .admin-tool { flex-basis: 280px; width: 280px; }
+}
+@media (max-width: 680px) {
+  .admin-tool-list,
+  #website .admin-tool-list {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .admin-tool,
+  #website .admin-tool {
+    width: auto;
+    flex-basis: auto;
+  }
 }
