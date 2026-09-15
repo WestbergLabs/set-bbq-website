@@ -4,6 +4,7 @@ const orderState = {
   selected: new Map(),
   optionSelections: new Map(),
   optionSplits: new Map(),
+  optionModifiers: new Map(),
   deliverySelected: false,
   submitting: false
 };
@@ -25,9 +26,64 @@ function getMenuItemById(id) {
   return null;
 }
 
+function getOptionGroups(item) {
+  if (item.pricing?.groups?.length) return item.pricing.groups;
+  if (item.pricing?.options?.length) return [{ label: 'Options', options: item.pricing.options }];
+  if (item.orderOptions?.length) {
+    return [{ label: 'Options', options: item.orderOptions.map((label) => ({ label, adjustment: 0 })) }];
+  }
+  return [];
+}
+
+// The first group is the primary choice: it drives the checkboxes and the quantity split.
 function getOptionDefinitions(item) {
-  if (item.pricing?.options?.length) return item.pricing.options;
-  return (item.orderOptions ?? []).map((label) => ({ label, adjustment: 0 }));
+  return getOptionGroups(item)[0]?.options ?? [];
+}
+
+// Every later group is a modifier on the primary choice, e.g. Cookies for each pudding flavor.
+// A group with appliesTo only offers its choices to the primary options it names.
+function getModifierGroups(item, optionLabel) {
+  return getOptionGroups(item).slice(1).filter((group) =>
+    !group.appliesTo?.length || group.appliesTo.includes(optionLabel)
+  );
+}
+
+function hasModifierGroups(item) {
+  return getOptionGroups(item).length > 1;
+}
+
+function modifierKey(itemId, optionLabel, groupLabel) {
+  return `${itemId}--${optionLabel}--${groupLabel}`;
+}
+
+function getModifierChoice(itemId, optionLabel, group) {
+  const chosen = orderState.optionModifiers.get(modifierKey(itemId, optionLabel, group.label));
+  return (group.options ?? []).find((choice) => choice.label === chosen) ?? null;
+}
+
+function optionAdjustment(item, optionLabel) {
+  const primary = getOptionDefinitions(item).find((entry) => entry.label === optionLabel);
+  return getModifierGroups(item, optionLabel).reduce(
+    (sum, group) => sum + (getModifierChoice(item.id, optionLabel, group)?.adjustment ?? 0),
+    primary?.adjustment ?? 0
+  );
+}
+
+function optionFullLabel(item, optionLabel) {
+  const modifiers = getModifierGroups(item, optionLabel)
+    .map((group) => getModifierChoice(item.id, optionLabel, group)?.label)
+    .filter(Boolean);
+  return [optionLabel, ...modifiers].join(' \u00b7 ');
+}
+
+function modifiersComplete(item, optionLabel) {
+  return getModifierGroups(item, optionLabel).every((group) => getModifierChoice(item.id, optionLabel, group));
+}
+
+function clearModifiers(item, optionLabel) {
+  getModifierGroups(item, optionLabel).forEach((group) => {
+    orderState.optionModifiers.delete(modifierKey(item.id, optionLabel, group.label));
+  });
 }
 
 function makeQuantityInput(itemId, optionKey = '') {
@@ -47,6 +103,8 @@ function renderCategorySelection(category, container) {
   const list = category.items.map((item) => {
     const itemPrice = getPriceByKey(item.priceKey);
     const options = getOptionDefinitions(item);
+    const firstGroupLabel = getOptionGroups(item)[0]?.label;
+    const primaryGroupLabel = !firstGroupLabel || firstGroupLabel === 'Options' ? 'Choose one or more' : firstGroupLabel;
 
     if (options.length) {
       const optionRows = options.map((option) => `
@@ -56,10 +114,21 @@ function renderCategorySelection(category, container) {
           <span class="option-price">${optionPriceText(item, option)}</span>
         </label>`).join('');
 
+      const modifierFields = (option) => getModifierGroups(item, option.label).map((group) => `
+            <label class="option-modifier">${group.label}
+              <select class="option-modifier-select" data-modifier-item="${item.id}" data-modifier-option="${option.label}" data-modifier-group="${group.label}">
+                <option value="">Choose...</option>
+                ${(group.options ?? []).map((choice) => `<option value="${choice.label}">${choice.label}${choice.adjustment ? ` (+${formatCurrency(choice.adjustment)})` : ''}</option>`).join('')}
+              </select>
+            </label>`).join('');
+
       const splitRows = options.map((option) => `
         <div class="option-split-row" data-split-row="${item.id}--${option.label}" hidden>
-          <span>${option.label}</span>
-          <label class="quantity-control">Qty ${makeQuantityInput(item.id, option.label)}</label>
+          <span class="option-split-name">${option.label}</span>
+          <div class="option-split-fields">
+            ${modifierFields(option)}
+            <label class="quantity-control" data-split-quantity="true" hidden>Qty ${makeQuantityInput(item.id, option.label)}</label>
+          </div>
         </div>`).join('');
 
       return `<div class="order-item" data-order-item="${item.id}" data-has-options="true">
@@ -74,7 +143,7 @@ function renderCategorySelection(category, container) {
           </div>
         </div>
         <div class="order-options" data-options-container="${item.id}" hidden>
-          <div class="option-prompt">Choose one or more:</div>
+          <div class="option-prompt">${primaryGroupLabel}:</div>
           <div class="option-choice-list">${optionRows}</div>
           <div class="option-split-list" data-split-list="${item.id}" hidden>${splitRows}</div>
           <div class="option-validation" data-option-validation="${item.id}" aria-live="polite"></div>
@@ -132,6 +201,8 @@ function setOptionSelection(itemId, optionLabel, checked) {
   } else {
     selections.delete(optionLabel);
     orderState.optionSplits.delete(`${itemId}--${optionLabel}`);
+    const item = getMenuItemById(itemId);
+    if (item) clearModifiers(item, optionLabel);
   }
 
   orderState.optionSelections.set(itemId, selections);
@@ -151,6 +222,7 @@ function updateMainQuantity(itemId, quantity) {
       const keepSet = new Set(keep);
       Array.from(selections).slice(quantity).forEach((label) => {
         orderState.optionSplits.delete(`${itemId}--${label}`);
+        clearModifiers(item, label);
       });
       orderState.optionSelections.set(itemId, keepSet);
     }
@@ -159,6 +231,7 @@ function updateMainQuantity(itemId, quantity) {
     orderState.optionSelections.delete(itemId);
     getOptionDefinitions(item).forEach((option) => {
       orderState.optionSplits.delete(`${itemId}--${option.label}`);
+      clearModifiers(item, option.label);
     });
   }
 
@@ -180,25 +253,46 @@ function updateOptionVisibility(itemId) {
     splitList.hidden = true;
     container.querySelectorAll('.option-checkbox').forEach((input) => { input.checked = false; });
     container.querySelectorAll('.item-quantity').forEach((input) => { input.value = ''; });
+    container.querySelectorAll('.option-modifier-select').forEach((select) => { select.value = ''; });
     return;
   }
 
+  const item = getMenuItemById(itemId);
   const selections = getSelectedOptions(itemId);
   const splitMode = selections.size > 1 && mainQuantity > 1;
-  splitList.hidden = !splitMode;
+  // The detail rows carry the split quantities and the per-option modifiers, so show them for either.
+  const detailMode = splitMode || (item ? hasModifierGroups(item) : false);
+  splitList.hidden = !detailMode || selections.size === 0;
 
   splitList.querySelectorAll('[data-split-row]').forEach((row) => {
     const label = row.dataset.splitRow.split('--').slice(1).join('--');
-    row.hidden = !splitMode || !selections.has(label);
+    const active = selections.has(label);
+    row.hidden = !detailMode || !active;
+
+    const quantityControl = row.querySelector('[data-split-quantity]');
+    if (quantityControl) quantityControl.hidden = !splitMode;
+
     if (!splitMode) {
       const input = row.querySelector('.item-quantity');
       if (input) input.value = '';
       orderState.optionSplits.delete(`${itemId}--${label}`);
     }
+
+    if (!active) {
+      row.querySelectorAll('.option-modifier-select').forEach((select) => { select.value = ''; });
+    }
   });
 
   if (selections.size === 0) {
     validation.textContent = 'Select an option.';
+    validation.className = 'option-validation invalid';
+    return;
+  }
+
+  const incomplete = item && Array.from(selections).find((label) => !modifiersComplete(item, label));
+  if (incomplete) {
+    const group = getModifierGroups(item, incomplete).find((entry) => !getModifierChoice(itemId, incomplete, entry));
+    validation.textContent = `Choose ${group.label} for ${incomplete}`;
     validation.className = 'option-validation invalid';
     return;
   }
@@ -254,6 +348,17 @@ function bindSelectionEvents() {
     });
   });
 
+  document.querySelectorAll('.option-modifier-select').forEach((select) => {
+    select.addEventListener('change', (event) => {
+      const { modifierItem, modifierOption, modifierGroup } = event.target.dataset;
+      const key = modifierKey(modifierItem, modifierOption, modifierGroup);
+      if (event.target.value) orderState.optionModifiers.set(key, event.target.value);
+      else orderState.optionModifiers.delete(key);
+      updateOptionVisibility(modifierItem);
+      updateSummary();
+    });
+  });
+
   const deliveryToggle = document.querySelector('[data-delivery-toggle]');
   if (deliveryToggle) {
     deliveryToggle.addEventListener('change', (event) => {
@@ -273,6 +378,9 @@ function hasValidOptions() {
 
       const selections = getSelectedOptions(item.id);
       if (selections.size === 0) return false;
+      for (const label of selections) {
+        if (!modifiersComplete(item, label)) return false;
+      }
 
       if (selections.size > 1 && mainQuantity > 1) {
         const splitTotal = Array.from(selections).reduce(
@@ -307,22 +415,20 @@ function updateSummary() {
 
     const selections = Array.from(getSelectedOptions(record.item.id));
     if (selections.length === 1) {
-      const option = options.find((entry) => entry.label === selections[0]);
-      const lineTotal = (getPriceByKey(record.item.priceKey) + (option?.adjustment ?? 0)) * record.quantity;
+      const lineTotal = (getPriceByKey(record.item.priceKey) + optionAdjustment(record.item, selections[0])) * record.quantity;
       subtotal += lineTotal;
-      rows.push(`<li><span>${record.item.name} — ${selections[0]} × ${record.quantity}</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
+      rows.push(`<li><span>${record.item.name} — ${optionFullLabel(record.item, selections[0])} × ${record.quantity}</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
     } else if (selections.length > 1 && record.quantity === 1 && record.item.id === 'wings') {
       const lineTotal = getPriceByKey(record.item.priceKey) * record.quantity;
       subtotal += lineTotal;
       rows.push(`<li><span>${record.item.name} — Mixed (${selections.join(' + ')}) × 1</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
     } else if (selections.length > 1) {
       selections.forEach((label) => {
-        const option = options.find((entry) => entry.label === label);
         const quantity = orderState.optionSplits.get(`${record.item.id}--${label}`) ?? 0;
         if (!quantity) return;
-        const lineTotal = (getPriceByKey(record.item.priceKey) + (option?.adjustment ?? 0)) * quantity;
+        const lineTotal = (getPriceByKey(record.item.priceKey) + optionAdjustment(record.item, label)) * quantity;
         subtotal += lineTotal;
-        rows.push(`<li><span>${record.item.name} — ${label} × ${quantity}</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
+        rows.push(`<li><span>${record.item.name} — ${optionFullLabel(record.item, label)} × ${quantity}</span><strong>${formatCurrency(lineTotal)}</strong></li>`);
       });
     }
   });
@@ -406,8 +512,7 @@ function buildOrderItems() {
     }
 
     if (selections.length === 1) {
-      const option = options.find((entry) => entry.label === selections[0]);
-      const unitPrice = getPriceByKey(record.item.priceKey) + (option?.adjustment ?? 0);
+      const unitPrice = getPriceByKey(record.item.priceKey) + optionAdjustment(record.item, selections[0]);
       items.push({
         menu_item_id: record.item.id,
         item_name: record.item.name,
@@ -416,7 +521,7 @@ function buildOrderItems() {
         unit: record.item.unit,
         unit_price: unitPrice,
         line_total: unitPrice * record.quantity,
-        option: selections[0]
+        option: optionFullLabel(record.item, selections[0])
       });
       return;
     }
@@ -437,10 +542,9 @@ function buildOrderItems() {
     }
 
     selections.forEach((label) => {
-      const option = options.find((entry) => entry.label === label);
       const quantity = orderState.optionSplits.get(`${record.item.id}--${label}`) ?? 0;
       if (!quantity) return;
-      const unitPrice = getPriceByKey(record.item.priceKey) + (option?.adjustment ?? 0);
+      const unitPrice = getPriceByKey(record.item.priceKey) + optionAdjustment(record.item, label);
       items.push({
         menu_item_id: record.item.id,
         item_name: record.item.name,
@@ -449,7 +553,7 @@ function buildOrderItems() {
         unit: record.item.unit,
         unit_price: unitPrice,
         line_total: unitPrice * quantity,
-        option: label
+        option: optionFullLabel(record.item, label)
       });
     });
   });

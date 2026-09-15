@@ -39,26 +39,41 @@
     return [];
   }
 
+  function groupLabelText(group) {
+    const scope = group.appliesTo?.length ? ` [${group.appliesTo.join(', ')}]` : '';
+    return `${group.label || 'Options'}${scope}`;
+  }
+
+  // "Cookies [Regular Banana Pudding]" limits a group to the primary options it names.
+  function parseGroupLabel(text) {
+    const match = text.match(/^(.*?)\s*\[(.*)\]$/);
+    if (!match) return { label: text.trim() || 'Options', appliesTo: [] };
+    return {
+      label: match[1].trim() || 'Options',
+      appliesTo: match[2].split(',').map((entry) => entry.trim()).filter(Boolean)
+    };
+  }
+
   function optionText(item) {
     return getOptionGroups(item).map((group) => {
       const lines = [];
-      if (group.label && group.label !== 'Options') lines.push(`Group: ${group.label}`);
+      if (group.label && group.label !== 'Options') lines.push(`Group: ${groupLabelText(group)}`);
       (group.options || []).forEach((option) => {
         lines.push(`${option.label} | ${Number(option.adjustment || 0)}`);
       });
-      return lines.join('\\n');
-    }).join('\\n');
+      return lines.join('\n');
+    }).join('\n');
   }
 
   function parseOptions(text) {
     const groups = [];
-    let current = { label: 'Options', options: [] };
+    let current = { label: 'Options', appliesTo: [], options: [] };
 
-    text.split('\\n').map((line) => line.trim()).filter(Boolean).forEach((line) => {
-      const groupMatch = line.match(/^group\\s*:\\s*(.+)$/i);
+    text.split('\n').map((line) => line.trim()).filter(Boolean).forEach((line) => {
+      const groupMatch = line.match(/^group\s*:\s*(.+)$/i);
       if (groupMatch) {
         if (current.options.length) groups.push(current);
-        current = { label: groupMatch[1].trim() || 'Options', options: [] };
+        current = { ...parseGroupLabel(groupMatch[1]), options: [] };
         return;
       }
 
@@ -73,6 +88,7 @@
     });
 
     if (current.options.length) groups.push(current);
+    groups.forEach((group) => { if (!group.appliesTo?.length) delete group.appliesTo; });
     return groups;
   }
 
@@ -170,7 +186,7 @@
         <button id="reload-menu" class="secondary" type="button">Discard Changes</button>
       </div>
       <div id="menu-editor-message" class="admin-message" aria-live="polite"></div>
-      <p class="editor-help">Options use <code>Option name | price adjustment</code>. To create separate option groups, add <code>Group: Group Name</code> on its own line. The adjustment is added to the base price.</p>
+      <p class="editor-help">Options use <code>Option name | price adjustment</code>. To create separate option groups, add <code>Group: Group Name</code> on its own line. Write <code>Group: Cookies [Flavor A, Flavor B]</code> to offer that group only for those options. The adjustment is added to the base price.</p>
       <div id="add-item-modal" class="admin-modal" hidden>
         <div class="admin-modal-card" role="dialog" aria-modal="true" aria-labelledby="add-item-title">
           <div class="admin-modal-head">

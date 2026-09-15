@@ -36,6 +36,21 @@ function getPrice(item) {
 
 function getOptionGroups(item) { return item.pricing?.groups?.length ? item.pricing.groups : (getOptions(item).length ? [{ label: 'Options', options: getOptions(item) }] : []); }
 
+// A heading reads "Cookies [Regular Banana Pudding]" when the group only applies to some primary options.
+function groupHeadingText(group) {
+  const scope = group.appliesTo?.length ? ` [${group.appliesTo.join(', ')}]` : '';
+  return `${group.label || 'Options'}${scope}`;
+}
+
+function parseGroupHeading(text) {
+  const match = text.match(/^(.*?)\s*\[(.*)\]$/);
+  if (!match) return { label: text.trim() || 'Options' };
+  const group = { label: match[1].trim() || 'Options' };
+  const appliesTo = match[2].split(',').map((entry) => entry.trim()).filter(Boolean);
+  if (appliesTo.length) group.appliesTo = appliesTo;
+  return group;
+}
+
 function getOptions(item) {
   const menuOptions = item.pricing?.options || [];
   const priceOptions = getPrice(item).adjustments || [];
@@ -274,7 +289,7 @@ function renderOptions(row, item) {
   groups.forEach((group, groupIndex) => {
     const heading = document.createElement('div');
     heading.className = 'option-group-heading';
-    heading.textContent = group.label || 'Options';
+    heading.textContent = groupHeadingText(group);
     list.appendChild(heading);
 
     (group.options || []).forEach((option) => {
@@ -306,7 +321,7 @@ function syncRow(item, row) {
   const lines = [...row.querySelectorAll('.option-line')];
   const headings = [...row.querySelectorAll('.option-group-heading')];
   const groups = headings.map((heading, groupIndex) => ({
-    label: heading.textContent.trim() || 'Options',
+    ...parseGroupHeading(heading.textContent),
     options: lines
       .filter((line) => Number(line.dataset.optionGroup) === groupIndex)
       .map((line) => ({

@@ -112,7 +112,7 @@
       <div style="margin-top:16px;padding:13px 14px;border:1px solid #c98b36;border-radius:6px;background:#fff8eb">
         <div style="font-size:11px;font-weight:800;letter-spacing:.08em;color:#8a621f">CUSTOM DESSERT REQUEST</div>
         <div style="margin-top:7px;font-weight:700">Final pricing will be confirmed after SET BBQ &amp; Catering discusses the request with the customer.</div>
-        <div style="margin-top:8px;white-space:pre-wrap">${esc(customDetails.join('\\n\\n'))}</div>
+        <div style="margin-top:8px;white-space:pre-wrap">${esc(customDetails.join('\n\n'))}</div>
       </div>` : '';
 
     const subtotalRows = [
