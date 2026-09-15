@@ -26,14 +26,6 @@
         </div>
         <div class="orders-toolbar-actions">
           <input id="order-search" class="order-search" type="search" placeholder="Search orders, names, email…">
-          <select id="order-status-filter" aria-label="Filter orders by status">
-            <option value="">All statuses</option>
-            <option value="new">New</option>
-            <option value="contacted">Contacted</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
           <button id="refresh-orders" class="secondary" type="button">Refresh</button>
         </div>
       </div>
@@ -48,11 +40,10 @@
               <th>Event Date</th>
               <th>Guests</th>
               <th>Total</th>
-              <th>Status</th>
-            </tr>
+                          </tr>
           </thead>
           <tbody id="orders-body">
-            <tr><td colspan="7" class="orders-empty">Loading orders…</td></tr>
+            <tr><td colspan="6" class="orders-empty">Loading orders…</td></tr>
           </tbody>
         </table>
       </div>
