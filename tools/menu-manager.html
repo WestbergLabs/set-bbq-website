@@ -3,49 +3,42 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="SET BBQ menu and pricing editor.">
-  <title>SET BBQ — Menu & Pricing Manager</title>
-  <link rel="stylesheet" href="menu-manager.css">
+  <meta name="description" content="SET BBQ administrator menu and pricing editor.">
+  <meta name="robots" content="noindex,nofollow">
+  <title>SET BBQ — Menu Editor</title>
+  <link rel="stylesheet" href="menu-manager.css?v=21">
 </head>
 <body>
   <header class="manager-header">
     <div class="manager-header-inner">
-      <div>
-        <div class="eyebrow">South East Texas BBQ & Catering</div>
-        <h1>Menu & Pricing Manager</h1>
-        <p>Edit the menu in a simple table. Internal item IDs stay hidden.</p>
+      <div class="brand-block">
+        <div class="eyebrow">SET BBQ · ADMIN TOOL</div>
+        <h1>Menu Editor</h1>
+        <p>Manage menu items, pricing, options, and category details without editing JSON by hand.</p>
       </div>
-      <a class="back-link" href="../index.html">← Back to website</a>
+      <a class="back-link" href="../admin.html">← Admin</a>
     </div>
   </header>
 
   <main class="container">
-    <div class="notice">
-      <strong>How this works:</strong> Make your changes below, then download the updated JSON file(s).
-      Replace the matching files in <code>data/</code> and test the order form before publishing.
-      This page does not change GitHub automatically.
-    </div>
-
-    <section class="toolbar card">
-      <div>
-        <h2>Pricing</h2>
-        <p>Change the delivery fee here, or edit individual item prices below.</p>
-      </div>
-      <label class="field compact">
-        <span>Delivery fee</span>
-        <div class="input-prefix"><span>$</span><input id="deliveryFee" type="number" min="0" step="0.01"></div>
-      </label>
-    </section>
-
-    <section class="card">
-      <div class="section-title">
+    <section class="editor-card">
+      <div class="editor-toolbar">
         <div>
-          <h2>Menu items</h2>
-          <p>Change names, descriptions, units, prices, and customer-facing options.</p>
+          <div class="section-kicker">Menu &amp; Pricing</div>
+          <h2>Current menu</h2>
+          <p class="section-copy">Edit the fields below. Item IDs remain visible for reference but are managed by the system.</p>
         </div>
-        <div class="actions">
-          <button id="downloadMenu" class="button">Download menu.json</button>
-          <button id="downloadPrices" class="button secondary">Download prices.json</button>
+
+        <div class="toolbar-actions">
+          <label class="fee-field">
+            <span>Delivery fee</span>
+            <div class="money-input">
+              <span>$</span>
+              <input id="deliveryFee" type="number" min="0" step="0.01" inputmode="decimal" aria-label="Delivery fee">
+            </div>
+          </label>
+          <button id="downloadMenu" class="button primary" type="button">Download menu.json</button>
+          <button id="downloadPrices" class="button secondary" type="button">Download prices.json</button>
         </div>
       </div>
 
@@ -53,18 +46,23 @@
       <div id="editor"></div>
     </section>
 
-    <section class="card help">
-      <h2>Before publishing</h2>
-      <ol>
-        <li>Download the changed JSON file(s).</li>
-        <li>Replace the matching file in <code>data/</code>.</li>
-        <li>Test the order form on desktop and mobile.</li>
-        <li>Submit a test order if pricing or options changed.</li>
-        <li>Keep special items such as wings, brisket, pork belly, baked beans, banana pudding, and Custom Dessert working as intended.</li>
-      </ol>
-    </section>
+    <details class="help-card">
+      <summary>Publishing notes</summary>
+      <div class="help-content">
+        <p>When you are finished, download the JSON file(s), replace the matching files in <code>data/</code>, and test the order form before publishing.</p>
+        <ul>
+          <li>Changing an item name does not change its ID.</li>
+          <li>Use the arrows to change an item's order within its category.</li>
+          <li>Delete removes the item from the downloaded menu and pricing data.</li>
+          <li>Options use one line per option in the format <code>Label | adjustment</code>.</li>
+        </ul>
+      </div>
+    </details>
   </main>
 
-  <script src="menu-manager.js"></script>
+  <footer class="manager-footer">Build <span data-site-version>v0.1.21</span></footer>
+
+  <script src="menu-manager.js?v=21"></script>
+  <script src="../js/site-version.js?v=21"></script>
 </body>
 </html>
