@@ -757,8 +757,8 @@ form button {
 .menu-editor-table col.col-item { width: 15%; }
 .menu-editor-table col.col-unit { width: 8%; }
 .menu-editor-table col.col-price { width: 8%; }
-.menu-editor-table col.col-options { width: 19%; }
-.menu-editor-table col.col-description { width: 33%; }
+.menu-editor-table col.col-options { width: 24%; }
+.menu-editor-table col.col-description { width: 28%; }
 .menu-editor-table col.col-id { width: 7%; }
 .menu-editor-table col.col-actions { width: 5%; }
 
@@ -787,9 +787,10 @@ form button {
 }
 .menu-editor-table textarea {
   min-height: 38px;
-  height: 38px !important;
   resize: vertical;
-  line-height: 1.25;
+  line-height: 1.35;
+  field-sizing: content;
+  overflow-y: auto;
 }
 .menu-category-row th {
   padding: 9px 10px;
@@ -1212,8 +1213,8 @@ code { background: #eee; padding: 2px 4px; border-radius: 4px; }
 .menu-editor-table col.col-item { width: 14%; }
 .menu-editor-table col.col-unit { width: 8%; }
 .menu-editor-table col.col-price { width: 8%; }
-.menu-editor-table col.col-options { width: 17%; }
-.menu-editor-table col.col-description { width: 34%; }
+.menu-editor-table col.col-options { width: 23%; }
+.menu-editor-table col.col-description { width: 28%; }
 .menu-editor-table col.col-id { width: 6%; }
 .menu-editor-table col.col-actions { width: 8%; }
 

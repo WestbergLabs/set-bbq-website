@@ -215,6 +215,17 @@
         </div>
       </div>`;
 
+    // Grow the options and description boxes to their content: a grouped option list
+    // is a dozen lines and the fixed one-line height hid all but the first few.
+    const autosize = (field) => {
+      field.style.height = 'auto';
+      field.style.height = `${Math.min(field.scrollHeight, 280)}px`;
+    };
+    document.querySelectorAll('.menu-options, .menu-description').forEach((field) => {
+      autosize(field);
+      field.addEventListener('input', () => autosize(field));
+    });
+
     $('#save-menu').addEventListener('click', save);
     $('#reload-menu').addEventListener('click', load);
     $('#add-item-top').addEventListener('click', () => openAddItem());
