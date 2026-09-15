@@ -148,6 +148,39 @@ Custom desserts are **starting-price requests**, not guaranteed final prices. So
 
 ---
 
+
+## Menu & Pricing Manager
+
+A simple browser-based editor is available for menu and pricing changes:
+
+**Menu & Pricing Manager:** https://westberglabs.github.io/set-bbq-website/tools/menu-manager.html
+
+It loads the current `menu.json` and `prices.json` and presents the editable information as a table. You can change:
+
+- Item names
+- Descriptions
+- Unit/size wording
+- Base prices
+- Customer-facing options
+- Option price adjustments
+- Delivery fee
+
+The editor intentionally hides internal item IDs so normal menu maintenance is easier and safer.
+
+### Important: how saving works
+
+The editor is a **static GitHub Pages tool**, so it cannot write directly back to the repository. After editing:
+
+1. Download `menu.json` and/or `prices.json`.
+2. Replace the matching file in the repository's `data/` folder.
+3. Test the order form.
+4. Commit the change to the development branch first when practical.
+5. Move the tested change to `main`.
+
+Do not use the editor to change special logic or internal IDs. Those remain in the application code.
+
+The manager is especially useful for routine price and wording changes; it does not replace testing after changes.
+
 # Email system
 
 Email is handled by **EmailJS**. Supabase or another database is **not** involved in sending email.
