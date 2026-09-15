@@ -25,7 +25,7 @@
     const totals = window.calculateSubtotals(items);
     const deliveryFee = window.orderState.deliverySelected ? window.orderState.prices.deliveryFee : 0;
     return {
-      orderNumber: orderNumber(),
+      orderNumber: '',
       eventName: document.getElementById('eventName').value.trim(),
       guestCount: Number(document.getElementById('guestCount').value),
       eventDate: document.getElementById('eventDate').value,
