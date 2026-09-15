@@ -107,13 +107,6 @@ function renderCategorySelection(category, container) {
     const primaryGroupLabel = !firstGroupLabel || firstGroupLabel === 'Options' ? 'Choose one or more' : firstGroupLabel;
 
     if (options.length) {
-      const optionRows = options.map((option) => `
-        <label class="option-choice-row" data-option-row="${item.id}">
-          <input type="checkbox" class="option-checkbox" data-option-item="${item.id}" data-option-key="${option.label}" />
-          <span class="option-choice-label">${option.label}</span>
-          <span class="option-price">${optionPriceText(item, option)}</span>
-        </label>`).join('');
-
       const modifierFields = (option) => getModifierGroups(item, option.label).map((group) => `
             <label class="option-modifier">${group.label}
               <select class="option-modifier-select" data-modifier-item="${item.id}" data-modifier-option="${option.label}" data-modifier-group="${group.label}">
@@ -122,13 +115,17 @@ function renderCategorySelection(category, container) {
               </select>
             </label>`).join('');
 
-      const splitRows = options.map((option) => `
-        <div class="option-split-row" data-split-row="${item.id}--${option.label}" hidden>
-          <span class="option-split-name">${option.label}</span>
-          <div class="option-split-fields">
+      const optionRows = options.map((option) => `
+        <div class="option-choice-row">
+          <label class="option-choice-main">
+            <input type="checkbox" class="option-checkbox" data-option-item="${item.id}" data-option-key="${option.label}" />
+            <span class="option-choice-label">${option.label}</span>
+          </label>
+          <div class="option-choice-controls" data-option-controls="${item.id}--${option.label}" hidden>
             ${modifierFields(option)}
             <label class="quantity-control" data-split-quantity="true" hidden>Qty ${makeQuantityInput(item.id, option.label)}</label>
           </div>
+          <span class="option-price">${optionPriceText(item, option)}</span>
         </div>`).join('');
 
       return `<div class="order-item" data-order-item="${item.id}" data-has-options="true">
@@ -145,7 +142,6 @@ function renderCategorySelection(category, container) {
         <div class="order-options" data-options-container="${item.id}" hidden>
           <div class="option-prompt">${primaryGroupLabel}:</div>
           <div class="option-choice-list">${optionRows}</div>
-          <div class="option-split-list" data-split-list="${item.id}" hidden>${splitRows}</div>
           <div class="option-validation" data-option-validation="${item.id}" aria-live="polite"></div>
         </div>
       </div>`;
@@ -242,44 +238,42 @@ function updateMainQuantity(itemId, quantity) {
 function updateOptionVisibility(itemId) {
   const mainQuantity = getMainQuantity(itemId);
   const container = document.querySelector(`[data-options-container="${itemId}"]`);
-  const splitList = document.querySelector(`[data-split-list="${itemId}"]`);
   const validation = document.querySelector(`[data-option-validation="${itemId}"]`);
-  if (!container || !splitList || !validation) return;
+  if (!container || !validation) return;
 
   container.hidden = mainQuantity <= 0;
 
   if (mainQuantity <= 0) {
     validation.textContent = '';
-    splitList.hidden = true;
     container.querySelectorAll('.option-checkbox').forEach((input) => { input.checked = false; });
     container.querySelectorAll('.item-quantity').forEach((input) => { input.value = ''; });
     container.querySelectorAll('.option-modifier-select').forEach((select) => { select.value = ''; });
+    container.querySelectorAll('[data-option-controls]').forEach((controls) => { controls.hidden = true; });
     return;
   }
 
   const item = getMenuItemById(itemId);
   const selections = getSelectedOptions(itemId);
   const splitMode = selections.size > 1 && mainQuantity > 1;
-  // The detail rows carry the split quantities and the per-option modifiers, so show them for either.
-  const detailMode = splitMode || (item ? hasModifierGroups(item) : false);
-  splitList.hidden = !detailMode || selections.size === 0;
 
-  splitList.querySelectorAll('[data-split-row]').forEach((row) => {
-    const label = row.dataset.splitRow.split('--').slice(1).join('--');
+  container.querySelectorAll('[data-option-controls]').forEach((controls) => {
+    const label = controls.dataset.optionControls.split('--').slice(1).join('--');
     const active = selections.has(label);
-    row.hidden = !detailMode || !active;
+    const hasModifiers = item ? getModifierGroups(item, label).length > 0 : false;
+    // Controls only earn their space once the option is checked and has something to ask.
+    controls.hidden = !active || (!splitMode && !hasModifiers);
 
-    const quantityControl = row.querySelector('[data-split-quantity]');
+    const quantityControl = controls.querySelector('[data-split-quantity]');
     if (quantityControl) quantityControl.hidden = !splitMode;
 
     if (!splitMode) {
-      const input = row.querySelector('.item-quantity');
+      const input = controls.querySelector('.item-quantity');
       if (input) input.value = '';
       orderState.optionSplits.delete(`${itemId}--${label}`);
     }
 
     if (!active) {
-      row.querySelectorAll('.option-modifier-select').forEach((select) => { select.value = ''; });
+      controls.querySelectorAll('.option-modifier-select').forEach((select) => { select.value = ''; });
     }
   });
 

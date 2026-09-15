@@ -10,7 +10,7 @@ const stubs = {
   querySelectorAll: () => []
 };
 const load = new Function('document', 'window', `${source}
-  return { orderState, optionAdjustment, optionFullLabel, modifiersComplete, getOptionDefinitions, getModifierGroups, modifierKey };`);
+  return { orderState, renderOrderOptions, optionAdjustment, optionFullLabel, modifiersComplete, getOptionDefinitions, getModifierGroups, modifierKey };`);
 const api = load(stubs, {});
 
 const pudding = {
@@ -73,5 +73,39 @@ assert.strictEqual(api.modifiersComplete(pudding, 'Regular Banana Pudding'), fal
 assert.strictEqual(api.modifiersComplete(brisket, '14+ lbs'), true);
 assert.strictEqual(api.optionAdjustment(brisket, '14+ lbs'), 30);
 assert.strictEqual(api.optionFullLabel(brisket, '14+ lbs'), '14+ lbs');
+
+// The rendered markup must put each option's controls on its own row, scoped to that option.
+const rendered = [];
+const renderDoc = {
+  addEventListener() {},
+  querySelector: (selector) => (selector === '[data-order-categories]'
+    ? { innerHTML: '', appendChild(child) { rendered.push(child.innerHTML); } }
+    : null),
+  querySelectorAll: () => [],
+  createElement: () => ({ className: '', innerHTML: '', appendChild() {} })
+};
+const renderApi = load(renderDoc, {});
+renderApi.orderState.menu = api.orderState.menu;
+renderApi.orderState.prices = api.orderState.prices;
+renderApi.renderOrderOptions();
+
+const html = rendered.join('');
+assert.strictEqual(html.match(/class="option-choice-row"/g).length, 4, 'one row per option across both items');
+assert.ok(html.includes('data-option-controls="banana-pudding-full-pan--Strawberry Only"'));
+assert.ok(!html.includes('option-split-row'), 'the duplicate detail list is gone');
+
+const puddingRows = html.split('class="option-choice-row"');
+const strawberryRow = puddingRows.find((row) => row.includes('data-option-key="Strawberry Only"'));
+assert.ok(strawberryRow.includes('Half Cookies'), 'Strawberry Only offers Half Cookies');
+assert.ok(!strawberryRow.includes('Different Cookies'), 'Strawberry Only does not offer Different Cookies');
+
+const regularRow = puddingRows.find((row) => row.includes('data-option-key="Regular Banana Pudding"'));
+assert.ok(regularRow.includes('Different Cookies'), 'Regular Banana Pudding offers Different Cookies');
+assert.ok(!regularRow.includes('Half Cookies'), 'Regular Banana Pudding does not offer Half Cookies');
+
+// Brisket has one group, so its rows carry a quantity control and no dropdown.
+const brisketRow = puddingRows.find((row) => row.includes('data-option-key="14+ lbs"'));
+assert.ok(!brisketRow.includes('option-modifier-select'));
+assert.ok(brisketRow.includes('data-split-quantity'));
 
 console.log('grouped option checks passed');

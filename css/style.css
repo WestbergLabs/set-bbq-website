@@ -118,7 +118,8 @@ input:focus, select:focus, textarea:focus { outline: 2px solid rgba(182,67,45,.2
 .summary-list li { display: flex; justify-content: space-between; gap: .75rem; padding: .7rem 0; border-bottom: 1px solid var(--line); }
 .summary-total { display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 1.1rem; margin-top: 1rem; }
 .form-error { color: var(--brand-red-dark); font-size: .82rem; min-height: 1.1rem; margin-top: .25rem; }
-.item-selector { padding: 1rem; border: 1px solid var(--line); border-radius: 3px; background: var(--white); margin-bottom: .8rem; }
+.item-selector { padding: 1rem; border: 1px solid var(--line); border-radius: 3px; background: var(--white); margin-bottom: .8rem; overflow: hidden; }
+.item-selector h3 { margin: -1rem -1rem .6rem; padding: .7rem 1rem; background: var(--brand-red); color: var(--white); font-size: 1.15rem; letter-spacing: .02em; }
 .item-header { display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin-bottom: .8rem; }
 .checkbox-row { display: flex; justify-content: space-between; align-items: center; gap: .75rem; margin-top: .8rem; }
 .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; }
@@ -218,8 +219,6 @@ input:focus, select:focus, textarea:focus { outline: 2px solid rgba(182,67,45,.2
 /* Compact option selection: choose variants without a field for every option. */
 .option-choice { display: inline-flex; align-items: center; gap: .55rem; cursor: pointer; }
 .option-choice input[type="checkbox"] { width: 1rem; height: 1rem; margin: 0; }
-.option-split-control { display: flex; align-items: center; gap: .35rem; font-size: .82rem; font-weight: 700; white-space: nowrap; }
-.option-split-control .item-quantity { width: 58px; }
 .option-validation:empty { display: none; }
 .option-validation.invalid { margin-top: .35rem; font-size: .82rem; font-weight: 700; }
 
@@ -228,14 +227,12 @@ input:focus, select:focus, textarea:focus { outline: 2px solid rgba(182,67,45,.2
 .order-options { margin-top: .3rem; padding-top: .35rem; border-top: 1px solid rgba(213,213,213,.7); }
 .option-prompt { font-size: .82rem; font-weight: 700; color: var(--muted); margin: 0 0 .2rem; }
 .option-choice-list { display: grid; gap: 0; }
-.option-choice-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: .55rem; padding: .32rem 0; margin: 0; cursor: pointer; font-weight: 400; }
+.option-choice-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; column-gap: .75rem; row-gap: .3rem; padding: .32rem 0; font-weight: 400; }
+.option-choice-main { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: .55rem; margin: 0; cursor: pointer; }
 .option-choice-row input[type="checkbox"] { width: 17px; height: 17px; margin: 0; }
 .option-choice-label { font-weight: 700; line-height: 1.3; }
 .option-choice-row .option-price { font-weight: 600; }
-.option-split-list { margin-top: .2rem; padding-top: .25rem; border-top: 1px dashed var(--line); }
-.option-split-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .25rem 0; font-size: .88rem; }
-.option-split-name { font-weight: 700; }
-.option-split-fields { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: .5rem .75rem; }
+.option-choice-controls { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem .7rem; }
 .option-modifier { display: flex; align-items: center; gap: .35rem; margin: 0; font-size: .82rem; font-weight: 700; white-space: nowrap; }
 .option-modifier-select { padding: .2rem .3rem; font: inherit; font-weight: 400; border: 1px solid var(--line); border-radius: 4px; background: #fff; max-width: 10.5rem; }
 .option-validation.invalid { margin-top: .25rem; font-size: .8rem; font-weight: 700; }
@@ -243,14 +240,13 @@ input:focus, select:focus, textarea:focus { outline: 2px solid rgba(182,67,45,.2
 
 @media (max-width: 780px) {
   .order-options { margin-top: .25rem; padding-top: .3rem; }
-  .option-choice-row { padding: .28rem 0; }
-  .option-split-row { padding: .22rem 0; }
+  .option-choice-row { grid-template-columns: minmax(0, 1fr) auto; padding: .28rem 0; }
+  .option-choice-controls { grid-column: 1 / -1; justify-content: flex-start; padding-left: 1.5rem; }
 }
 
 
 /* Keep hidden option rows truly hidden until that option is checked. */
-.option-split-row[hidden],
-.option-split-list[hidden],
+.option-choice-controls[hidden],
 .quantity-control[hidden],
 .order-options[hidden] {
   display: none !important;
