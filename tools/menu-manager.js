@@ -34,6 +34,8 @@ function getPrice(item) {
   return state.prices.items[item.priceKey];
 }
 
+function getOptionGroups(item) { return item.pricing?.groups?.length ? item.pricing.groups : (getOptions(item).length ? [{ label: 'Options', options: getOptions(item) }] : []); }
+
 function getOptions(item) {
   const menuOptions = item.pricing?.options || [];
   const priceOptions = getPrice(item).adjustments || [];
