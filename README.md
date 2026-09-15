@@ -42,10 +42,10 @@ The website itself is **static**. There is currently no database or server-side 
 
 | Branch | Purpose |
 |---|---|
-| `main` | Production / GitHub Pages |
-| `emailjs-rebuild` | Development and testing |
+| `main` | Production / approved live code |
+| `development` | Development, testing, and the current GitHub Pages preview |
 
-Keep `emailjs-rebuild`. Use it for future changes, test thoroughly, then move approved changes to `main`.
+Keep `main` stable. Make and test major changes on `development`, then merge the approved result into `main`.
 
 ---
 
@@ -359,7 +359,7 @@ For meaningful production changes:
 2. Check any changed script cache-busting query strings in `order.html`.
 3. Test the affected workflow.
 
-The current production version is **v0.1.16**.
+The current site build is **v0.1.22**.
 
 ---
 
@@ -389,7 +389,7 @@ Do not reintroduce database/email responsibilities into the website unless there
 
 Recommended workflow:
 
-1. Start on `emailjs-rebuild`.
+1. Start on `development`.
 2. Make the smallest necessary change.
 3. Test locally.
 4. Test the affected page on mobile and desktop.
@@ -397,6 +397,6 @@ Recommended workflow:
 6. Verify business email, customer email, PDF, and SMS alert when applicable.
 7. Update the version.
 8. Move the approved change to `main`.
-9. Leave `emailjs-rebuild` available for the next change.
+9. Keep `development` available for the next change.
 
 **Keep the site simple.** Avoid adding infrastructure unless the business actually needs it.
