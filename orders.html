@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>SET BBQ — Order Database</title>
+  <link rel="stylesheet" href="css/admin.css?v=26">
+</head>
+<body>
+  <main class="admin-shell">
+    <section class="admin-card admin-dashboard orders-page">
+      <div class="admin-page-head">
+        <div>
+          <div class="brand">SET BBQ</div>
+          <h1>Order Database</h1>
+          <p>Recent website orders and customer information.</p>
+        </div>
+        <a class="back-link" href="admin.html">← Admin</a>
+      </div>
+
+      <div class="orders-toolbar">
+        <div>
+          <strong id="order-count">Orders</strong>
+          <span class="editor-help">Click an order to view the complete order.</span>
+        </div>
+        <div class="orders-toolbar-actions">
+          <input id="order-search" class="order-search" type="search" placeholder="Search orders, names, email…">
+          <select id="order-status-filter" aria-label="Filter orders by status">
+            <option value="">All statuses</option>
+            <option value="new">New</option>
+            <option value="contacted">Contacted</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <button id="refresh-orders" class="secondary" type="button">Refresh</button>
+        </div>
+      </div>
+
+      <div class="orders-table-wrap">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>Order #</th>
+              <th>Customer</th>
+              <th>Event</th>
+              <th>Event Date</th>
+              <th>Guests</th>
+              <th>Total</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="orders-body">
+            <tr><td colspan="7" class="orders-empty">Loading orders…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="editor-actions">
+        <button id="admin-logout" class="secondary" type="button">Sign Out</button>
+        <a href="index.html">← Back to website</a>
+        <div id="orders-message" class="admin-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="admin-modal" id="order-modal" hidden>
+    <div class="admin-modal-card order-modal-card" role="dialog" aria-modal="true" aria-labelledby="order-modal-title">
+      <div class="admin-modal-head">
+        <div>
+          <div class="kicker">Order Details</div>
+          <h2 id="order-modal-title">Order</h2>
+        </div>
+        <button class="modal-close" id="close-order-modal" type="button" aria-label="Close">×</button>
+      </div>
+      <div id="order-detail-content"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js?v=1"></script>
+  <script src="js/admin-auth.js?v=1"></script>
+  <script src="js/admin-orders.js?v=1"></script>
+</body>
+</html>
