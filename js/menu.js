@@ -45,20 +45,30 @@ function renderMenuPage() {
       itemRow.className = 'menu-item';
 
       let pricingHtml = '';
-      if (item.pricing && item.pricing.options) {
-        const options = item.pricing.options.map((option) => {
-          const optionPrice = itemPrice + Number(option.adjustment || 0);
-          return `<div class="menu-item-option"><span>${option.label}</span><strong>${formatCurrency(optionPrice)}</strong></div>`;
+      const optionGroups = item.pricing?.groups?.length
+        ? item.pricing.groups
+        : (item.pricing?.options?.length ? [{ label: 'Options', options: item.pricing.options }] : []);
+
+      if (optionGroups.length) {
+        const groupsHtml = optionGroups.map((group) => {
+          const options = (group.options || []).map((option) => {
+            const adjustment = Number(option.adjustment || 0);
+            const optionPrice = itemPrice + adjustment;
+            const priceText = adjustment ? formatCurrency(optionPrice) : formatCurrency(itemPrice);
+            return '<div class="menu-item-option"><span>' + option.label + '</span><strong>' + priceText + '</strong></div>';
+          }).join('');
+          return '<div class="menu-item-option-group"><div class="menu-item-option-group-title">' +
+            (group.label || 'Options') + '</div>' + options + '</div>';
         }).join('');
-        pricingHtml = `<div class="menu-item-options">${options}</div>`;
+        pricingHtml = '<div class="menu-item-options">' + groupsHtml + '</div>';
       } else if (item.unit) {
-        pricingHtml = `<div class="menu-item-meta">${item.unit}</div>`;
+        pricingHtml = '<div class="menu-item-meta">' + item.unit + '</div>';
       }
 
       itemRow.innerHTML = `
         <div class="menu-item-header">
           <span class="menu-item-name">${item.name}</span>
-          ${item.pricing && item.pricing.options ? '' : `<span class="menu-item-price">${formatCurrency(itemPrice)}</span>`}
+          ${optionGroups.length ? '' : `<span class="menu-item-price">${formatCurrency(itemPrice)}</span>`}
         </div>
         ${pricingHtml}
       `;
