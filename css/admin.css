@@ -349,3 +349,18 @@ code { background: #eee; padding: 2px 4px; border-radius: 4px; }
   .toolbar-actions { width: 100%; justify-content: space-between; }
   .delivery-price { align-self: center; }
 }
+
+/* The menu grid needs the full desktop width so the complete spreadsheet fits
+   without an unnecessary horizontal scrollbar. Keep the other admin pages at
+   the normal card width. */
+.menu-editor-page {
+  width: min(100%, 1270px);
+}
+.menu-editor-page .admin-page-head {
+  margin-bottom: 0;
+}
+@media (max-width: 1300px) {
+  .menu-editor-page {
+    width: min(100%, calc(100vw - 36px));
+  }
+}
