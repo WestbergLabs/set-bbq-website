@@ -266,21 +266,29 @@ function renderOptions(row, item) {
   const list = row.querySelector('.option-list');
   list.innerHTML = '';
 
-  getOptions(item).forEach((option) => {
-    const optionRow = document.createElement('div');
-    optionRow.className = 'option-line';
-    optionRow.innerHTML = `
-      <input class="cell-input option-label-input" placeholder="Label" aria-label="Option label">
-      <input class="cell-input option-adjustment price-input" type="number" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Option adjustment">
-      <button class="option-remove" type="button" title="Remove option" aria-label="Remove option">×</button>
-    `;
+  getOptionGroups(item).forEach((group, groupIndex) => {
+    const heading = document.createElement('div');
+    heading.className = 'option-group-heading';
+    heading.textContent = group.label || 'Options';
+    list.appendChild(heading);
 
-    optionRow.querySelector('.option-label-input').value = option.label || '';
-    optionRow.querySelector('.option-adjustment').value = option.adjustment ?? 0;
-    list.appendChild(optionRow);
-    bindOptionRow(optionRow, row, item);
+    (group.options || []).forEach((option) => {
+      const optionRow = document.createElement('div');
+      optionRow.className = 'option-line';
+      optionRow.dataset.optionGroup = groupIndex;
+      optionRow.innerHTML =
+        '<input class="cell-input option-label-input" placeholder="Label" aria-label="Option label">' +
+        '<input class="cell-input option-adjustment price-input" type="number" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Option adjustment">' +
+        '<button class="option-remove" type="button" title="Remove option" aria-label="Remove option">×</button>';
+
+      optionRow.querySelector('.option-label-input').value = option.label || '';
+      optionRow.querySelector('.option-adjustment').value = option.adjustment ?? 0;
+      list.appendChild(optionRow);
+      bindOptionRow(optionRow, row, item);
+    });
   });
 }
+
 
 function syncRow(item, row) {
   item.name = row.querySelector('[data-field="name"]').value.trim();
