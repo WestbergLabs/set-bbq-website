@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex,nofollow">
   <title>SET BBQ — Admin</title>
-  <link rel="stylesheet" href="css/admin.css?v=32">
+  <link rel="stylesheet" href="css/admin.css?v=33">
 </head>
 <body>
   <main class="admin-shell">
@@ -34,6 +34,7 @@
         <div class="admin-user">
           <span class="status-dot" aria-hidden="true"></span>
           <span id="admin-user-email">Signed in</span>
+          <button id="admin-logout-head" class="header-signout" type="button">Sign Out</button>
         </div>
       </div>
 
@@ -41,7 +42,6 @@
         <a href="#menu">Menu</a>
         <a href="#website">Website</a>
         <a href="#system">System</a>
-        <a href="#account">Account</a>
       </nav>
 
       <section class="admin-section" id="menu">
@@ -50,7 +50,7 @@
             <span class="section-kicker">Menu</span>
             <h2>Menu &amp; Pricing</h2>
           </div>
-          <span class="section-note">Database-backed</span>
+          <span class="section-note">Live menu</span>
         </div>
         <div class="admin-tool-list">
           <a class="admin-tool" href="menu-editor.html">
@@ -78,7 +78,7 @@
             <span class="section-kicker">Website</span>
             <h2>Customer Pages</h2>
           </div>
-          <span class="section-note">Quick access</span>
+          <span class="section-note">Public site</span>
         </div>
         <div class="admin-tool-list">
           <a class="admin-tool" href="index.html" target="_blank" rel="noopener">
@@ -150,29 +150,9 @@
         </div>
       </section>
 
-      <section class="admin-section" id="account">
-        <div class="admin-section-heading">
-          <div>
-            <span class="section-kicker">Account</span>
-            <h2>Admin Account</h2>
-          </div>
-        </div>
-        <div class="account-panel">
-          <div>
-            <span class="account-label">Signed in as</span>
-            <strong id="account-email">—</strong>
-          </div>
-          <div>
-            <span class="account-label">Environment</span>
-            <strong>Production</strong>
-          </div>
-          <button id="admin-logout" class="secondary" type="button">Sign Out</button>
-        </div>
-      </section>
-
       <footer class="dashboard-footer">
         <a href="index.html">← Back to website</a>
-        <span>Build <span>v0.1.32</span></span>
+        <span>Build <span>v0.1.33</span></span>
       </footer>
     </section>
   </main>
@@ -181,7 +161,7 @@
   <script src="js/supabase-config.js?v=2"></script>
   <script src="js/admin-auth.js?v=1"></script>
   <script src="js/menu-store.js?v=2"></script>
-  <script src="js/site-version.js?v=32"></script>
+  <script src="js/site-version.js?v=33"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const form = document.getElementById('admin-login-form');
@@ -273,10 +253,11 @@
 
       document.getElementById('run-status-check').addEventListener('click', runStatusChecks);
 
-      document.getElementById('admin-logout').addEventListener('click', async () => {
+      const signOut = async () => {
         await window.SET_ADMIN_AUTH_API.signOut();
         window.location.reload();
-      });
+      };
+      document.getElementById('admin-logout-head').addEventListener('click', signOut);
     });
   </script>
 </body>
