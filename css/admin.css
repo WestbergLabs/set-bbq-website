@@ -1249,3 +1249,7 @@ code { background: #eee; padding: 2px 4px; border-radius: 4px; }
     margin-bottom: 16px;
   }
 }
+
+@media (max-width: 680px) {
+  .admin-shell { padding: 0; }
+}
