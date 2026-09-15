@@ -1117,3 +1117,135 @@ code { background: #eee; padding: 2px 4px; border-radius: 4px; }
     margin-left: auto;
   }
 }
+
+
+/* v0.1.34 — practical admin navigation and a true full-width menu editor. */
+.nav-brand {
+  display: block;
+  padding: 0 12px 22px;
+  color: #f1f1f1;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+
+.nav-label {
+  margin: 16px 12px 5px;
+  color: #666;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.nav-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 9px 12px 9px 13px;
+  border-left: 2px solid transparent;
+  border-radius: 5px;
+  color: #a2a2a2;
+  font-size: 12px;
+  font-weight: 700;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+
+.nav-link:hover,
+.nav-link:focus-visible {
+  color: #fff;
+  background: rgba(255,255,255,.055);
+  border-left-color: #777;
+}
+
+.nav-link.nav-dashboard {
+  color: #fff;
+  background: #242424;
+  border-left-color: var(--admin-red);
+}
+
+.nav-link[target="_blank"]::after {
+  content: "↗";
+  margin-left: auto;
+  color: #666;
+  font-size: 11px;
+}
+
+.nav-link[target="_blank"]:hover::after {
+  color: #aaa;
+}
+
+/* The menu editor is a working spreadsheet, so give it the whole canvas. */
+.menu-editor-page {
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: 28px clamp(20px, 3vw, 48px) 38px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: #fff;
+}
+
+.menu-editor-page .admin-page-head {
+  padding: 0 0 22px;
+  margin: 0 0 20px;
+  border-bottom: 1px solid var(--admin-line);
+}
+
+.menu-editor-page .editor-toolbar {
+  margin-top: 0;
+}
+
+.menu-editor-page .menu-table-wrap {
+  width: 100%;
+}
+
+.menu-editor-table {
+  min-width: 1240px;
+}
+
+.menu-editor-table col.col-order { width: 5%; }
+.menu-editor-table col.col-item { width: 14%; }
+.menu-editor-table col.col-unit { width: 8%; }
+.menu-editor-table col.col-price { width: 8%; }
+.menu-editor-table col.col-options { width: 17%; }
+.menu-editor-table col.col-description { width: 34%; }
+.menu-editor-table col.col-id { width: 6%; }
+.menu-editor-table col.col-actions { width: 8%; }
+
+@media (max-width: 680px) {
+  .nav-brand,
+  .nav-label {
+    display: none;
+  }
+
+  .admin-nav {
+    padding: 7px 10px;
+  }
+
+  .nav-link {
+    min-height: 38px;
+    padding: 8px 11px;
+    border-left: 0;
+    border-bottom: 2px solid transparent;
+  }
+
+  .nav-link.nav-dashboard {
+    border-left: 0;
+    border-bottom-color: var(--admin-red);
+  }
+
+  .menu-editor-page {
+    min-height: 100vh;
+    padding: 20px 12px 30px;
+  }
+
+  .menu-editor-page .admin-page-head {
+    padding-bottom: 17px;
+    margin-bottom: 16px;
+  }
+}
