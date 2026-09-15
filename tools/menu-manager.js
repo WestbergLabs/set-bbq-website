@@ -1,4 +1,8 @@
-const state = { menu: null, prices: null };
+const state = {
+  menu: null,
+  prices: null,
+  dirty: false
+};
 
 const $ = (id) => document.getElementById(id);
 
@@ -6,10 +10,61 @@ function money(value) {
   return Number(value || 0).toFixed(2);
 }
 
-function setStatus(message, isError = false) {
+function slugify(value) {
+  return String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'new-item';
+}
+
+function uniqueId(base, category) {
+  const used = new Set(category.items.map((item) => item.id).filter(Boolean));
+  let id = slugify(base);
+  let n = 2;
+  while (used.has(id)) id = slugify(base) + '-' + n++;
+  return id;
+}
+
+function getPrice(item) {
+  if (!state.prices.items[item.priceKey]) {
+    state.prices.items[item.priceKey] = { basePrice: 0 };
+  }
+  return state.prices.items[item.priceKey];
+}
+
+function getOptions(item) {
+  const menuOptions = item.pricing?.options || [];
+  const priceOptions = getPrice(item).adjustments || [];
+  const labels = menuOptions.length
+    ? menuOptions
+    : (item.orderOptions || []).map((label) => ({ label }));
+
+  if (!labels.length && priceOptions.length) {
+    return priceOptions.map((option) => ({
+      label: option.label,
+      adjustment: Number(option.value || 0)
+    }));
+  }
+
+  return labels.map((option) => {
+    const priceOption = priceOptions.find((p) => p.label === option.label);
+    return {
+      label: option.label,
+      adjustment: Number(option.adjustment ?? priceOption?.value ?? 0)
+    };
+  });
+}
+
+function setStatus(message, dirty = false) {
   const el = $('status');
   el.textContent = message;
-  el.style.color = isError ? '#a40000' : '#333';
+  el.classList.toggle('dirty', dirty);
+}
+
+function markDirty(message = 'Unsaved changes — download the JSON files when you are finished.') {
+  state.dirty = true;
+  setStatus(message, true);
 }
 
 async function loadData() {
@@ -18,166 +73,338 @@ async function loadData() {
       fetch('../data/menu.json'),
       fetch('../data/prices.json')
     ]);
-    if (!menuResponse.ok || !pricesResponse.ok) throw new Error('Could not load menu data.');
+
+    if (!menuResponse.ok || !pricesResponse.ok) {
+      throw new Error('Could not load menu data.');
+    }
+
     state.menu = await menuResponse.json();
     state.prices = await pricesResponse.json();
-    $('deliveryFee').value = state.prices.deliveryFee ?? 0;
+    $('deliveryFee').value = money(state.prices.deliveryFee ?? 0);
     render();
-    setStatus('Loaded current menu and pricing.');
+    setStatus('');
   } catch (error) {
     setStatus('Unable to load the menu files. Open this page through the website, not as a local file.', true);
   }
-}
-
-function getPrice(item) {
-  return state.prices.items[item.priceKey] || { basePrice: 0 };
-}
-
-function optionData(item) {
-  const menuOptions = item.pricing?.options || [];
-  const priceOptions = getPrice(item).adjustments || [];
-  const labels = menuOptions.length
-    ? menuOptions.map((o) => o.label)
-    : item.orderOptions || priceOptions.map((o) => o.label);
-  return labels.map((label) => {
-    const menuOption = menuOptions.find((o) => o.label === label);
-    const priceOption = priceOptions.find((o) => o.label === label);
-    return {
-      label,
-      adjustment: menuOption?.adjustment ?? priceOption?.value ?? 0
-    };
-  });
 }
 
 function render() {
   const editor = $('editor');
   editor.innerHTML = '';
 
-  state.menu.categories.forEach((category, categoryIndex) => {
-    const section = document.createElement('section');
-    section.className = 'category';
-    section.innerHTML = '<div class="category-header"><h2></h2><p></p></div>';
-    section.querySelector('h2').textContent = category.name;
-    section.querySelector('p').textContent = category.description || '';
+  let totalItems = 0;
+  state.menu.categories.forEach((category) => {
+    totalItems += category.items.length;
+  });
+  $('itemCount').textContent =
+    totalItems + (totalItems === 1 ? ' item' : ' items') +
+    ' · ' + state.menu.categories.length + ' categories';
 
-    const wrap = document.createElement('div');
-    wrap.className = 'table-wrap';
-    const table = document.createElement('table');
-    table.innerHTML = `
-      <thead><tr>
-        <th>Item</th><th>Description</th><th>Unit / Size</th><th>Base Price</th><th>Customer Options / Adjustments</th>
-      </tr></thead><tbody></tbody>`;
-    const tbody = table.querySelector('tbody');
+  const table = document.createElement('table');
+  table.className = 'menu-table';
+  table.innerHTML = `
+    <colgroup>
+      <col class="order">
+      <col class="item">
+      <col class="unit">
+      <col class="price">
+      <col class="options">
+      <col class="description">
+      <col class="id">
+    </colgroup>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Item</th>
+        <th>Unit / Size</th>
+        <th>Base Price</th>
+        <th>Options / Adjustments</th>
+        <th>Description</th>
+        <th>ID</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  `;
+
+  const tbody = table.querySelector('tbody');
+
+  state.menu.categories.forEach((category, categoryIndex) => {
+    const categoryRow = document.createElement('tr');
+    categoryRow.className = 'category-row';
+    categoryRow.innerHTML = `
+      <td colspan="3"><span class="category-name"></span><span class="category-description"></span></td>
+      <td colspan="4" class="category-actions"><button class="add-category-item" type="button">+ Add Item</button></td>
+    `;
+    categoryRow.querySelector('.category-name').textContent = category.name;
+    categoryRow.querySelector('.category-description').textContent =
+      category.description ? '— ' + category.description : '';
+    categoryRow.querySelector('.add-category-item')
+      .addEventListener('click', () => addItem(categoryIndex));
+    tbody.appendChild(categoryRow);
 
     category.items.forEach((item, itemIndex) => {
-      const price = getPrice(item);
-      const tr = document.createElement('tr');
-      tr.dataset.category = categoryIndex;
-      tr.dataset.item = itemIndex;
-      const options = optionData(item);
+      tbody.appendChild(createItemRow(category, categoryIndex, item, itemIndex));
+    });
+  });
 
-      tr.innerHTML = `
-        <td class="name"><input data-field="name"></td>
-        <td class="description"><textarea data-field="description"></textarea></td>
-        <td class="unit"><input data-field="unit"></td>
-        <td class="price"><input data-field="price" type="number" min="0" step="0.01"></td>
-        <td class="options">
-          <div class="option-label">Label — adjustment</div>
-          <div class="option-list"></div>
-        </td>`;
+  if (!state.menu.categories.length) {
+    const row = document.createElement('tr');
+    row.className = 'empty-row';
+    row.innerHTML = '<td colspan="7">No menu categories found.</td>';
+    tbody.appendChild(row);
+  }
 
-      tr.querySelector('[data-field="name"]').value = item.name;
-      tr.querySelector('[data-field="description"]').value = item.description || '';
-      tr.querySelector('[data-field="unit"]').value = item.unit || '';
-      tr.querySelector('[data-field="price"]').value = price.basePrice ?? 0;
+  editor.appendChild(table);
+}
 
-      const optionList = tr.querySelector('.option-list');
-      options.forEach((option, optionIndex) => {
-        const row = document.createElement('div');
-        row.className = 'option-row';
-        row.innerHTML = `
-          <input class="option-label-input" placeholder="Option" aria-label="Option label">
-          <input class="option-adjustment" type="number" step="0.01" aria-label="Option price adjustment">
-        `;
-        row.querySelector('.option-label-input').value = option.label;
-        row.querySelector('.option-adjustment').value = option.adjustment;
-        row.dataset.optionIndex = optionIndex;
-        optionList.appendChild(row);
+function createItemRow(category, categoryIndex, item, itemIndex) {
+  const price = getPrice(item);
+  const row = document.createElement('tr');
+  row.className = 'item-row';
+  row.dataset.itemId = item.id || '';
+
+  row.innerHTML = `
+    <td class="order-cell">
+      <span class="row-number"></span>
+      <div class="move-buttons">
+        <button class="move-button move-up" type="button" title="Move up" aria-label="Move up">↑</button>
+        <button class="move-button move-down" type="button" title="Move down" aria-label="Move down">↓</button>
+      </div>
+    </td>
+    <td><input class="cell-input item-name" data-field="name" aria-label="Item name"></td>
+    <td><input class="cell-input" data-field="unit" aria-label="Unit or size"></td>
+    <td><input class="cell-input price-input" data-field="price" type="number" min="0" step="0.01" inputmode="decimal" aria-label="Base price"></td>
+    <td class="options-cell">
+      <div class="option-list"></div>
+      <button class="add-option" type="button">+ option</button>
+    </td>
+    <td><textarea class="cell-textarea" data-field="description" rows="2" aria-label="Description"></textarea></td>
+    <td class="id-cell">
+      <div class="id-value"></div>
+      <button class="delete-button" type="button">Delete</button>
+    </td>
+  `;
+
+  row.querySelector('[data-field="name"]').value = item.name || '';
+  row.querySelector('[data-field="unit"]').value = item.unit || '';
+  row.querySelector('[data-field="price"]').value = price.basePrice ?? 0;
+  row.querySelector('[data-field="description"]').value = item.description || '';
+  row.querySelector('.id-value').textContent = item.id || '(new item)';
+
+  row.querySelectorAll('input:not(.option-label-input):not(.option-adjustment), textarea')
+    .forEach((input) => {
+      input.addEventListener('input', () => {
+        syncRow(category, item, row);
+        markDirty();
       });
-
-      tbody.appendChild(tr);
     });
 
-    wrap.appendChild(table);
-    section.appendChild(wrap);
-    editor.appendChild(section);
+  renderOptions(row, item);
+
+  row.querySelector('.add-option').addEventListener('click', () => {
+    addOptionRow(row, item);
+    markDirty('Unsaved changes — finish the option, then download the JSON files.');
   });
 
-  editor.querySelectorAll('input, textarea').forEach((input) => {
-    input.addEventListener('input', markDirty);
+  row.querySelector('.delete-button')
+    .addEventListener('click', () => deleteItem(categoryIndex, itemIndex));
+
+  row.querySelector('.move-up')
+    .addEventListener('click', () => moveItem(categoryIndex, itemIndex, -1));
+
+  row.querySelector('.move-down')
+    .addEventListener('click', () => moveItem(categoryIndex, itemIndex, 1));
+
+  row.querySelector('.row-number').textContent = itemIndex + 1;
+  row.querySelector('.move-up').disabled = itemIndex === 0;
+  row.querySelector('.move-down').disabled = itemIndex === category.items.length - 1;
+
+  return row;
+}
+
+function addOptionRow(row, item) {
+  const list = row.querySelector('.option-list');
+  const optionRow = document.createElement('div');
+  optionRow.className = 'option-line';
+  optionRow.innerHTML = `
+    <input class="cell-input option-label-input" placeholder="Label" aria-label="Option label">
+    <input class="cell-input option-adjustment price-input" type="number" step="0.01" inputmode="decimal" placeholder="0.00" value="0" aria-label="Option adjustment">
+    <button class="option-remove" type="button" title="Remove option" aria-label="Remove option">×</button>
+  `;
+
+  list.appendChild(optionRow);
+  bindOptionRow(optionRow, row, item);
+  optionRow.querySelector('.option-label-input').focus();
+}
+
+function bindOptionRow(optionRow, row, item) {
+  optionRow.querySelectorAll('input').forEach((input) => {
+    input.addEventListener('input', () => {
+      syncRow(null, item, row);
+      markDirty();
+    });
+  });
+
+  optionRow.querySelector('.option-remove').addEventListener('click', () => {
+    optionRow.remove();
+    syncRow(null, item, row);
+    markDirty('Option removed. Download the JSON files to keep the change.');
   });
 }
 
-function markDirty() {
-  setStatus('Unsaved edits — download the changed JSON file(s) when finished.');
+function renderOptions(row, item) {
+  const list = row.querySelector('.option-list');
+  list.innerHTML = '';
+
+  getOptions(item).forEach((option) => {
+    const optionRow = document.createElement('div');
+    optionRow.className = 'option-line';
+    optionRow.innerHTML = `
+      <input class="cell-input option-label-input" placeholder="Label" aria-label="Option label">
+      <input class="cell-input option-adjustment price-input" type="number" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Option adjustment">
+      <button class="option-remove" type="button" title="Remove option" aria-label="Remove option">×</button>
+    `;
+    optionRow.querySelector('.option-label-input').value = option.label || '';
+    optionRow.querySelector('.option-adjustment').value = option.adjustment ?? 0;
+    list.appendChild(optionRow);
+    bindOptionRow(optionRow, row, item);
+  });
 }
 
-function syncState() {
-  state.prices.deliveryFee = Number($('deliveryFee').value || 0);
+function syncRow(category, item, row) {
+  item.name = row.querySelector('[data-field="name"]').value.trim();
+  item.unit = row.querySelector('[data-field="unit"]').value.trim();
+  item.description = row.querySelector('[data-field="description"]').value.trim();
 
-  document.querySelectorAll('tbody tr').forEach((row) => {
-    const category = state.menu.categories[Number(row.dataset.category)];
-    const item = category.items[Number(row.dataset.item)];
-    const price = getPrice(item);
+  const price = getPrice(item);
+  price.basePrice = Number(row.querySelector('[data-field="price"]').value || 0);
 
-    item.name = row.querySelector('[data-field="name"]').value.trim();
-    item.description = row.querySelector('[data-field="description"]').value.trim();
-    item.unit = row.querySelector('[data-field="unit"]').value.trim();
-    price.basePrice = Number(row.querySelector('[data-field="price"]').value || 0);
-
-    const optionRows = [...row.querySelectorAll('.option-row')];
-    const options = optionRows.map((optionRow) => ({
+  const options = [...row.querySelectorAll('.option-line')]
+    .map((optionRow) => ({
       label: optionRow.querySelector('.option-label-input').value.trim(),
       adjustment: Number(optionRow.querySelector('.option-adjustment').value || 0)
-    })).filter((option) => option.label);
+    }))
+    .filter((option) => option.label);
 
-    if (options.length) {
-      item.orderOptions = options.map((o) => o.label);
-      item.pricing = {
-        type: 'adjustment',
-        options: options.map((o) => ({ label: o.label, adjustment: o.adjustment }))
-      };
-      price.adjustments = options.map((o) => ({ label: o.label, value: o.adjustment }));
-    } else {
-      delete item.orderOptions;
-      delete item.pricing;
-      delete price.adjustments;
-    }
+  if (options.length) {
+    item.orderOptions = options.map((option) => option.label);
+    item.pricing = {
+      type: 'adjustment',
+      options: options.map((option) => ({
+        label: option.label,
+        adjustment: option.adjustment
+      }))
+    };
+    price.adjustments = options.map((option) => ({
+      label: option.label,
+      value: option.adjustment
+    }));
+  } else {
+    delete item.orderOptions;
+    delete item.pricing;
+    delete price.adjustments;
+  }
+}
+
+function addItem(categoryIndex = 0) {
+  if (!state.menu.categories.length) return;
+
+  const category = state.menu.categories[categoryIndex];
+  const id = uniqueId('new-item', category);
+  const item = {
+    id,
+    name: 'New Item',
+    description: '',
+    unit: 'Each',
+    priceKey: id,
+    category: category.id
+  };
+
+  category.items.push(item);
+  state.prices.items[id] = { basePrice: 0 };
+  render();
+  markDirty('New item added. Edit the row, then download the JSON files.');
+  focusNewItem(id);
+}
+
+function focusNewItem(id) {
+  const target = [...document.querySelectorAll('.item-row')]
+    .find((row) => row.querySelector('.id-value')?.textContent === id);
+  target?.querySelector('[data-field="name"]')?.focus();
+}
+
+function deleteItem(categoryIndex, itemIndex) {
+  const category = state.menu.categories[categoryIndex];
+  const item = category.items[itemIndex];
+  if (!item) return;
+
+  const confirmed = window.confirm(
+    'Delete "' + (item.name || 'this item') + '" from the menu? This will also remove its price entry.'
+  );
+  if (!confirmed) return;
+
+  category.items.splice(itemIndex, 1);
+  if (item.priceKey) delete state.prices.items[item.priceKey];
+
+  render();
+  markDirty('Item deleted. Download the JSON files to keep the change.');
+}
+
+function moveItem(categoryIndex, itemIndex, direction) {
+  const category = state.menu.categories[categoryIndex];
+  const newIndex = itemIndex + direction;
+  if (!category?.items[newIndex]) return;
+
+  const [item] = category.items.splice(itemIndex, 1);
+  category.items.splice(newIndex, 0, item);
+
+  render();
+  markDirty('Item order changed. Download the JSON files to keep the new order.');
+}
+
+function syncAllRows() {
+  document.querySelectorAll('.item-row').forEach((row) => {
+    const id = row.dataset.itemId;
+    const found = state.menu.categories
+      .flatMap((category) => category.items)
+      .find((item) => item.id === id);
+
+    if (found) syncRow(null, found, row);
   });
+
+  state.prices.deliveryFee = Number($('deliveryFee').value || 0);
 }
 
 function download(filename, data) {
-  const blob = new Blob([JSON.stringify(data, null, 2) + '\n'], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(data, null, 2) + '\\n'], {
+    type: 'application/json'
+  });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
   anchor.download = filename;
+  document.body.appendChild(anchor);
   anchor.click();
+  anchor.remove();
   URL.revokeObjectURL(url);
 }
 
+$('deliveryFee').addEventListener('input', () => markDirty());
+
+$('addItem').addEventListener('click', () => addItem(0));
+
 $('downloadMenu').addEventListener('click', () => {
-  syncState();
+  syncAllRows();
   download('menu.json', state.menu);
+  state.dirty = false;
   setStatus('Downloaded menu.json. Replace data/menu.json with it, then test.');
 });
 
 $('downloadPrices').addEventListener('click', () => {
-  syncState();
+  syncAllRows();
   download('prices.json', state.prices);
+  state.dirty = false;
   setStatus('Downloaded prices.json. Replace data/prices.json with it, then test.');
 });
-
-$('deliveryFee').addEventListener('input', markDirty);
 
 loadData();
