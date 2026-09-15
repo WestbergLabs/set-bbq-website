@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex,nofollow">
   <title>SET BBQ — Admin</title>
-  <link rel="stylesheet" href="css/admin.css?v=47">
+  <link rel="stylesheet" href="css/admin.css?v=48">
 </head>
 <body>
   <main class="admin-shell">
@@ -158,7 +158,7 @@
 
       <footer class="dashboard-footer">
         <a href="index.html">← Back to website</a>
-        <span>Build <span data-site-version>v0.1.47</span></span>
+        <span>Build <span data-site-version>v0.1.48</span></span>
       </footer>
     </section>
   </main>
@@ -167,7 +167,7 @@
   <script src="js/supabase-config.js?v=2"></script>
   <script src="js/admin-auth.js?v=1"></script>
   <script src="js/menu-store.js?v=2"></script>
-  <script src="js/site-version.js?v=47"></script>
+  <script src="js/site-version.js?v=48"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const form = document.getElementById('admin-login-form');
@@ -253,7 +253,7 @@
           runStatusChecks();
         }
       } catch (error) {
-        message.textContent = error?.message || 'Unable to verify admin access.';
+        message.textContent = (/session|not authenticated/i.test(error?.message || '') ? '' : (error?.message || 'Unable to verify admin access.'));
       }
 
       document.getElementById('run-status-check').addEventListener('click', runStatusChecks);

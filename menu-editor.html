@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex,nofollow">
   <title>SET BBQ — Menu Editor</title>
-  <link rel="stylesheet" href="css/admin.css?v=47">
+  <link rel="stylesheet" href="css/admin.css?v=48">
 </head>
 <body>
   <main class="admin-shell">
@@ -44,7 +44,7 @@
   <script src="js/admin-auth.js?v=1"></script>
   <script src="js/menu-store.js?v=1"></script>
   <script src="js/admin-menu.js?v=9"></script>
-  <script src="js/site-version.js?v=47"></script>
+  <script src="js/site-version.js?v=48"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const form = document.getElementById('admin-login-form');
@@ -72,7 +72,7 @@
           window.SET_ADMIN_MENU_API.init();
         }
       } catch (error) {
-        message.textContent = error?.message || 'Unable to verify admin access.';
+        message.textContent = (/session|not authenticated/i.test(error?.message || '') ? '' : (error?.message || 'Unable to verify admin access.'));
       }
     });
   </script>

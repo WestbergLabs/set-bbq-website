@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex,nofollow"><title>SET BBQ — Site Content</title>
-  <link rel="stylesheet" href="css/admin.css?v=47">
+  <link rel="stylesheet" href="css/admin.css?v=48">
   <style>
     .content-editor-page{min-height:100vh;background:var(--admin-bg)}
     .content-editor-head{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;padding:30px clamp(20px,4vw,54px) 22px;background:#fff;border-bottom:1px solid var(--admin-line)}
@@ -41,7 +41,7 @@ function renderForm(id,fields,data){document.getElementById(id).innerHTML=fields
 function readForm(id,fields){const out={};fields.forEach(([key])=>out[key]=document.querySelector('#'+id+' [data-field="'+key+'"]').value.trim());return out}
 async function loadContent(){status.textContent='Loading…';status.className='content-status';try{const [home,contact]=await Promise.all([SET_SITE_CONTENT_API.loadHome(),SET_SITE_CONTENT_API.loadContact()]);renderForm('home-form',homeFields,home);renderForm('contact-form',contactFields,contact);status.textContent='Loaded from the site content database.'}catch(e){status.textContent=e?.message||'Unable to load site content.';status.className='content-status error'}}
 loginForm.addEventListener('submit',async e=>{e.preventDefault();loginMessage.textContent='Signing in…';try{await SET_ADMIN_AUTH_API.signIn(document.getElementById('admin-email').value.trim(),document.getElementById('admin-password').value);location.reload()}catch(e){loginMessage.textContent=e?.message||'Unable to sign in.'}});
-try{const user=await SET_ADMIN_AUTH_API.checkSession();if(!user)return;loginCard.hidden=true;editor.hidden=false;await loadContent()}catch(e){loginMessage.textContent=e?.message||'Unable to verify admin access.'}
+try{const user=await SET_ADMIN_AUTH_API.checkSession();if(!user)return;loginCard.hidden=true;editor.hidden=false;await loadContent()}catch(e){loginMessage.textContent=/session|not authenticated/i.test(e?.message||'')?'':(e?.message||'Unable to verify admin access.')}
 document.getElementById('reload-content').addEventListener('click',loadContent);
 document.getElementById('save-content').addEventListener('click',async()=>{status.textContent='Saving…';status.className='content-status';const b=document.getElementById('save-content');b.disabled=true;try{await Promise.all([SET_SITE_CONTENT_API.saveHome(readForm('home-form',homeFields)),SET_SITE_CONTENT_API.saveContact(readForm('contact-form',contactFields))]);status.textContent='Saved successfully.';status.className='content-status success'}catch(e){status.textContent=e?.message||'Unable to save changes.';status.className='content-status error'}finally{b.disabled=false}});
 });
