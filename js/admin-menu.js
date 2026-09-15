@@ -101,6 +101,16 @@
       </div>
       <div class="menu-table-wrap">
         <table class="menu-editor-table">
+          <colgroup>
+            <col class="col-order">
+            <col class="col-item">
+            <col class="col-unit">
+            <col class="col-price">
+            <col class="col-options">
+            <col class="col-description">
+            <col class="col-id">
+            <col class="col-actions">
+          </colgroup>
           <thead><tr><th>#</th><th>Item</th><th>Unit</th><th>Price</th><th>Options</th><th>Description</th><th>ID</th><th></th></tr></thead>
           <tbody>${rows.join('')}</tbody>
         </table>
