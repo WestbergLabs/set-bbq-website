@@ -372,6 +372,66 @@
       button.textContent = 'Sending...';
       window.emailjs.init({ publicKey: config.publicKey });
 
+      // Persist the order through the server-side submit-order function before
+      // sending confirmation email. The Edge Function owns the database insert
+      // and generates the unique order number atomically.
+      if (message) message.textContent = 'Saving your order…';
+      button.textContent = 'Saving...';
+
+      const supabaseConfig = window.SET_SUPABASE_CONFIG || {};
+      if (!window.supabase || !supabaseConfig.url || !supabaseConfig.publishableKey) {
+        throw new Error('The order database connection is not available. Please refresh and try again.');
+      }
+
+      const supabaseClient = window.supabase.createClient(
+        supabaseConfig.url,
+        supabaseConfig.publishableKey
+      );
+
+      const { data: savedOrder, error: saveError } = await supabaseClient.functions.invoke('submit-order', {
+        body: {
+          eventName: order.eventName,
+          guestCount: order.guestCount,
+          eventDate: order.eventDate,
+          eventTime: order.eventTime,
+          eventAddress: order.eventAddress,
+          contactName: order.contactName,
+          phone: order.phone,
+          email: order.email,
+          deliveryRequired: order.deliveryRequired,
+          deliveryFee: order.deliveryFee,
+          specialRequests: order.specialRequests,
+          items: order.items,
+          subtotalMeats: order.subtotalMeats,
+          subtotalSides: order.subtotalSides,
+          subtotalDesserts: order.subtotalDesserts,
+          total: order.total
+        }
+      });
+
+      if (saveError) {
+        let detail = saveError.message || 'Unable to save your order.';
+        try {
+          if (saveError.context?.body) {
+            const body = typeof saveError.context.body === 'string'
+              ? JSON.parse(saveError.context.body)
+              : saveError.context.body;
+            if (body?.error) detail = body.error;
+          }
+        } catch (_) {}
+        throw new Error(detail);
+      }
+
+      if (!savedOrder?.order_number) {
+        throw new Error('The order was not saved because the database did not return an order number.');
+      }
+
+      // Use the database-generated order number everywhere after persistence.
+      order.orderNumber = savedOrder.order_number;
+
+      if (message) message.textContent = 'Sending your order…';
+      button.textContent = 'Sending...';
+
       const params = {
         order_number: order.orderNumber,
         business_email: config.businessEmail,
