@@ -233,3 +233,159 @@ function renderCategorySelection(category, container) {
   });
   return items;
 }
+
+function renderOrderOptions() {
+  const container = document.querySelector('[data-order-categories]');
+  if (!container || !orderState.menu) return;
+  container.innerHTML = '';
+  orderState.menu.categories.forEach((category) => renderCategorySelection(category, container));
+  bindSelectionEvents();
+}
+
+function getMainQuantity(itemId) {
+  return orderState.selected.get(itemId)?.quantity ?? 0;
+}
+
+function getSelectedOptions(itemId) {
+  return orderState.optionSelections.get(itemId) ?? new Map();
+}
+
+function bindSelectionEvents() {
+  document.querySelectorAll('[data-quantity-key]').forEach((input) => {
+    input.addEventListener('input', (event) => {
+      event.target.value = event.target.value.replace(/[^0-9]/g, '');
+      const quantity = Math.max(0, Number.parseInt(event.target.value || '0', 10));
+      updateMainQuantity(event.target.dataset.itemId, quantity);
+    });
+  });
+
+  document.querySelectorAll('.option-radio').forEach((input) => {
+    input.addEventListener('change', (event) => {
+      setOptionSelection(
+        event.target.dataset.optionItem,
+        Number(event.target.dataset.optionGroup),
+        event.target.dataset.optionKey
+      );
+    });
+  });
+
+  const deliveryToggle = document.querySelector('[data-delivery-toggle]');
+  if (deliveryToggle) {
+    deliveryToggle.addEventListener('change', (event) => {
+      orderState.deliverySelected = event.target.checked;
+      updateSummary();
+    });
+  }
+}
+
+function validateOrderForm() {
+  const requiredFields = ['eventName', 'guestCount', 'eventDate', 'contactName', 'email', 'confirmEmail', 'phone', 'eventAddress'];
+  let valid = true;
+
+  requiredFields.forEach((fieldName) => {
+    const element = document.getElementById(fieldName);
+    if (!element || !element.value.trim()) {
+      valid = false;
+      if (element) element.setCustomValidity('Required');
+    } else {
+      element.setCustomValidity('');
+    }
+  });
+
+  const email = document.getElementById('email');
+  const confirmEmail = document.getElementById('confirmEmail');
+  if (email && confirmEmail) {
+    confirmEmail.setCustomValidity(
+      email.value.trim() !== confirmEmail.value.trim() ? 'Emails must match' : ''
+    );
+    if (confirmEmail.validationMessage) valid = false;
+  }
+
+  const guestCount = Number(document.getElementById('guestCount')?.value || 0);
+  if (guestCount <= 0 || Number.isNaN(guestCount)) {
+    valid = false;
+    const input = document.getElementById('guestCount');
+    if (input) input.setCustomValidity('Guest count must be greater than zero');
+  }
+
+  const eventDate = document.getElementById('eventDate');
+  if (eventDate?.value) {
+    const selectedDate = new Date(eventDate.value + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    eventDate.setCustomValidity(selectedDate < today ? 'Event date cannot be in the past' : '');
+    if (eventDate.validationMessage) valid = false;
+  }
+
+  const message = document.querySelector('[data-order-message]');
+  if (orderState.selected.size === 0) {
+    valid = false;
+    if (message) message.textContent = 'Please enter a quantity for at least one menu item.';
+  } else if (!hasValidOptions()) {
+    valid = false;
+    if (message) message.textContent = 'Please finish selecting the options for your items.';
+  } else if (message) {
+    message.textContent = '';
+  }
+
+  return valid;
+}
+
+function calculateSubtotals(items) {
+  return items.reduce((totals, item) => {
+    if (item.category === 'meats') totals.meats += item.line_total;
+    else if (item.category === 'sides') totals.sides += item.line_total;
+    else if (item.category === 'desserts') totals.desserts += item.line_total;
+    return totals;
+  }, { meats: 0, sides: 0, desserts: 0 });
+}
+
+function attachOrderHandler() {
+  const form = document.getElementById('order-form');
+  if (!form || form.dataset.handlerAttached) return;
+  form.dataset.handlerAttached = 'true';
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    form.classList.add('validated');
+
+    if (!validateOrderForm()) {
+      document.querySelector('[data-order-message]')?.scrollIntoView({ block: 'center' });
+      form.reportValidity();
+      return;
+    }
+
+    if (typeof window.submitOrder === 'function') {
+      window.submitOrder();
+    } else {
+      const message = document.querySelector('[data-order-message]');
+      if (message) message.textContent = 'The order submission system is still loading. Please refresh and try again.';
+    }
+  });
+}
+
+async function initializeOrderPage() {
+  attachOrderHandler();
+
+  try {
+    const result = await window.SET_MENU_API.load();
+    orderState.menu = result.menu;
+    orderState.prices = result.prices;
+    renderOrderOptions();
+    updateSummary();
+  } catch (error) {
+    const message = document.querySelector('[data-order-message]');
+    if (message) {
+      message.textContent = error.message || 'Unable to load the order form.';
+      message.classList.add('form-error');
+    }
+  }
+}
+
+window.orderState = orderState;
+window.buildOrderItems = buildOrderItems;
+window.calculateSubtotals = calculateSubtotals;
+window.validateOrderForm = validateOrderForm;
+
+document.addEventListener('DOMContentLoaded', initializeOrderPage);
