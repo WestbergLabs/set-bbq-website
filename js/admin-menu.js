@@ -30,23 +30,73 @@
     return id;
   }
 
-  function optionText(item) {
-    if (item.pricing?.options?.length) {
-      return item.pricing.options
-        .map((option) => `${option.label} | ${Number(option.adjustment || 0)}`)
-        .join('\n');
+  function getOptionGroups(item) {
+    if (item.pricing?.groups?.length) return item.pricing.groups;
+    if (item.pricing?.options?.length) return [{ label: 'Options', options: item.pricing.options }];
+    if (item.orderOptions?.length) {
+      return [{ label: 'Options', options: item.orderOptions.map((label) => ({ label, adjustment: 0 })) }];
     }
-    return (item.orderOptions || []).map((label) => `${label} | 0`).join('\n');
+    return [];
+  }
+
+  function optionText(item) {
+    return getOptionGroups(item).map((group) => {
+      const lines = [];
+      if (group.label && group.label !== 'Options') lines.push(`Group: ${group.label}`);
+      (group.options || []).forEach((option) => {
+        lines.push(`${option.label} | ${Number(option.adjustment || 0)}`);
+      });
+      return lines.join('\\n');
+    }).join('\\n');
   }
 
   function parseOptions(text) {
-    return text.split('\n').map((line) => line.trim()).filter(Boolean).map((line) => {
+    const groups = [];
+    let current = { label: 'Options', options: [] };
+
+    text.split('\\n').map((line) => line.trim()).filter(Boolean).forEach((line) => {
+      const groupMatch = line.match(/^group\\s*:\\s*(.+)$/i);
+      if (groupMatch) {
+        if (current.options.length) groups.push(current);
+        current = { label: groupMatch[1].trim() || 'Options', options: [] };
+        return;
+      }
+
       const [labelPart, adjustmentPart = '0'] = line.split('|');
-      return {
-        label: labelPart.trim(),
+      const label = labelPart.trim();
+      if (!label) return;
+
+      current.options.push({
+        label,
         adjustment: Number(adjustmentPart.trim().replace(/[^0-9.-]/g, '')) || 0
-      };
-    }).filter((option) => option.label);
+      });
+    });
+
+    if (current.options.length) groups.push(current);
+    return groups;
+  }
+
+  function applyOptions(item, price, groups) {
+    if (!groups.length) {
+      delete item.pricing;
+      delete item.orderOptions;
+      delete price.adjustments;
+      return;
+    }
+
+    if (groups.length === 1 && groups[0].label === 'Options') {
+      item.pricing = { type: 'adjustment', options: groups[0].options };
+    } else {
+      item.pricing = { type: 'groups', groups };
+    }
+
+    delete item.orderOptions;
+    price.adjustments = groups.flatMap((group) =>
+      group.options.map((option) => ({
+        label: option.label,
+        value: option.adjustment
+      }))
+    );
   }
 
   function render() {
@@ -80,7 +130,7 @@
             <td><input class="menu-name" value="${escapeHTML(item.name)}" aria-label="Item name"></td>
             <td><input class="menu-unit" value="${escapeHTML(item.unit || '')}" aria-label="Unit"></td>
             <td><input class="menu-price" type="number" min="0" step="0.01" value="${money(price)}" aria-label="Price"></td>
-            <td><textarea class="menu-options" rows="1" placeholder="Label | adjustment">${escapeHTML(optionText(item))}</textarea></td>
+            <td><textarea class="menu-options" rows="1" placeholder="Group: Flavor&#10;Option | adjustment&#10;Group: Cookies&#10;Option | adjustment">${escapeHTML(optionText(item))}</textarea></td>
             <td><textarea class="menu-description" rows="1" aria-label="Description">${escapeHTML(item.description || '')}</textarea></td>
             <td class="menu-id">${escapeHTML(item.id)}</td>
             <td class="menu-delete-cell"><button type="button" class="delete-item" aria-label="Delete ${escapeHTML(item.name)}">Delete</button></td>
@@ -120,7 +170,7 @@
         <button id="reload-menu" class="secondary" type="button">Discard Changes</button>
       </div>
       <div id="menu-editor-message" class="admin-message" aria-live="polite"></div>
-      <p class="editor-help">Options use <code>Option name | price adjustment</code>. The adjustment is added to the base price.</p>
+      <p class="editor-help">Options use <code>Option name | price adjustment</code>. To create separate option groups, add <code>Group: Group Name</code> on its own line. The adjustment is added to the base price.</p>
       <div id="add-item-modal" class="admin-modal" hidden>
         <div class="admin-modal-card" role="dialog" aria-modal="true" aria-labelledby="add-item-title">
           <div class="admin-modal-head">
@@ -140,7 +190,7 @@
               <label>Base price<input id="new-item-price" type="number" min="0" step="0.01" value="0" required></label>
             </div>
             <label>Description<textarea id="new-item-description" rows="3" placeholder="Short customer-facing description"></textarea></label>
-            <label>Options <span class="field-note">optional</span><textarea id="new-item-options" rows="4" placeholder="Example: Mild | 0&#10;Spicy | 5"></textarea></label>
+            <label>Options <span class="field-note">optional</span><textarea id="new-item-options" rows="4" placeholder="Group: Flavor&#10;Blueberry Lemon Drop | 0&#10;Strawberry | 0&#10;Group: Cookies&#10;No Cookies | 0&#10;Half Cookies | 0&#10;Regular Cookies | 0"></textarea></label>
             <div class="modal-actions">
               <button type="button" class="secondary" id="cancel-add-item">Cancel</button>
               <button type="submit">Add Item</button>
@@ -239,7 +289,7 @@
     };
 
     if (options.length) {
-      item.pricing = { type: 'adjustment', options };
+      applyOptions(item, state.prices.items[id], options);
     }
 
     category.items.push(item);
@@ -276,19 +326,8 @@
       state.prices.items[item.priceKey] ||= {};
       state.prices.items[item.priceKey].basePrice = price;
 
-      const options = parseOptions(row.querySelector('.menu-options').value);
-      if (options.length) {
-        item.pricing = { type: 'adjustment', options };
-        delete item.orderOptions;
-        state.prices.items[item.priceKey].adjustments = options.map((option) => ({
-          label: option.label,
-          value: option.adjustment
-        }));
-      } else {
-        delete item.pricing;
-        delete item.orderOptions;
-        delete state.prices.items[item.priceKey].adjustments;
-      }
+      const optionGroups = parseOptions(row.querySelector('.menu-options').value);
+      applyOptions(item, state.prices.items[item.priceKey], optionGroups);
     });
 
     const deliveryFee = Number($('#delivery-fee').value);
