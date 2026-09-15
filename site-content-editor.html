@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow"><title>SET BBQ — Site Content</title>
+  <link rel="stylesheet" href="css/admin.css?v=45">
+  <style>
+    .content-editor-page{min-height:100vh;background:var(--admin-bg)}
+    .content-editor-head{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;padding:30px clamp(20px,4vw,54px) 22px;background:#fff;border-bottom:1px solid var(--admin-line)}
+    .content-editor-main{padding:28px clamp(20px,4vw,54px) 48px}.content-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;max-width:1200px}
+    .content-panel{background:#fff;border:1px solid var(--admin-line);border-radius:10px;padding:20px}.content-panel h2{margin-bottom:5px}.content-panel>p{margin-top:0;font-size:12px}
+    .content-form{display:grid;gap:13px;max-width:none}.content-field{display:grid;gap:5px}.content-field label{margin:0;font-size:12px;font-weight:700;color:#444}
+    .content-field input,.content-field textarea{padding:9px 10px;border:1px solid #d2d2d2;border-radius:6px}.content-field textarea{min-height:78px;resize:vertical;line-height:1.45}.content-field textarea.tall{min-height:110px}
+    .content-actions{display:flex;align-items:center;gap:10px;margin-top:18px}.content-status{color:#666;font-size:12px;min-height:18px}.content-status.success{color:var(--admin-green);font-weight:700}.content-status.error{color:var(--admin-error);font-weight:700}
+    @media(max-width:900px){.content-grid{grid-template-columns:1fr}}@media(max-width:680px){.content-editor-head{padding:22px 16px 18px}.content-editor-main{padding:20px 16px 35px}.content-panel{padding:16px}}
+  </style>
+</head>
+<body>
+<main class="content-editor-page">
+<section id="login-card" class="admin-card">
+<div class="brand">SET BBQ</div><h1>Admin Sign In</h1><p>Sign in with your authorized Supabase admin account.</p>
+<form id="admin-login-form"><label for="admin-email">Email</label><input id="admin-email" type="email" autocomplete="username" required>
+<label for="admin-password">Password</label><input id="admin-password" type="password" autocomplete="current-password" required>
+<button type="submit">Sign In</button><div class="admin-message" id="admin-message" aria-live="polite"></div></form>
+<a href="index.html">← Back to website</a></section>
+<section id="editor" hidden>
+<header class="content-editor-head"><div><div class="brand">SET BBQ · Admin Tool</div><h1>Site Content</h1><p>Update frequently changing text on the customer-facing Home and Contact pages.</p></div><a class="back-link" href="admin.html">← Admin</a></header>
+<div class="content-editor-main"><div class="content-grid">
+<section class="content-panel"><div class="brand">Home</div><h2>Home Page</h2><p>Hero, catering, service summary, and call-to-action copy.</p><form class="content-form" id="home-form"></form></section>
+<section class="content-panel"><div class="brand">Contact</div><h2>Contact Page</h2><p>Contact details and customer-facing contact copy.</p><form class="content-form" id="contact-form"></form></section>
+</div><div class="content-actions"><button id="save-content" type="button">Save Changes</button><button id="reload-content" class="secondary" type="button">Reload</button><span id="content-status" class="content-status" aria-live="polite"></span></div></div>
+</section></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="js/supabase-config.js?v=2"></script><script src="js/admin-auth.js?v=1"></script><script src="js/site-content.js?v=2"></script>
+<script>
+document.addEventListener('DOMContentLoaded',async()=>{
+const loginCard=document.getElementById('login-card'),editor=document.getElementById('editor'),loginForm=document.getElementById('admin-login-form'),loginMessage=document.getElementById('admin-message'),status=document.getElementById('content-status');
+const homeFields=[['hero_eyebrow','Hero eyebrow','input'],['hero_heading','Hero heading','input'],['hero_lead','Hero lead','textarea'],['hero_menu_button','Menu button','input'],['hero_order_button','Catering button','input'],['eyebrow','Section eyebrow','input'],['heading','Section heading','input'],['intro','Section text','textarea'],['delivery_text','Delivery text','textarea'],['serve_eyebrow','What We Serve eyebrow','input'],['serve_heading','What We Serve heading','input'],['serve_categories','Categories line','input'],['serve_description','What We Serve text','textarea'],['serve_link_text','Menu link text','input'],['cta_eyebrow','CTA eyebrow','input'],['cta_heading','CTA heading','input'],['cta_text','CTA text','textarea'],['cta_button_text','CTA button','input']];
+const contactFields=[['page_eyebrow','Page eyebrow','input'],['page_heading','Page heading','input'],['page_intro','Page intro','textarea'],['intro_eyebrow','Intro eyebrow','input'],['intro_heading','Intro heading','input'],['intro_text','Intro text','textarea'],['business_name','Business name','input'],['contact_person','Contact person','input'],['phone','Phone','input'],['email','Email','input'],['address_line1','Address line 1','input'],['address_line2','Address line 2','input'],['cta_eyebrow','CTA eyebrow','input'],['cta_heading','CTA heading','input'],['cta_text_1','CTA text 1','textarea'],['cta_text_2','CTA text 2','textarea'],['cta_button_text','CTA button','input']];
+function esc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function renderForm(id,fields,data){document.getElementById(id).innerHTML=fields.map(([key,label,type])=>'<div class="content-field"><label for="'+id+'-'+key+'">'+label+'</label>'+(type==='textarea'?'<textarea class="'+(key.includes('heading')?'':'tall')+'" id="'+id+'-'+key+'" data-field="'+key+'">'+esc(data?.[key])+'</textarea>':'<input id="'+id+'-'+key+'" data-field="'+key+'" value="'+esc(data?.[key])+'">')+'</div>').join('')}
+function readForm(id,fields){const out={};fields.forEach(([key])=>out[key]=document.querySelector('#'+id+' [data-field="'+key+'"]').value.trim());return out}
+async function loadContent(){status.textContent='Loading…';status.className='content-status';try{const [home,contact]=await Promise.all([SET_SITE_CONTENT_API.loadHome(),SET_SITE_CONTENT_API.loadContact()]);renderForm('home-form',homeFields,home);renderForm('contact-form',contactFields,contact);status.textContent='Loaded from the site content database.'}catch(e){status.textContent=e?.message||'Unable to load site content.';status.className='content-status error'}}
+loginForm.addEventListener('submit',async e=>{e.preventDefault();loginMessage.textContent='Signing in…';try{await SET_ADMIN_AUTH_API.signIn(document.getElementById('admin-email').value.trim(),document.getElementById('admin-password').value);location.reload()}catch(e){loginMessage.textContent=e?.message||'Unable to sign in.'}});
+try{const user=await SET_ADMIN_AUTH_API.checkSession();if(!user)return;loginCard.hidden=true;editor.hidden=false;await loadContent()}catch(e){loginMessage.textContent=e?.message||'Unable to verify admin access.'}
+document.getElementById('reload-content').addEventListener('click',loadContent);
+document.getElementById('save-content').addEventListener('click',async()=>{status.textContent='Saving…';status.className='content-status';const b=document.getElementById('save-content');b.disabled=true;try{await Promise.all([SET_SITE_CONTENT_API.saveHome(readForm('home-form',homeFields)),SET_SITE_CONTENT_API.saveContact(readForm('contact-form',contactFields))]);status.textContent='Saved successfully.';status.className='content-status success'}catch(e){status.textContent=e?.message||'Unable to save changes.';status.className='content-status error'}finally{b.disabled=false}});
+});
+</script></body></html>
