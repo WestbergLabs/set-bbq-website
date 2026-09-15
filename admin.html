@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex,nofollow">
   <title>SET BBQ — Admin</title>
-  <link rel="stylesheet" href="css/admin.css?v=48">
+  <link rel="stylesheet" href="css/admin.css?v=49">
 </head>
 <body>
   <main class="admin-shell">
@@ -47,8 +47,7 @@
         <a class="nav-link" href="menu.html" target="_blank" rel="noopener">View Menu</a>
 
         <div class="nav-label">Website</div>
-        <a class="nav-link" href="#website">Website Tools</a>
-        <a class="nav-link" href="#website">Contact &amp; Site Content</a>
+        <a class="nav-link" href="#website">Website &amp; Content</a>
         <a class="nav-link" href="order.html" target="_blank" rel="noopener">Order Page</a>
 
         <div class="nav-label">System</div>
@@ -58,7 +57,6 @@
       <section class="admin-section" id="menu">
         <div class="admin-section-heading">
           <div>
-            <span class="section-kicker">Menu</span>
             <h2>Menu &amp; Pricing</h2>
           </div>
         </div>
@@ -85,10 +83,8 @@
       <section class="admin-section" id="website">
         <div class="admin-section-heading">
           <div>
-            <span class="section-kicker">Website</span>
-            <h2>Customer Pages</h2>
+            <h2>Website &amp; Content</h2>
           </div>
-          <span class="section-note">Quick access</span>
         </div>
         <div class="admin-tool-list">
           <a class="admin-tool" href="site-content-editor.html">
@@ -117,7 +113,6 @@
       <section class="admin-section" id="system">
         <div class="admin-section-heading">
           <div>
-            <span class="section-kicker">System</span>
             <h2>System Status</h2>
           </div>
           <button id="run-status-check" class="text-button" type="button">Run checks</button>
@@ -158,7 +153,7 @@
 
       <footer class="dashboard-footer">
         <a href="index.html">← Back to website</a>
-        <span>Build <span data-site-version>v0.1.48</span></span>
+        <span>Build <span data-site-version>v0.1.49</span></span>
       </footer>
     </section>
   </main>
@@ -167,7 +162,7 @@
   <script src="js/supabase-config.js?v=2"></script>
   <script src="js/admin-auth.js?v=1"></script>
   <script src="js/menu-store.js?v=2"></script>
-  <script src="js/site-version.js?v=48"></script>
+  <script src="js/site-version.js?v=49"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const form = document.getElementById('admin-login-form');

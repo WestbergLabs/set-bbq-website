@@ -984,15 +984,13 @@ code { background: #eee; padding: 2px 4px; border-radius: 4px; }
 
 /* SET BBQ dashboard refinement: compact controls, deliberate whitespace, no stretched cards. */
 .admin-tool-list {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
   align-items: stretch;
-  justify-content: flex-start;
   gap: 10px;
 }
 .admin-tool {
-  flex: 0 1 390px;
-  width: 390px;
+  width: auto;
   min-height: 68px;
   grid-template-columns: 34px minmax(0, 1fr) 16px;
   gap: 11px;
@@ -1031,16 +1029,19 @@ code { background: #eee; padding: 2px 4px; border-radius: 4px; }
   padding-top: 28px;
   padding-bottom: 30px;
 }
+.admin-dashboard .admin-section > *,
+.admin-dashboard .admin-page-head > * { max-width: none; }
+.admin-dashboard .admin-section { max-width: 1280px; }
 .admin-section-heading { margin-bottom: 12px; }
 .section-kicker { color: var(--admin-red); }
 
 .status-summary {
-  width: min(100%, 980px);
+  width: 100%;
   padding: 11px 14px;
   margin-bottom: 8px;
 }
 .status-list {
-  width: min(100%, 980px);
+  width: 100%;
   border-radius: 8px;
 }
 .status-row {
@@ -1051,7 +1052,7 @@ code { background: #eee; padding: 2px 4px; border-radius: 4px; }
 .status-row div span { font-size: 11px; }
 .check-result { font-size: 11px; }
 .system-note {
-  width: min(100%, 980px);
+  width: 100%;
   margin-top: 8px;
   font-size: 11px;
 }

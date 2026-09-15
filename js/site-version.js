@@ -1,5 +1,5 @@
 (() => {
-  const SITE_VERSION = 'v0.1.48';
+  const SITE_VERSION = 'v0.1.49';
 
   document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-site-version]').forEach((el) => {
