@@ -7,7 +7,8 @@ window.SET_EMAIL_CONFIG = {
   businessServiceId: 'Northquarters',
   businessTemplateId: 'set_bbq_business_order',
   customerTemplateId: 'set_bbq_customer_confirm',
-  businessEmail: 'northquarterscook@yahoo.com'
+  businessEmail: 'northquarterscook@yahoo.com',
+  alertUrl: 'https://set-bbq-alerts.4thehalibit.workers.dev' // Cloudflare Worker URL for phone alerts; empty = disabled
 };
 
 // Route only the business-order send through Gmail.

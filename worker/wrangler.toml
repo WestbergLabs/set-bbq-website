@@ -1,0 +1,4 @@
+name = "set-bbq-alerts"
+main = "index.js"
+compatibility_date = "2025-01-01"
+# Secrets (never commit): wrangler secret put NTFY_TOPIC

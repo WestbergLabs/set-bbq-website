@@ -432,6 +432,16 @@
       };
 
       await window.emailjs.send(config.serviceId, config.businessTemplateId, params);
+
+      // Extra phone alert to the owner. Fire-and-forget: never blocks or alters the emails.
+      if (config.alertUrl) {
+        try {
+          fetch(config.alertUrl, {
+            method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: order.contactName, phone: order.phone, email: order.email, eventName: order.eventName, eventDate: dateTime(order.eventDate, order.eventTime), guests: order.guestCount, notes: order.specialRequests, orderNumber: order.orderNumber, website: '' })
+          }).catch(() => {});
+        } catch (e) { /* ignore */ }
+      }
       await new Promise((resolve) => setTimeout(resolve, 1200));
       await window.emailjs.send(config.serviceId, config.customerTemplateId, params);
 
