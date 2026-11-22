@@ -37,15 +37,20 @@ export default {
     ].filter(Boolean).join('\n');
 
     // ntfy: the topic name acts as the password, so keep NTFY_TOPIC long and random.
-    try {
-      const r = await fetch(`https://ntfy.sh/${encodeURIComponent(env.NTFY_TOPIC)}`, {
-        method: 'POST',
-        headers: { Title: 'New SET BBQ order', Priority: 'high', Tags: 'meat_on_bone' },
-        body: text,
-      });
-      return r.ok ? reply({ ok: true }) : reply({ ok: false, error: 'ntfy ' + r.status }, 502);
-    } catch {
-      return reply({ ok: false, error: 'ntfy unreachable' }, 502);
+    // Retry because ntfy.sh rate-limits (429) Cloudflare's shared egress IPs now and then.
+    let err = 'ntfy unreachable';
+    for (let i = 0; i < 4; i++) {
+      if (i) await new Promise((r) => setTimeout(r, 1500 * i));
+      try {
+        const r = await fetch(`https://ntfy.sh/${encodeURIComponent(env.NTFY_TOPIC)}`, {
+          method: 'POST',
+          headers: { Title: 'New SET BBQ order', Priority: 'high', Tags: 'meat_on_bone' },
+          body: text,
+        });
+        if (r.ok) return reply({ ok: true });
+        err = 'ntfy ' + r.status;
+      } catch { /* retry */ }
     }
+    return reply({ ok: false, error: err }, 502);
   },
 };
