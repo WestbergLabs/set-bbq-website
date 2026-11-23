@@ -207,6 +207,46 @@ It is intentionally just an alert to check the business email rather than a seco
 
 If this changes later, document the new workflow here before changing production code.
 
+### Telegram order alert
+
+Every order also posts an alert and the invoice PDF to the private **SET BBQ Orders** Telegram channel. This is purely additive: the EmailJS emails are unchanged, and a Telegram failure never blocks or alters them.
+
+**Flow:** `order.html` -> `js/email-order-v2.js` (fire-and-forget POST) -> Cloudflare Worker `worker/index.js` -> Telegram Bot API (`sendMessage`, then `sendDocument` with the PDF).
+
+- **Worker URL:** `alertUrl` in `js/emailjs-config.js`. Empty disables the alert.
+- **Worker code:** `worker/` (`index.js`, `wrangler.toml`). It only accepts POSTs from `setxbbqcatering.com` and the `github.io` site, rejects the honeypot field, trims every field, and retries Telegram up to 4 times on errors or rate limits.
+- **Secrets** (Cloudflare, never in the repo): `TELEGRAM_BOT_TOKEN` (from @BotFather) and `TELEGRAM_CHAT_ID` (the channel's ID, a negative number).
+
+**Redeploy the Worker** after changing `worker/index.js`:
+
+```powershell
+cd worker
+npx wrangler login      # first time only
+npx wrangler deploy
+```
+
+**Change a secret** (for example after rotating the bot token in @BotFather, or to point at a different channel). Setting a secret takes effect immediately, no redeploy needed:
+
+```powershell
+cd worker
+npx wrangler secret put TELEGRAM_BOT_TOKEN
+npx wrangler secret put TELEGRAM_CHAT_ID
+```
+
+**Find a chat ID:** add the bot to the channel as an admin, post a message, then open `https://api.telegram.org/bot<TOKEN>/getUpdates` or run `(Invoke-RestMethod "https://api.telegram.org/bot<TOKEN>/getUpdates").result` and read `chat.id`.
+
+**Add a recipient:** share the channel's invite link. They need Telegram notifications turned on for channels (Telegram -> Settings -> Notifications and Sounds -> Channels) and the channel not muted.
+
+**Test the Worker alone** (PowerShell, one line):
+
+```powershell
+Invoke-RestMethod -Method Post -Uri https://set-bbq-alerts.4thehalibit.workers.dev -Headers @{Origin="https://setxbbqcatering.com"} -ContentType "application/json" -Body '{"name":"Test","phone":"555-1234","eventName":"Test BBQ","eventDate":"Dec 1","guests":"20","orderNumber":"TEST-1"}'
+```
+
+Expect `ok: True` and a message in the channel. A full test order from `order.html` also sends the real business email, so mark it as a test.
+
+**History:** CallMeBot (WhatsApp) was full, and ntfy banners were unreliable on iPhone, so Telegram was chosen.
+
 ---
 
 # External services and websites
@@ -216,6 +256,8 @@ If this changes later, document the new workflow here before changing production
 | **GitHub** | Source code and version control | https://github.com/ |
 | **GitHub Pages** | Hosts the production website | https://pages.github.com/ |
 | **EmailJS** | Sends business and customer emails | https://www.emailjs.com/ |
+| **Cloudflare Workers** | Relays order alerts to Telegram | https://workers.cloudflare.com/ |
+| **Telegram** | Order alert channel and invoice PDF | https://telegram.org/ |
 | **Verizon** | Current SMS/email-to-text notification path | https://www.verizon.com/ |
 | **jsDelivr** | Loads browser libraries | https://www.jsdelivr.com/ |
 | **PDF-Lib** | Generates PDF invoices in the browser | https://pdf-lib.js.org/ |
