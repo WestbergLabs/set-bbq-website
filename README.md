@@ -199,13 +199,9 @@ docs/EMAILJS_SETUP.md
 
 for the setup reference.
 
-### SMS notification
+### SMS notification (retired)
 
-The current order alert uses the existing **business email → Verizon email-to-text** workflow.
-
-It is intentionally just an alert to check the business email rather than a second copy of the complete order.
-
-If this changes later, document the new workflow here before changing production code.
+The old alert used a **business email -> Verizon email-to-text** BCC. It was removed in November 2026 (Verizon ends that gateway on 2027-03-31, and it was not reliable). The **Telegram order alert** below replaces it.
 
 ### Telegram order alert
 
@@ -258,7 +254,6 @@ Expect `ok: True` and a message in the channel. A full test order from `order.ht
 | **EmailJS** | Sends business and customer emails | https://www.emailjs.com/ |
 | **Cloudflare Workers** | Relays order alerts to Telegram | https://workers.cloudflare.com/ |
 | **Telegram** | Order alert channel and invoice PDF | https://telegram.org/ |
-| **Verizon** | Current SMS/email-to-text notification path | https://www.verizon.com/ |
 | **jsDelivr** | Loads browser libraries | https://www.jsdelivr.com/ |
 | **PDF-Lib** | Generates PDF invoices in the browser | https://pdf-lib.js.org/ |
 
