@@ -1,7 +1,7 @@
 // Relays a catering order alert to the owner's phone via Telegram. Purely additive to EmailJS.
 // Secrets: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 const ORIGINS = ['https://setxbbqcatering.com', 'https://www.setxbbqcatering.com', 'https://westberglabs.github.io'];
-const LIMITS = { name: 80, phone: 30, email: 120, eventName: 100, eventDate: 40, guests: 6, notes: 300, orderNumber: 40, address: 150, delivery: 10, total: 20 };
+const LIMITS = { name: 80, phone: 30, email: 120, eventName: 100, eventDate: 40, guests: 6, notes: 300, orderNumber: 40, address: 150, delivery: 10, total: 20, emailFailed: 150 };
 
 const clip = (v, n) => String(v ?? '').replace(/\s+/g, ' ').trim().slice(0, n);
 
@@ -42,7 +42,7 @@ export default {
 
     // ponytail: no rate limit beyond origin+honeypot; add Turnstile or a KV counter if abused
     const text = [
-      `New SET BBQ order ${d.orderNumber}`,
+      d.emailFailed ? `EMAIL FAILED for order ${d.orderNumber} - the customer may not have received a confirmation. Error: ${d.emailFailed}` : `New SET BBQ order ${d.orderNumber}`,
       `${d.name} - ${[d.phone, d.email].filter(Boolean).join(' / ')}`,
       `${d.eventName} on ${d.eventDate}, ${d.guests} guests`,
       [d.delivery, d.address].filter(Boolean).join(': '),
@@ -60,7 +60,7 @@ export default {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text }),
         });
-        if (r.ok) { await sendPdf(env, b.pdf, d.orderNumber); return reply({ ok: true }); }
+        if (r.ok) { if (!d.emailFailed) await sendPdf(env, b.pdf, d.orderNumber); return reply({ ok: true }); }
         err = 'telegram ' + r.status;
       } catch { /* retry */ }
     }

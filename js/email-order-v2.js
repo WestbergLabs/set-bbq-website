@@ -402,6 +402,7 @@
     const button = form?.querySelector('button[type="submit"]');
     if (!form || !button || window.orderState.submitting) return;
     window.orderState.submitting = true;
+    let alertBase = null;
 
     try {
       const order = getOrder();
@@ -409,6 +410,17 @@
       button.disabled = true;
       button.textContent = 'Preparing...';
       const pdfBytes = await makePdf(order);
+
+      // Telegram alert (via Worker) with the invoice PDF, sent BEFORE the emails so an order
+      // is never lost if EmailJS fails. Fire-and-forget: never blocks or alters the emails.
+      alertBase = { name: order.contactName, phone: order.phone, email: order.email, eventName: order.eventName, eventDate: dateTime(order.eventDate, order.eventTime), guests: order.guestCount, address: order.eventAddress, delivery: order.deliveryRequired ? 'Delivery' : 'Pickup', total: money(order.total), notes: order.specialRequests, orderNumber: order.orderNumber, website: '' };
+      if (config.alertUrl) {
+        try {
+          let bin = '';
+          for (let i = 0; i < pdfBytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, pdfBytes.subarray(i, i + 0x8000));
+          fetch(config.alertUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...alertBase, pdf: btoa(bin) }) }).catch(() => {});
+        } catch (e) { /* ignore */ }
+      }
 
       const configured = config.publicKey && config.serviceId && config.businessTemplateId && config.customerTemplateId && !String(config.publicKey).startsWith('YOUR_');
       if (!configured || !window.emailjs) {
@@ -433,19 +445,6 @@
 
       await window.emailjs.send(config.serviceId, config.businessTemplateId, params);
 
-      // Extra phone alert (Telegram via Worker) with the invoice PDF attached.
-      // Fire-and-forget: never blocks or alters the emails.
-      if (config.alertUrl) {
-        try {
-          let bin = '';
-          for (let i = 0; i < pdfBytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, pdfBytes.subarray(i, i + 0x8000));
-          fetch(config.alertUrl, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: order.contactName, phone: order.phone, email: order.email, eventName: order.eventName, eventDate: dateTime(order.eventDate, order.eventTime), guests: order.guestCount, address: order.eventAddress, delivery: order.deliveryRequired ? 'Delivery' : 'Pickup', total: money(order.total), notes: order.specialRequests, orderNumber: order.orderNumber, pdf: btoa(bin), website: '' })
-          }).catch(() => {});
-        } catch (e) { /* ignore */ }
-      }
-
       await new Promise((resolve) => setTimeout(resolve, 1200));
       await window.emailjs.send(config.serviceId, config.customerTemplateId, params);
 
@@ -455,6 +454,10 @@
       document.querySelector('main').innerHTML = `<section class="masthead"><div class="container"><div class="eyebrow">Order Received</div><h1>Thank you for your order!</h1><p class="page-intro">Your invoice <strong>${esc(order.orderNumber)}</strong> is ready below. A copy of your order has also been emailed to you.</p><div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.25rem"><a href="${url}" download="${esc(order.orderNumber)}.pdf" style="display:inline-block;padding:.75rem 1.15rem;background:#7a1f1f;color:#fff;text-decoration:none;border-radius:4px;font-weight:700">Download Invoice</a><a href="${url}" target="_blank" rel="noopener" style="display:inline-block;padding:.75rem 1.15rem;border:1px solid #7a1f1f;color:#7a1f1f;text-decoration:none;border-radius:4px;font-weight:700">Open Invoice in New Tab</a></div><p class="page-intro" style="margin-top:1rem"><strong>Need to make a change?</strong> Please call or email <a href="mailto:${esc(config.businessEmail)}">${esc(config.businessEmail)}</a>.</p></div></section><section class="section"><div class="container"><div class="card"><div class="section-head"><div class="kicker">Invoice</div><h2>Your Invoice</h2></div><div style="height:88vh;min-height:720px;max-height:1100px"><iframe src="${url}" title="Your catering invoice" style="width:100%;height:100%;border:1px solid #ddd;border-radius:4px"></iframe></div><p style="margin-top:1rem"><a href="${url}" download="${esc(order.orderNumber)}.pdf">Download Invoice</a></p></div></div></section>`;
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
+      // Tell the owner the emails failed so the order is not missed.
+      if (alertBase && config.alertUrl) {
+        fetch(config.alertUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...alertBase, emailFailed: String(error?.text || error?.message || error).slice(0, 150) }) }).catch(() => {});
+      }
       if (message) {
         message.textContent = error?.message || 'We could not submit your order. Please try again.';
         message.classList.add('form-error');
