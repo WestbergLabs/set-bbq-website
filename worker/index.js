@@ -1,5 +1,5 @@
-// Relays a catering order alert to the owner's phone via ntfy. Purely additive to EmailJS.
-// Secret: NTFY_TOPIC
+// Relays a catering order alert to the owner's phone via Telegram. Purely additive to EmailJS.
+// Secrets: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 const ORIGINS = ['https://setxbbqcatering.com', 'https://www.setxbbqcatering.com', 'https://westberglabs.github.io'];
 const LIMITS = { name: 80, phone: 30, email: 120, eventName: 100, eventDate: 40, guests: 6, notes: 300, orderNumber: 40 };
 
@@ -36,19 +36,19 @@ export default {
       d.notes && `Notes: ${d.notes}`,
     ].filter(Boolean).join('\n');
 
-    // ntfy: the topic name acts as the password, so keep NTFY_TOPIC long and random.
-    // Retry because ntfy.sh rate-limits (429) Cloudflare's shared egress IPs now and then.
-    let err = 'ntfy unreachable';
+    // Telegram bot -> chat/group. Retry in case of a 429 or a network blip.
+    let err = 'telegram unreachable';
     for (let i = 0; i < 4; i++) {
       if (i) await new Promise((r) => setTimeout(r, 1500 * i));
       try {
-        const r = await fetch(`https://ntfy.sh/${encodeURIComponent(env.NTFY_TOPIC)}`, {
+        const r = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
           method: 'POST',
-          headers: { Title: 'New SET BBQ order', Priority: 'high', Tags: 'meat_on_bone' },
-          body: text,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text: `New SET BBQ order
+${text}` }),
         });
         if (r.ok) return reply({ ok: true });
-        err = 'ntfy ' + r.status;
+        err = 'telegram ' + r.status;
       } catch { /* retry */ }
     }
     return reply({ ok: false, error: err }, 502);
