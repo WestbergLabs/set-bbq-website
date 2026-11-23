@@ -433,15 +433,19 @@
 
       await window.emailjs.send(config.serviceId, config.businessTemplateId, params);
 
-      // Extra phone alert to the owner. Fire-and-forget: never blocks or alters the emails.
+      // Extra phone alert (Telegram via Worker) with the invoice PDF attached.
+      // Fire-and-forget: never blocks or alters the emails.
       if (config.alertUrl) {
         try {
+          let bin = '';
+          for (let i = 0; i < pdfBytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, pdfBytes.subarray(i, i + 0x8000));
           fetch(config.alertUrl, {
-            method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: order.contactName, phone: order.phone, email: order.email, eventName: order.eventName, eventDate: dateTime(order.eventDate, order.eventTime), guests: order.guestCount, notes: order.specialRequests, orderNumber: order.orderNumber, website: '' })
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: order.contactName, phone: order.phone, email: order.email, eventName: order.eventName, eventDate: dateTime(order.eventDate, order.eventTime), guests: order.guestCount, address: order.eventAddress, delivery: order.deliveryRequired ? 'Delivery' : 'Pickup', total: money(order.total), notes: order.specialRequests, orderNumber: order.orderNumber, pdf: btoa(bin), website: '' })
           }).catch(() => {});
         } catch (e) { /* ignore */ }
       }
+
       await new Promise((resolve) => setTimeout(resolve, 1200));
       await window.emailjs.send(config.serviceId, config.customerTemplateId, params);
 
