@@ -28,7 +28,7 @@ When an order is submitted:
 2. The customer receives a confirmation email.
 3. The PDF invoice is generated in the browser.
 4. The business email's **Reply-To** is set to the customer.
-5. The business email also provides the current SMS notification workflow through Verizon email-to-text.
+5. A Telegram alert with the invoice PDF is also sent through a Cloudflare Worker (see Telegram order alert).
 
 The pages themselves are **static**. The menu, prices, and admin sign-in are backed by Supabase, so menu changes go live without a deploy.
 
@@ -261,7 +261,6 @@ Expect `ok: True` and a message in the channel. A full test order from `order.ht
 
 - **Yahoo** — business/customer email mailbox
 - **Gmail** — current sending service used for business-order email routing
-- **Verizon** — SMS notification delivery
 
 These are part of the operational workflow; they are not application databases.
 
@@ -393,11 +392,8 @@ Customer
    ↓
 Website
    ├── Database → order records
-   └── EmailJS → email notifications
-                    ↓
-                 Verizon
-                    ↓
-                 SMS alert
+   ├── EmailJS → email notifications
+   └── Worker → Telegram alert + PDF
 ```
 
 Do not reintroduce database/email responsibilities into the website unless there is a specific reason to do so.
